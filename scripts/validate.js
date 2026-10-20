@@ -1,25 +1,31 @@
 #!/usr/bin/env node
-// 用分析报告校验装配数据：零件总数、五金总数、逐步五金用量与页码、几何。
-// 用法：node scripts/validate.js [数据 JSON] [分析报告 md]
-// 默认：data/kallax-body.json 对照 docs/analysis/kallax-manuals.md 的"1. shelf"一节。有任何不一致就以退出码 1 结束。
+// 用分析报告校验装配数据：零件数、五金总数、逐步页码与五金用量、几何；"全套"另查嵌件数量与重叠。
+// 用法：
+//   node scripts/validate.js                    校验 data/ 下的主体、门、抽屉、全套
+//   node scripts/validate.js <数据.json> [报告.md] 只校验一份（装配数据或全套数据）
+// 装配数据靠 source.reportSection（如 "## 2."）找到报告里对应的一节。有任何不一致就以退出码 1 结束。
 'use strict';
 const fs = require('fs');
 const path = require('path');
 
 const root = path.resolve(__dirname, '..');
-const dataPath = path.resolve(process.argv[2] || path.join(root, 'data/kallax-body.json'));
-const reportPath = path.resolve(process.argv[3] || path.join(root, 'docs/analysis/kallax-manuals.md'));
+const DEFAULT_REPORT = path.join(root, 'docs/analysis/kallax-manuals.md');
+const DEFAULT_FILES = ['data/kallax-body.json', 'data/kallax-door.json', 'data/kallax-drawer.json', 'data/kallax-set.json'];
+// 全套里应有的嵌件数量：来自任务要求，排布依据是 refs/ 商品图（第 3 排 5 个门、第 4 排 5 个双抽屉）
+const EXPECTED_SET = { door: 5, drawer: 5 };
 
-const errors = [];
-const passes = [];
-const check = (ok, okMsg, errMsg) => (ok ? passes.push(okMsg) : errors.push(errMsg));
 const normId = (s) => s.replace(/\s+/g, '');
-const sameList = (a, b) => JSON.stringify([...a].sort()) === JSON.stringify([...b].sort());
+const sameList = (a, b) => JSON.stringify([...a].map(String).sort()) === JSON.stringify([...b].map(String).sort());
+const rel = (p) => path.relative(process.cwd(), p) || p;
+const readJson = (p) => JSON.parse(fs.readFileSync(p, 'utf8'));
 
-// ---------- 解析报告 ----------
-const md = fs.readFileSync(reportPath, 'utf8');
-const sec = md.slice(md.indexOf('## 1.'), md.indexOf('## 2.'));
-if (!sec.trim()) { console.error(`✘ 在 ${reportPath} 里找不到"## 1."一节`); process.exit(1); }
+// ---------------- 报告解析 ----------------
+function sectionOf(md, heading) {
+  const start = md.indexOf(heading);
+  if (start < 0) return '';
+  const next = md.indexOf('\n## ', start + heading.length);
+  return md.slice(start, next < 0 ? undefined : next);
+}
 
 function tables(text) {
   const out = [];
@@ -33,149 +39,308 @@ function tables(text) {
   }
   return out;
 }
-const secTables = tables(sec);
 
-// 板件清单：| 图示 | 数量 | 用途 |
-const TYPE_BY_NAME = [['长层板', 'shelf'], ['隔板', 'divider'], ['侧板', 'side'], ['底板', 'bottom'], ['顶板', 'top']];
-const reportParts = {};
-const boardTable = secTables.find((t) => t.header[0] === '图示' && t.header[1] === '数量');
-for (const row of boardTable ? boardTable.rows : []) {
-  const head = row[2].replace(/\*\*/g, '').split(/[（(，,]/)[0];
-  const hit = TYPE_BY_NAME.find(([k]) => head.endsWith(k));
-  if (!hit) { errors.push(`报告板件行无法识别：${row.join(' | ')}`); continue; }
-  reportParts[hit[1]] = (reportParts[hit[1]] || 0) + Number(row[1]);
+// 五金列 → [{id, count|null}]；count 为 null 表示报告里只写了编号
+function hwItems(col) {
+  const items = [];
+  const counted = /(\d{5,}(?:\s*\/\s*\d{5,})*)\s*×\s*(\d+)/g;
+  for (const m of col.matchAll(counted)) items.push({ id: normId(m[1]), count: Number(m[2]) });
+  for (const m of col.replace(counted, '').matchAll(/(?<![\d/])(\d{6,}(?:\/\d{6,})*)(?![\d/])/g)) items.push({ id: m[1], count: null });
+  return items;
 }
 
-// 五金清单：| 编号 | 数量 | 图示 |
-const reportHw = {};
-const hwTable = secTables.find((t) => t.header[0] === '编号' && t.header[1] === '数量');
-for (const row of hwTable ? hwTable.rows : []) reportHw[normId(row[0])] = Number(row[1]);
-
-// 步骤表：| 页 | 步骤 | 内容 | 用到的五金 |，只取本数据覆盖的步骤
-const reportSteps = {};
-for (const t of secTables.filter((t) => t.header[0] === '页' && t.header[1] === '步骤')) {
-  for (const row of t.rows) {
-    const page = /^p(\d+)$/.exec(row[0]);
-    const n = /^\d+$/.test(row[1]) ? Number(row[1]) : null;
-    if (!page || n === null) continue;
-    const s = (reportSteps[n] = reportSteps[n] || { pages: new Set(), hw: {}, tools: new Set(), rows: 0 });
-    s.rows++;
-    s.pages.add(Number(page[1]));
-    const col = row[3] || '';
-    for (const m of col.matchAll(/(\d{5,}(?:\s*\/\s*\d{5,})*)\s*×\s*(\d+)/g)) {
-      const id = normId(m[1]);
-      s.hw[id] = (s.hw[id] || 0) + Number(m[2]);
+function parseReport(md, heading) {
+  const sec = sectionOf(md, heading);
+  const ts = tables(sec);
+  const rep = { found: !!sec, parts: [], hw: {}, steps: {}, altPages: {} };
+  for (const t of ts) {
+    if (t.header[0] === '图示' && t.header[1] === '数量') rep.parts.push(...t.rows.map((r) => ({ label: r[0], qty: r[1] })));
+    if (t.header[0] === '编号' && t.header[1] === '数量') for (const r of t.rows) rep.hw[normId(r[0])] = parseInt(r[1], 10);
+    if (t.header[0] === '页' && t.header[1] === '步骤') {
+      for (const r of t.rows) {
+        const page = /^p(\d+)$/.exec(r[0]);
+        if (!page || !/^\d+$/.test(r[1])) continue;
+        const s = (rep.steps[r[1]] = rep.steps[r[1]] || { pages: new Set(), items: [] });
+        s.pages.add(Number(page[1]));
+        s.items.push(...hwItems(r[3] || ''));
+      }
     }
-    const noCounts = col.replace(/(\d{5,}(?:\s*\/\s*\d{5,})*)\s*×\s*\d+/g, '');
-    for (const m of noCounts.matchAll(/\b(\d{6,})\b/g)) s.tools.add(m[1]);
   }
-}
-
-// ---------- 读数据 ----------
-const data = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
-const stepNs = data.steps.map((s) => s.n);
-const scopeMax = Math.max(...stepNs);
-
-// 1. 零件
-const partCount = {};
-for (const p of data.parts) partCount[p.type] = (partCount[p.type] || 0) + 1;
-const reportPartTotal = Object.values(reportParts).reduce((a, b) => a + b, 0);
-check(reportPartTotal > 0, `报告板件清单解析到 ${Object.keys(reportParts).length} 种`, '报告里没有解析到板件清单');
-for (const [type, qty] of Object.entries(reportParts)) {
-  check(partCount[type] === qty, `零件 ${type}：${qty} 块`, `零件 ${type}：报告 ${qty} 块，数据 ${partCount[type] || 0} 块`);
-  check(data.partTypes[type] && data.partTypes[type].quantity === qty, `partTypes.${type}.quantity = ${qty}`,
-    `partTypes.${type}.quantity 与报告不符（报告 ${qty}）`);
-}
-for (const type of Object.keys(partCount)) {
-  if (!(type in reportParts)) errors.push(`数据里有报告没有的零件种类：${type}`);
-}
-check(data.parts.length === reportPartTotal, `零件总数 ${reportPartTotal}`, `零件总数：报告 ${reportPartTotal}，数据 ${data.parts.length}`);
-
-// 2. 五金目录
-const hwById = Object.fromEntries(data.hardware.map((h) => [normId(h.id), h]));
-check(Object.keys(reportHw).length > 0, `报告五金清单解析到 ${Object.keys(reportHw).length} 种`, '报告里没有解析到五金清单');
-for (const [id, qty] of Object.entries(reportHw)) {
-  const h = hwById[id];
-  check(h && h.quantity === qty, `五金 ${id}：${qty}`, `五金 ${id}：报告 ${qty}，数据 ${h ? h.quantity : '缺失'}`);
-}
-for (const id of Object.keys(hwById)) if (!(id in reportHw)) errors.push(`数据里有报告没有的五金：${id}`);
-const reportHwTotal = Object.values(reportHw).reduce((a, b) => a + b, 0);
-const dataHwTotal = data.hardware.reduce((a, h) => a + h.quantity, 0);
-check(reportHwTotal === dataHwTotal, `五金总数 ${reportHwTotal}`, `五金总数：报告 ${reportHwTotal}，数据 ${dataHwTotal}`);
-
-// 3. 逐步对照
-const inScope = Object.keys(reportSteps).map(Number).filter((n) => n <= scopeMax).sort((a, b) => a - b);
-check(sameList(inScope, stepNs), `步骤 1–${scopeMax} 与报告一一对应`,
-  `步骤编号不一致：报告 [${inScope}]，数据 [${stepNs}]`);
-for (const s of data.steps) {
-  const rep = reportSteps[s.n];
-  if (!rep) continue;
-  check(sameList(rep.pages, s.pages), `第 ${s.n} 步页码 p${s.pages}`, `第 ${s.n} 步页码：报告 p${[...rep.pages]}，数据 p${s.pages}`);
-  const used = {};
-  for (const h of s.hardware) used[normId(h.id)] = (used[normId(h.id)] || 0) + h.count;
-  const keys = new Set([...Object.keys(rep.hw), ...Object.keys(used)]);
-  for (const id of keys) {
-    check(rep.hw[id] === used[id], `第 ${s.n} 步 ${id} ×${used[id]}`,
-      `第 ${s.n} 步 ${id}：报告 ×${rep.hw[id] || 0}，数据 ×${used[id] || 0}`);
+  // 门嵌件的右铰链路线是列表："- p13：第 6、7 步……"，五金与左铰链路线相同（报告原话：左右镜像）
+  const alt = /\*\*右铰链路线[^\n]*\n([\s\S]*?)(?:\n\s*\n|$)/.exec(sec);
+  if (alt) {
+    for (const line of alt[1].split(/\r?\n/)) {
+      const m = /^- p(\d+)：(.*)$/.exec(line.trim());
+      if (!m) continue;
+      for (const g of m[2].matchAll(/第\s*([\d、]+)\s*步/g)) {
+        for (const n of g[1].split('、')) (rep.altPages[n] = rep.altPages[n] || new Set()).add(Number(m[1]));
+      }
+    }
   }
-  const dataTools = s.tools.filter((t) => /^\d+$/.test(t));
-  check(sameList(rep.tools, dataTools), `第 ${s.n} 步工具编号 [${dataTools}]`,
-    `第 ${s.n} 步工具编号：报告 [${[...rep.tools]}]，数据 [${dataTools}]`);
-  for (const h of s.hardware) {
-    check(h.count === h.placements.length, `第 ${s.n} 步 ${h.id} 摆放 ${h.count} 处`,
-      `第 ${s.n} 步 ${h.id}：count ${h.count}，placements ${h.placements.length}`);
-    if (!hwById[normId(h.id)]) errors.push(`第 ${s.n} 步引用了目录里没有的五金 ${h.id}`);
+  return rep;
+}
+
+// ---------------- 几何 ----------------
+const D2R = Math.PI / 180;
+function rotate([x, y, z], [rx = 0, ry = 0, rz = 0] = []) {
+  // 与 three.js Euler 'XYZ' 一致：v' = Rx·Ry·Rz·v
+  const c = (a) => Math.cos(a * D2R), s = (a) => Math.sin(a * D2R);
+  let p = [x * c(rz) - y * s(rz), x * s(rz) + y * c(rz), z];
+  p = [p[0] * c(ry) + p[2] * s(ry), p[1], -p[0] * s(ry) + p[2] * c(ry)];
+  return [p[0], p[1] * c(rx) - p[2] * s(rx), p[1] * s(rx) + p[2] * c(rx)];
+}
+function aabb(center, size, rot, origin = [0, 0, 0]) {
+  const lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity];
+  for (const sx of [-1, 1]) for (const sy of [-1, 1]) for (const sz of [-1, 1]) {
+    const p = rotate([center[0] + (sx * size[0]) / 2, center[1] + (sy * size[1]) / 2, center[2] + (sz * size[2]) / 2], rot);
+    for (let i = 0; i < 3; i++) { lo[i] = Math.min(lo[i], p[i] + origin[i]); hi[i] = Math.max(hi[i], p[i] + origin[i]); }
   }
+  return [lo, hi];
 }
-
-// 4. 消耗总量
-const consumed = {};
-for (const s of data.steps) for (const h of s.hardware) consumed[normId(h.id)] = (consumed[normId(h.id)] || 0) + h.count;
-for (const h of data.hardware) {
-  const id = normId(h.id);
-  if (h.kind === 'tool') continue;
-  if (h.scope === 'wall') check(!consumed[id], `上墙五金 ${id} 本次未使用`, `上墙五金 ${id} 不应出现在本数据的步骤里`);
-  else check(consumed[id] === h.quantity, `${id} 各步合计 ${h.quantity}，用完`, `${id}：各步合计 ${consumed[id] || 0}，清单 ${h.quantity}`);
+// 一块零件（含 pieces 与变体姿态）的所有盒子，坐标为装配坐标 + offset
+function partBoxes(part, variant, offset = [0, 0, 0]) {
+  const v = (variant && part.variants && part.variants[variant]) || {};
+  const pos = v.position || part.position;
+  const rot = v.rotation || part.rotation;
+  const at = pos.map((p, i) => p + offset[i]);
+  const list = part.pieces ? part.pieces.map((pc) => ({ id: `${part.id}/${pc.id}`, box: aabb(pc.offset, pc.size, rot, at) }))
+    : [{ id: part.id, box: aabb([0, 0, 0], part.size, rot, at) }];
+  return list.map((b) => ({ ...b, part: part.id }));
 }
-
-// 5. 零件放置
-const partIds = new Set(data.parts.map((p) => p.id));
-const placedIn = {};
-for (const s of data.steps) for (const id of s.parts) {
-  if (!partIds.has(id)) errors.push(`第 ${s.n} 步引用了不存在的零件 ${id}`);
-  (placedIn[id] = placedIn[id] || []).push(s.n);
+function hostBoxes(host) {
+  const [w, h, d] = host.cell, t = host.wall;
+  const mk = (id, c, s) => ({ id, part: id, box: aabb(c, s) });
+  return [
+    mk('格子底板', [0, -h / 2 - t / 2, 0], [w + 2 * t, t, d]), mk('格子顶板', [0, h / 2 + t / 2, 0], [w + 2 * t, t, d]),
+    mk('格子左壁', [-w / 2 - t / 2, 0, 0], [t, h, d]), mk('格子右壁', [w / 2 + t / 2, 0, 0], [t, h, d]),
+  ];
 }
-const badPlace = data.parts.filter((p) => !placedIn[p.id] || placedIn[p.id].length !== 1);
-check(badPlace.length === 0, '每块零件恰好放入一次',
-  `零件放入次数不对：${badPlace.map((p) => `${p.id}(${(placedIn[p.id] || []).join(',') || '未放'})`).join('，')}`);
-for (const s of data.steps) for (const h of s.hardware) for (const pl of h.placements) {
-  if (pl.attachTo && !partIds.has(pl.attachTo)) errors.push(`第 ${s.n} 步 ${h.id} attachTo 不存在：${pl.attachTo}`);
-}
-
-// 6. 几何
 const EPS = 0.01;
-const box = (p) => p.size.map((s, i) => [p.position[i] - s / 2, p.position[i] + s / 2]);
-const all = data.parts.map(box);
-const ext = [0, 1, 2].map((i) => Math.max(...all.map((b) => b[i][1])) - Math.min(...all.map((b) => b[i][0])));
-check(ext.every((e, i) => Math.abs(e - data.meta.overall[i]) < EPS), `外包盒 ${ext.map((e) => +e.toFixed(2)).join('×')}`,
-  `外包盒 ${ext.map((e) => +e.toFixed(2)).join('×')} ≠ meta.overall ${data.meta.overall.join('×')}`);
-const overlaps = [];
-for (let a = 0; a < all.length; a++) for (let b = a + 1; b < all.length; b++) {
-  if ([0, 1, 2].every((i) => Math.min(all[a][i][1], all[b][i][1]) - Math.max(all[a][i][0], all[b][i][0]) > EPS)) {
-    overlaps.push(`${data.parts[a].id}↔${data.parts[b].id}`);
+const overlapVol = (a, b) => [0, 1, 2].every((i) => Math.min(a[1][i], b[1][i]) - Math.max(a[0][i], b[0][i]) > EPS);
+function overlaps(listA, listB = null) {
+  const out = [];
+  const B = listB || listA;
+  for (let i = 0; i < listA.length; i++) {
+    for (let j = listB ? 0 : i + 1; j < B.length; j++) {
+      if (listA[i].part === B[j].part) continue;
+      if (overlapVol(listA[i].box, B[j].box)) out.push(`${listA[i].id}↔${B[j].id}`);
+    }
   }
+  return out;
 }
-check(overlaps.length === 0, '零件之间没有重叠', `零件重叠：${overlaps.join('，')}`);
 
-// ---------- 输出 ----------
-const rel = (p) => path.relative(process.cwd(), p);
-console.log(`数据：${rel(dataPath)}\n报告：${rel(reportPath)}（第 1 节，步骤 1–${scopeMax}）\n`);
-console.log(`零件：报告 ${reportPartTotal} 块 / 数据 ${data.parts.length} 块`);
-console.log(`五金：报告 ${reportHwTotal} 件（${Object.keys(reportHw).length} 种）/ 数据 ${dataHwTotal} 件`);
-console.log(`通过 ${passes.length} 项检查`);
-if (errors.length) {
-  console.error(`\n✘ 发现 ${errors.length} 处不一致：`);
-  for (const e of errors) console.error(`  - ${e}`);
-  process.exit(1);
+// ---------------- 装配数据校验 ----------------
+function validateAssembly(data, md, file) {
+  const errors = [], passes = [];
+  const check = (ok, okMsg, errMsg) => (ok ? passes.push(okMsg) : errors.push(errMsg));
+  const heading = data.source && data.source.reportSection;
+  const rep = parseReport(md, heading || '\u0000');
+  if (!rep.found) return { errors: [`报告里找不到 ${heading || '(未写 source.reportSection)'} 一节`], passes, summary: '' };
+
+  const cat = Object.fromEntries(data.hardware.map((h) => [normId(h.id), h]));
+  const memberOf = {};
+  for (const h of data.hardware) for (const m of h.members || []) memberOf[m] = normId(h.id);
+  const drawerCount = data.meta && data.meta.drawerCount;
+
+  // 1. 零件
+  const partCount = {};
+  for (const p of data.parts) partCount[p.type] = (partCount[p.type] || 0) + 1;
+  let reportPartTotal = 0;
+  const usedTypes = new Set();
+  for (const row of rep.parts) {
+    const entry = Object.entries(data.partTypes).find(([, t]) => t.report === row.label);
+    let qty = null;
+    const per = /每个抽屉\s*(\d+)/.exec(row.qty);
+    if (per) {
+      if (!drawerCount) { errors.push(`报告按"每个抽屉"计数（${row.label}），但数据没有 meta.drawerCount`); continue; }
+      qty = Number(per[1]) * drawerCount;
+      if (entry) check(entry[1].perDrawer === Number(per[1]), `${row.label} 每个抽屉 ${per[1]} 块`, `${row.label}：报告每个抽屉 ${per[1]} 块，数据 perDrawer=${entry[1].perDrawer}`);
+    } else qty = parseInt(row.qty, 10);
+    reportPartTotal += qty;
+    if (!entry) { errors.push(`报告板件"${row.label}"在数据 partTypes 里没有对应（report 字段）`); continue; }
+    const [type, t] = entry;
+    usedTypes.add(type);
+    check(partCount[type] === qty && t.quantity === qty, `零件 ${row.label}：${qty} 块`,
+      `零件 ${row.label}：报告 ${qty} 块，数据实例 ${partCount[type] || 0} 块、partTypes.quantity ${t.quantity}`);
+  }
+  for (const type of Object.keys(partCount)) if (!usedTypes.has(type)) errors.push(`数据里有报告没有的零件种类：${type}`);
+  check(data.parts.length === reportPartTotal, `零件总数 ${reportPartTotal}`, `零件总数：报告 ${reportPartTotal}，数据 ${data.parts.length}`);
+
+  // 2. 五金目录
+  for (const [id, qty] of Object.entries(rep.hw)) {
+    check(cat[id] && cat[id].quantity === qty, `五金 ${id}：${qty}`, `五金 ${id}：报告 ${qty}，数据 ${cat[id] ? cat[id].quantity : '缺失'}`);
+  }
+  for (const id of Object.keys(cat)) if (!(id in rep.hw)) errors.push(`数据里有报告没有的五金：${id}`);
+  const reportHwTotal = Object.values(rep.hw).reduce((a, b) => a + b, 0);
+  const dataHwTotal = data.hardware.reduce((a, h) => a + h.quantity, 0);
+  check(reportHwTotal === dataHwTotal, `五金总数 ${reportHwTotal}`, `五金总数：报告 ${reportHwTotal}，数据 ${dataHwTotal}`);
+
+  // 报告里一步的用量（每个抽屉 / 每次）：数量 + 工具编号
+  const expectStep = (n) => {
+    const s = rep.steps[n];
+    const use = {}, tools = new Set();
+    if (!s) return { use, tools };
+    const setsSeen = new Set();
+    for (const it of s.items) {
+      if (it.count !== null) { use[it.id] = (use[it.id] || 0) + it.count; continue; }
+      if (cat[it.id] && cat[it.id].kind === 'tool') { tools.add(it.id); continue; }
+      if (memberOf[it.id]) { // 成套五金（如 123801 + 123802）：报告列出成员即算 1 套
+        if (!setsSeen.has(memberOf[it.id])) { setsSeen.add(memberOf[it.id]); use[memberOf[it.id]] = (use[memberOf[it.id]] || 0) + 1; }
+        continue;
+      }
+      use[it.id] = (use[it.id] || 0) + 1; // 只写编号、没写数量：按 1 件
+    }
+    return { use, tools };
+  };
+
+  // 3–5. 逐个变体（路线）检查
+  const variants = data.variants ? Object.keys(data.variants) : [null];
+  const scopeMax = Math.max(...data.steps.map((s) => s.n));
+  const reportNs = Object.keys(rep.steps).map(Number).filter((n) => n <= scopeMax).sort((a, b) => a - b);
+  for (const v of variants) {
+    const tag = v ? `[${data.variants[v].label}] ` : '';
+    const seq = data.steps.filter((s) => !s.variant || s.variant === v);
+    const ns = seq.map((s) => s.n);
+    check(sameList(ns, reportNs) && new Set(ns).size === ns.length, `${tag}步骤 ${ns[0]}–${ns[ns.length - 1]} 与报告一一对应`,
+      `${tag}步骤编号不一致：报告 [${reportNs}]，数据 [${ns}]`);
+    const consumed = {};
+    const placed = {};
+    for (const s of seq) {
+      const repPages = (v && v !== 'left' && rep.altPages[s.n]) || (rep.steps[s.n] && rep.steps[s.n].pages);
+      if (repPages) check(sameList(repPages, s.pages), `${tag}第 ${s.n} 步页码 p${s.pages}`, `${tag}第 ${s.n} 步页码：报告 p${[...repPages]}，数据 p${s.pages}`);
+      else if (v && v !== 'left') errors.push(`${tag}第 ${s.n} 步：报告的路线列表里找不到页码`);
+      const repeat = s.repeat || 1;
+      if (s.repeat) check(s.repeat === drawerCount, `${tag}第 ${s.n} 步按 ${s.repeat} 个抽屉重复`, `${tag}第 ${s.n} 步 repeat=${s.repeat}，与 meta.drawerCount=${drawerCount} 不符`);
+      const { use, tools } = expectStep(s.n);
+      const got = {};
+      for (const h of s.hardware) got[normId(h.id)] = (got[normId(h.id)] || 0) + h.count;
+      for (const id of new Set([...Object.keys(use), ...Object.keys(got)])) {
+        const want = (use[id] || 0) * repeat;
+        check(want === (got[id] || 0), `${tag}第 ${s.n} 步 ${id} ×${got[id]}`,
+          `${tag}第 ${s.n} 步 ${id}：报告 ×${use[id] || 0}${repeat > 1 ? `（×${repeat} 个抽屉 = ${want}）` : ''}，数据 ×${got[id] || 0}`);
+        consumed[id] = (consumed[id] || 0) + (got[id] || 0);
+      }
+      const dataTools = (s.tools || []).filter((t) => /^\d+$/.test(t));
+      check(sameList(tools, dataTools), `${tag}第 ${s.n} 步工具编号 [${dataTools}]`, `${tag}第 ${s.n} 步工具编号：报告 [${[...tools]}]，数据 [${dataTools}]`);
+      for (const h of s.hardware) {
+        const def = cat[normId(h.id)];
+        if (!def) { errors.push(`${tag}第 ${s.n} 步引用了目录里没有的五金 ${h.id}`); continue; }
+        const per = def.pieces || 1;
+        check(h.placements.length === h.count * per, `${tag}第 ${s.n} 步 ${h.id} 摆放 ${h.placements.length} 处`,
+          `${tag}第 ${s.n} 步 ${h.id}：count ${h.count}${per > 1 ? ` × 每${def.unit || '件'} ${per} 个` : ''}，placements ${h.placements.length}`);
+        for (const pl of h.placements) if (pl.attachTo && !data.parts.some((p) => p.id === pl.attachTo)) errors.push(`${tag}第 ${s.n} 步 ${h.id} attachTo 不存在：${pl.attachTo}`);
+      }
+      for (const id of s.parts || []) (placed[id] = placed[id] || []).push(s.n);
+      for (const id of [...(s.install || []), ...(s.fold || [])]) {
+        if (!placed[id]) errors.push(`${tag}第 ${s.n} 步要移动/折叠的 ${id} 还没有放入`);
+      }
+    }
+    // 消耗总量
+    for (const h of data.hardware) {
+      const id = normId(h.id);
+      if (h.kind === 'tool') continue;
+      if (h.scope === 'wall') check(!consumed[id], `${tag}上墙五金 ${id} 本次未使用`, `${tag}上墙五金 ${id} 不应出现在步骤里`);
+      else check(consumed[id] === h.quantity, `${tag}${id} 各步合计 ${h.quantity}，用完`, `${tag}${id}：各步合计 ${consumed[id] || 0}，清单 ${h.quantity}`);
+    }
+    const badPlace = data.parts.filter((p) => !placed[p.id] || placed[p.id].length !== 1);
+    check(badPlace.length === 0, `${tag}每块零件恰好放入一次`,
+      `${tag}零件放入次数不对：${badPlace.map((p) => `${p.id}(${(placed[p.id] || []).join(',') || '未放'})`).join('，')}`);
+    for (const s of seq) for (const id of s.parts || []) if (!data.parts.some((p) => p.id === id)) errors.push(`${tag}第 ${s.n} 步引用了不存在的零件 ${id}`);
+
+    // 几何
+    const boxes = data.parts.flatMap((p) => partBoxes(p, v));
+    const lo = [0, 1, 2].map((i) => Math.min(...boxes.map((b) => b.box[0][i])));
+    const hi = [0, 1, 2].map((i) => Math.max(...boxes.map((b) => b.box[1][i])));
+    const ext = hi.map((h, i) => +(h - lo[i]).toFixed(2));
+    check(ext.every((e, i) => Math.abs(e - data.meta.overall[i]) < EPS), `${tag}外包盒 ${ext.join('×')}`, `${tag}外包盒 ${ext.join('×')} ≠ meta.overall ${data.meta.overall.join('×')}`);
+    const ov = overlaps(boxes);
+    check(ov.length === 0, `${tag}零件之间没有重叠`, `${tag}零件重叠：${ov.join('，')}`);
+    if (data.host) {
+      const hv = overlaps(boxes, hostBoxes(data.host));
+      check(hv.length === 0, `${tag}与格子隔板没有重叠`, `${tag}与格子隔板重叠：${hv.join('，')}`);
+    }
+  }
+
+  // 抽屉数要能由五金数量推出来：只在重复步骤里用到的五金，清单数 ÷ 每个抽屉用量 = 抽屉数
+  if (drawerCount) {
+    const perDrawer = {}, elsewhere = new Set();
+    for (const s of data.steps) {
+      const { use } = expectStep(s.n);
+      for (const [id, c] of Object.entries(use)) {
+        if (s.repeat) perDrawer[id] = (perDrawer[id] || 0) + c; else elsewhere.add(id);
+      }
+    }
+    const implied = Object.entries(perDrawer).filter(([id]) => !elsewhere.has(id)).map(([id, c]) => [id, rep.hw[id] / c]);
+    const okAll = implied.length > 0 && implied.every(([, k]) => k === drawerCount);
+    check(okAll, `按五金数量推得抽屉数 = ${drawerCount}（${implied.map(([id, k]) => `${id}:${k}`).join('，')}）`,
+      `五金数量推出的抽屉数与 meta.drawerCount=${drawerCount} 不符：${implied.map(([id, k]) => `${id}→${k}`).join('，')}`);
+  }
+
+  const summary = `零件：报告 ${reportPartTotal} 块 / 数据 ${data.parts.length} 块；五金：报告 ${reportHwTotal} 件（${Object.keys(rep.hw).length} 种）/ 数据 ${dataHwTotal} 件`;
+  return { errors, passes, summary };
 }
-console.log('\n✔ 全部一致');
+
+// ---------------- 全套校验 ----------------
+function validateSet(set, baseDir) {
+  const errors = [], passes = [];
+  const check = (ok, okMsg, errMsg) => (ok ? passes.push(okMsg) : errors.push(errMsg));
+  const body = readJson(path.join(baseDir, set.body));
+  const bodyBoxes = body.parts.flatMap((p) => partBoxes(p, null)).map((b) => ({ ...b, id: `主体/${b.id}`, part: `body:${b.part}` }));
+  const bLo = [0, 1, 2].map((i) => Math.min(...bodyBoxes.map((b) => b.box[0][i])));
+  const bHi = [0, 1, 2].map((i) => Math.max(...bodyBoxes.map((b) => b.box[1][i])));
+  const counts = {};
+  const cells = new Set();
+  const insertBoxes = [];
+  for (const ins of set.inserts) {
+    const data = readJson(path.join(baseDir, ins.data));
+    counts[ins.id] = (counts[ins.id] || 0) + ins.placements.length;
+    if (data.variants && !data.variants[ins.variant]) errors.push(`${ins.id}：变体 ${ins.variant} 不存在`);
+    for (const pl of ins.placements) {
+      const key = pl.cell.join(',');
+      if (cells.has(key)) errors.push(`格子 (${key}) 放了不止一个嵌件`);
+      cells.add(key);
+      const [c, r] = pl.cell;
+      if (!(c >= 1 && c <= body.meta.grid[0] && r >= 1 && r <= body.meta.grid[1])) errors.push(`${ins.id} 格子 (${key}) 超出 ${body.meta.grid.join('×')}`);
+      const bx = data.parts.flatMap((p) => partBoxes(p, ins.variant || null, pl.origin))
+        .map((b) => ({ ...b, id: `${ins.id}@(${key})/${b.id}`, part: `${ins.id}@${key}:${b.part}` }));
+      for (const b of bx) {
+        const inside = [0, 1, 2].every((i) => b.box[0][i] >= bLo[i] - EPS && b.box[1][i] <= bHi[i] + EPS);
+        if (!inside) errors.push(`${b.id} 超出主体外形`);
+      }
+      insertBoxes.push(...bx);
+    }
+  }
+  for (const [id, n] of Object.entries(EXPECTED_SET)) {
+    check(counts[id] === n, `全套 ${id} 嵌件 ${n} 个`, `全套 ${id} 嵌件：应为 ${n}，数据 ${counts[id] || 0}`);
+  }
+  for (const id of Object.keys(counts)) if (!(id in EXPECTED_SET)) errors.push(`全套里有未预期的嵌件种类：${id}`);
+  const withBody = overlaps(insertBoxes, bodyBoxes);
+  check(withBody.length === 0, '嵌件与主体板件没有重叠', `嵌件与主体板件重叠：${withBody.slice(0, 12).join('，')}${withBody.length > 12 ? ` 等 ${withBody.length} 处` : ''}`);
+  const between = overlaps(insertBoxes).filter((s) => s.split('↔').map((x) => x.split('/')[0]).reduce((a, b) => a !== b));
+  check(between.length === 0, '嵌件之间没有重叠', `嵌件之间重叠：${between.slice(0, 12).join('，')}`);
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  return { errors, passes, summary: `嵌件：${Object.entries(counts).map(([k, v]) => `${k} ${v}`).join(' + ')} = ${total} 个，占 ${cells.size} 格` };
+}
+
+// ---------------- 入口 ----------------
+const args = process.argv.slice(2);
+const files = args.length ? [path.resolve(args[0])] : DEFAULT_FILES.map((f) => path.join(root, f));
+const reportPath = path.resolve(args[1] || DEFAULT_REPORT);
+const md = fs.readFileSync(reportPath, 'utf8');
+let failed = 0;
+console.log(`报告：${rel(reportPath)}\n`);
+for (const file of files) {
+  const data = readJson(file);
+  const res = data.schema && data.schema.startsWith('flatpack3d/set') ? validateSet(data, root) : validateAssembly(data, md, file);
+  const head = `${rel(file)}${data.source && data.source.reportSection ? `（报告 ${data.source.reportSection.replace('## ', '第 ').replace('.', ' 节')}）` : ''}`;
+  if (res.errors.length) {
+    failed++;
+    console.log(`✘ ${head}\n  ${res.summary}\n  通过 ${res.passes.length} 项，发现 ${res.errors.length} 处不一致：`);
+    for (const e of res.errors) console.log(`    - ${e}`);
+  } else {
+    console.log(`✔ ${head}\n  ${res.summary}\n  通过 ${res.passes.length} 项检查`);
+  }
+  console.log('');
+}
+if (failed) { console.error(`${failed} 份数据未通过`); process.exit(1); }
+console.log('全部一致');

@@ -1,0 +1,1218 @@
+{
+  "schema": "flatpack3d/assembly@1",
+  "id": "kallax-door",
+  "title": "KALLAX 门嵌件",
+  "scope": "说明书第 1–11 步（两条路线）。安装在一个格子里；不含上墙固定。",
+  "source": {
+    "manual": "kallax-insert-with-door-white__AA-1009339-8-100.pdf",
+    "docId": "AA-1009339-8",
+    "analysis": "docs/analysis/kallax-manuals.md",
+    "dimensions": "docs/dimensions.md",
+    "reportSection": "## 2."
+  },
+  "manualPages": {
+    "dir": "renders/door",
+    "pattern": "p{NN}.png"
+  },
+  "staging": {
+    "origin": [
+      -110,
+      150
+    ],
+    "width": 230
+  },
+  "explodeScale": 1.6,
+  "placeApproach": [
+    0,
+    1,
+    0
+  ],
+  "approachDist": 25,
+  "meta": {
+    "overall": [
+      33,
+      33,
+      39
+    ],
+    "approximate": [
+      "嵌件外形 33×33 来自商品页；深度、板厚、门厚、铰链位置均为近似值，见 docs/dimensions.md"
+    ]
+  },
+  "variants": {
+    "left": {
+      "label": "左开",
+      "note": "铰链在左，门往左开（说明书 p6–p10）",
+      "default": true
+    },
+    "right": {
+      "label": "右开",
+      "note": "铰链在右，门往右开（说明书 p11–p15）"
+    }
+  },
+  "defaultPose": "upright",
+  "poses": {
+    "pivotLocal": [
+      0,
+      -18.36,
+      -19.5
+    ],
+    "pivotWorld": [
+      0,
+      0,
+      -19.5
+    ],
+    "upright": {
+      "tilt": 0,
+      "label": "装在格子里"
+    }
+  },
+  "host": {
+    "cell": [
+      33.52,
+      33.52,
+      39
+    ],
+    "wall": 1.6,
+    "note": "一个格子的内腔与四周隔板（主体近似尺寸）"
+  },
+  "partTypes": {
+    "frame": {
+      "name": "折叠外框",
+      "quantity": 1,
+      "report": "折叠外框"
+    },
+    "door": {
+      "name": "门板",
+      "quantity": 1,
+      "report": "门板"
+    }
+  },
+  "parts": [
+    {
+      "id": "frame",
+      "type": "frame",
+      "name": "折叠外框",
+      "size": [
+        33,
+        33,
+        37.1
+      ],
+      "position": [
+        0,
+        -0.26,
+        -0.95
+      ],
+      "pieces": [
+        {
+          "id": "back",
+          "size": [
+            30.2,
+            33,
+            0.7
+          ],
+          "offset": [
+            0,
+            0,
+            -18.2
+          ],
+          "unfolded": {
+            "offset": [
+              0,
+              0,
+              -18.2
+            ],
+            "rotation": [
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        {
+          "id": "side-left",
+          "size": [
+            0.7,
+            33,
+            37.1
+          ],
+          "offset": [
+            -15.45,
+            0,
+            0
+          ],
+          "unfolded": {
+            "offset": [
+              -33.65,
+              0,
+              -18.2
+            ],
+            "rotation": [
+              0,
+              -90,
+              0
+            ]
+          }
+        },
+        {
+          "id": "strip-left",
+          "size": [
+            0.7,
+            33,
+            4
+          ],
+          "offset": [
+            -16.15,
+            0,
+            16.55
+          ],
+          "unfolded": {
+            "offset": [
+              -54.2,
+              0,
+              -18.2
+            ],
+            "rotation": [
+              0,
+              -90,
+              0
+            ]
+          }
+        },
+        {
+          "id": "side-right",
+          "size": [
+            0.7,
+            33,
+            37.1
+          ],
+          "offset": [
+            15.45,
+            0,
+            0
+          ],
+          "unfolded": {
+            "offset": [
+              33.65,
+              0,
+              -18.2
+            ],
+            "rotation": [
+              0,
+              90,
+              0
+            ]
+          }
+        },
+        {
+          "id": "strip-right",
+          "size": [
+            0.7,
+            33,
+            4
+          ],
+          "offset": [
+            16.15,
+            0,
+            16.55
+          ],
+          "unfolded": {
+            "offset": [
+              54.2,
+              0,
+              -18.2
+            ],
+            "rotation": [
+              0,
+              90,
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "door",
+      "type": "door",
+      "name": "门板",
+      "size": [
+        33,
+        33,
+        1.6
+      ],
+      "position": [
+        0,
+        -0.26,
+        18.7
+      ],
+      "variants": {
+        "right": {
+          "rotation": [
+            0,
+            0,
+            180
+          ]
+        }
+      }
+    }
+  ],
+  "hardware": [
+    {
+      "id": "100412",
+      "name": "机制螺钉（拉手用）",
+      "quantity": 1,
+      "kind": "screw",
+      "shape": {
+        "type": "screw",
+        "diameter": 0.5,
+        "length": 2.5,
+        "headDiameter": 1
+      }
+    },
+    {
+      "id": "106266",
+      "name": "圆柱拉手",
+      "quantity": 1,
+      "kind": "knob",
+      "shape": {
+        "type": "cylinder",
+        "diameter": 1.6,
+        "length": 2.2
+      }
+    },
+    {
+      "id": "100344",
+      "name": "短十字螺钉（铰链用）",
+      "quantity": 4,
+      "kind": "screw",
+      "shape": {
+        "type": "screw",
+        "diameter": 0.4,
+        "length": 1.2,
+        "headDiameter": 0.8
+      }
+    },
+    {
+      "id": "124386",
+      "name": "十字自攻螺钉",
+      "quantity": 6,
+      "kind": "screw",
+      "shape": {
+        "type": "screw",
+        "diameter": 0.4,
+        "length": 3,
+        "headDiameter": 0.9
+      }
+    },
+    {
+      "id": "107091",
+      "name": "防撞垫贴片",
+      "quantity": 1,
+      "kind": "pad",
+      "pieces": 2,
+      "unit": "片",
+      "shape": {
+        "type": "cylinder",
+        "diameter": 1,
+        "length": 0.3
+      }
+    },
+    {
+      "id": "131351",
+      "name": "Z 形金属定位片",
+      "quantity": 1,
+      "kind": "tool"
+    },
+    {
+      "id": "109337",
+      "name": "杯状铰链",
+      "quantity": 2,
+      "kind": "hinge",
+      "shape": {
+        "type": "box",
+        "size": [
+          3,
+          4.5,
+          2
+        ]
+      }
+    },
+    {
+      "id": "109221",
+      "name": "铰链底座",
+      "quantity": 2,
+      "kind": "plate",
+      "shape": {
+        "type": "box",
+        "size": [
+          0.3,
+          5,
+          1.8
+        ]
+      }
+    }
+  ],
+  "overview": {
+    "n": 0,
+    "pages": [
+      3
+    ],
+    "title": "清点零件",
+    "hint": "对照 p3 清点五金。门嵌件本身只有折叠外框和门板两件。"
+  },
+  "steps": [
+    {
+      "n": 1,
+      "pages": [
+        4
+      ],
+      "title": "折叠外框",
+      "tools": [],
+      "parts": [
+        "frame"
+      ],
+      "fold": [
+        "frame"
+      ],
+      "bench": [
+        -60,
+        0,
+        80
+      ],
+      "hardware": [],
+      "hint": "展开折叠外框，沿折缝折成 U 形，两端窄边条折到侧板外侧。"
+    },
+    {
+      "n": 2,
+      "pages": [
+        5
+      ],
+      "title": "装铰链",
+      "tools": [],
+      "parts": [
+        "door"
+      ],
+      "bench": [
+        55,
+        0,
+        80
+      ],
+      "hardware": [
+        {
+          "id": "109337",
+          "count": 2,
+          "placements": [
+            {
+              "position": [
+                -13.6,
+                -11.26,
+                16.9
+              ],
+              "dir": [
+                0,
+                0,
+                -1
+              ],
+              "attachTo": "door"
+            },
+            {
+              "position": [
+                -13.6,
+                10.74,
+                16.9
+              ],
+              "dir": [
+                0,
+                0,
+                -1
+              ],
+              "attachTo": "door"
+            }
+          ]
+        },
+        {
+          "id": "100344",
+          "count": 4,
+          "placements": [
+            {
+              "position": [
+                -14.5,
+                -12.86,
+                17.7
+              ],
+              "dir": [
+                0,
+                0,
+                -1
+              ],
+              "attachTo": "door"
+            },
+            {
+              "position": [
+                -12.7,
+                -9.66,
+                17.7
+              ],
+              "dir": [
+                0,
+                0,
+                -1
+              ],
+              "attachTo": "door"
+            },
+            {
+              "position": [
+                -14.5,
+                9.14,
+                17.7
+              ],
+              "dir": [
+                0,
+                0,
+                -1
+              ],
+              "attachTo": "door"
+            },
+            {
+              "position": [
+                -12.7,
+                12.34,
+                17.7
+              ],
+              "dir": [
+                0,
+                0,
+                -1
+              ],
+              "attachTo": "door"
+            }
+          ]
+        }
+      ],
+      "hint": "两个铰链装到门板上，每个 2 颗螺钉。之后按开门方向分成两条路线。"
+    },
+    {
+      "n": 3,
+      "variant": "left",
+      "pages": [
+        6
+      ],
+      "tools": [
+        "131351",
+        "铅笔"
+      ],
+      "parts": [],
+      "hardware": [],
+      "title": "划线（左）",
+      "marks": [
+        {
+          "position": [
+            -14.76,
+            -16.73,
+            17.6
+          ],
+          "size": [
+            3,
+            0.06,
+            0.15
+          ]
+        }
+      ],
+      "hint": "定位片卡在格子底板前沿左侧，用铅笔划线（定位片别放反）。"
+    },
+    {
+      "n": 4,
+      "variant": "left",
+      "pages": [
+        6
+      ],
+      "tools": [
+        "131351",
+        "铅笔"
+      ],
+      "parts": [],
+      "hardware": [],
+      "title": "划线（右）",
+      "marks": [
+        {
+          "position": [
+            14.76,
+            -16.73,
+            17.6
+          ],
+          "size": [
+            3,
+            0.06,
+            0.15
+          ]
+        }
+      ],
+      "hint": "右侧同样划线。"
+    },
+    {
+      "n": 5,
+      "variant": "left",
+      "pages": [
+        7
+      ],
+      "tools": [],
+      "parts": [],
+      "hardware": [],
+      "title": "推入外框",
+      "install": [
+        "frame"
+      ],
+      "hint": "把 U 形外框推进格子。"
+    },
+    {
+      "n": 6,
+      "variant": "left",
+      "pages": [
+        7
+      ],
+      "tools": [],
+      "parts": [],
+      "hardware": [
+        {
+          "id": "109221",
+          "count": 1,
+          "placements": [
+            {
+              "position": [
+                -14.95,
+                -11.26,
+                15
+              ],
+              "dir": [
+                1,
+                0,
+                0
+              ],
+              "attachTo": "frame"
+            }
+          ]
+        },
+        {
+          "id": "124386",
+          "count": 2,
+          "placements": [
+            {
+              "position": [
+                -16.3,
+                -12.86,
+                15
+              ],
+              "dir": [
+                1,
+                0,
+                0
+              ],
+              "attachTo": "frame"
+            },
+            {
+              "position": [
+                -16.3,
+                -9.66,
+                15
+              ],
+              "dir": [
+                1,
+                0,
+                0
+              ],
+              "attachTo": "frame"
+            }
+          ]
+        }
+      ],
+      "title": "左下底座",
+      "hint": "把外框压紧在左侧壁上、前沿对齐铅笔线，装下方铰链底座。"
+    },
+    {
+      "n": 7,
+      "variant": "left",
+      "pages": [
+        8
+      ],
+      "tools": [],
+      "parts": [],
+      "hardware": [
+        {
+          "id": "109221",
+          "count": 1,
+          "placements": [
+            {
+              "position": [
+                -14.95,
+                10.74,
+                15
+              ],
+              "dir": [
+                1,
+                0,
+                0
+              ],
+              "attachTo": "frame"
+            }
+          ]
+        },
+        {
+          "id": "124386",
+          "count": 2,
+          "placements": [
+            {
+              "position": [
+                -16.3,
+                9.14,
+                15
+              ],
+              "dir": [
+                1,
+                0,
+                0
+              ],
+              "attachTo": "frame"
+            },
+            {
+              "position": [
+                -16.3,
+                12.34,
+                15
+              ],
+              "dir": [
+                1,
+                0,
+                0
+              ],
+              "attachTo": "frame"
+            }
+          ]
+        }
+      ],
+      "title": "左上底座",
+      "hint": "同样装上方铰链底座。"
+    },
+    {
+      "n": 8,
+      "variant": "left",
+      "pages": [
+        8
+      ],
+      "tools": [],
+      "parts": [],
+      "hardware": [
+        {
+          "id": "124386",
+          "count": 2,
+          "placements": [
+            {
+              "position": [
+                16.6,
+                -11.26,
+                15.6
+              ],
+              "dir": [
+                -1,
+                0,
+                0
+              ],
+              "attachTo": "frame"
+            },
+            {
+              "position": [
+                16.6,
+                10.74,
+                15.6
+              ],
+              "dir": [
+                -1,
+                0,
+                0
+              ],
+              "attachTo": "frame"
+            }
+          ]
+        }
+      ],
+      "title": "右侧螺钉",
+      "hint": "右侧压紧外框、对齐铅笔线，直接打 2 颗螺钉。"
+    },
+    {
+      "n": 9,
+      "variant": "left",
+      "pages": [
+        9
+      ],
+      "tools": [],
+      "parts": [],
+      "hardware": [],
+      "title": "挂门",
+      "install": [
+        "door"
+      ],
+      "approach": [
+        -1,
+        0,
+        1
+      ],
+      "hint": "铰链挂到底座上：先钩住，再按下，再拧紧。"
+    },
+    {
+      "n": 10,
+      "variant": "left",
+      "pages": [
+        9
+      ],
+      "tools": [],
+      "parts": [],
+      "hardware": [
+        {
+          "id": "106266",
+          "count": 1,
+          "placements": [
+            {
+              "position": [
+                14,
+                -0.26,
+                20.6
+              ],
+              "dir": [
+                0,
+                0,
+                1
+              ],
+              "attachTo": "door"
+            }
+          ]
+        },
+        {
+          "id": "100412",
+          "count": 1,
+          "placements": [
+            {
+              "position": [
+                14,
+                -0.26,
+                19.15
+              ],
+              "dir": [
+                0,
+                0,
+                -1
+              ],
+              "attachTo": "door"
+            }
+          ]
+        }
+      ],
+      "title": "拉手",
+      "hint": "装拉手，螺钉从门内侧拧入。"
+    },
+    {
+      "n": 11,
+      "variant": "left",
+      "pages": [
+        10
+      ],
+      "tools": [],
+      "parts": [],
+      "hardware": [
+        {
+          "id": "107091",
+          "count": 1,
+          "placements": [
+            {
+              "position": [
+                15.5,
+                -15.76,
+                17.75
+              ],
+              "dir": [
+                0,
+                0,
+                -1
+              ],
+              "attachTo": "door"
+            },
+            {
+              "position": [
+                15.5,
+                15.24,
+                17.75
+              ],
+              "dir": [
+                0,
+                0,
+                -1
+              ],
+              "attachTo": "door"
+            }
+          ]
+        }
+      ],
+      "title": "防撞垫",
+      "hint": "门背面开启侧的上、下两角各贴一个防撞垫（1 片 = 2 个垫）。"
+    },
+    {
+      "n": 3,
+      "variant": "right",
+      "pages": [
+        11
+      ],
+      "tools": [
+        "131351",
+        "铅笔"
+      ],
+      "parts": [],
+      "hardware": [],
+      "title": "划线（右）",
+      "marks": [
+        {
+          "position": [
+            14.76,
+            -16.73,
+            17.6
+          ],
+          "size": [
+            3,
+            0.06,
+            0.15
+          ]
+        }
+      ],
+      "hint": "定位片卡在格子底板前沿右侧，用铅笔划线（定位片别放反）。"
+    },
+    {
+      "n": 4,
+      "variant": "right",
+      "pages": [
+        12
+      ],
+      "tools": [
+        "131351",
+        "铅笔"
+      ],
+      "parts": [],
+      "hardware": [],
+      "title": "划线（左）",
+      "marks": [
+        {
+          "position": [
+            -14.76,
+            -16.73,
+            17.6
+          ],
+          "size": [
+            3,
+            0.06,
+            0.15
+          ]
+        }
+      ],
+      "hint": "左侧同样划线。"
+    },
+    {
+      "n": 5,
+      "variant": "right",
+      "pages": [
+        12
+      ],
+      "tools": [],
+      "parts": [],
+      "hardware": [],
+      "title": "推入外框",
+      "install": [
+        "frame"
+      ],
+      "hint": "把 U 形外框推进格子。"
+    },
+    {
+      "n": 6,
+      "variant": "right",
+      "pages": [
+        13
+      ],
+      "tools": [],
+      "parts": [],
+      "hardware": [
+        {
+          "id": "109221",
+          "count": 1,
+          "placements": [
+            {
+              "position": [
+                14.95,
+                -11.26,
+                15
+              ],
+              "dir": [
+                -1,
+                0,
+                0
+              ],
+              "attachTo": "frame"
+            }
+          ]
+        },
+        {
+          "id": "124386",
+          "count": 2,
+          "placements": [
+            {
+              "position": [
+                16.3,
+                -12.86,
+                15
+              ],
+              "dir": [
+                -1,
+                0,
+                0
+              ],
+              "attachTo": "frame"
+            },
+            {
+              "position": [
+                16.3,
+                -9.66,
+                15
+              ],
+              "dir": [
+                -1,
+                0,
+                0
+              ],
+              "attachTo": "frame"
+            }
+          ]
+        }
+      ],
+      "title": "右下底座",
+      "hint": "把外框压紧在右侧壁上、前沿对齐铅笔线，装下方铰链底座。"
+    },
+    {
+      "n": 7,
+      "variant": "right",
+      "pages": [
+        13
+      ],
+      "tools": [],
+      "parts": [],
+      "hardware": [
+        {
+          "id": "109221",
+          "count": 1,
+          "placements": [
+            {
+              "position": [
+                14.95,
+                10.74,
+                15
+              ],
+              "dir": [
+                -1,
+                0,
+                0
+              ],
+              "attachTo": "frame"
+            }
+          ]
+        },
+        {
+          "id": "124386",
+          "count": 2,
+          "placements": [
+            {
+              "position": [
+                16.3,
+                9.14,
+                15
+              ],
+              "dir": [
+                -1,
+                0,
+                0
+              ],
+              "attachTo": "frame"
+            },
+            {
+              "position": [
+                16.3,
+                12.34,
+                15
+              ],
+              "dir": [
+                -1,
+                0,
+                0
+              ],
+              "attachTo": "frame"
+            }
+          ]
+        }
+      ],
+      "title": "右上底座",
+      "hint": "同样装上方铰链底座。"
+    },
+    {
+      "n": 8,
+      "variant": "right",
+      "pages": [
+        14
+      ],
+      "tools": [],
+      "parts": [],
+      "hardware": [
+        {
+          "id": "124386",
+          "count": 2,
+          "placements": [
+            {
+              "position": [
+                -16.6,
+                -11.26,
+                15.6
+              ],
+              "dir": [
+                1,
+                0,
+                0
+              ],
+              "attachTo": "frame"
+            },
+            {
+              "position": [
+                -16.6,
+                10.74,
+                15.6
+              ],
+              "dir": [
+                1,
+                0,
+                0
+              ],
+              "attachTo": "frame"
+            }
+          ]
+        }
+      ],
+      "title": "左侧螺钉",
+      "hint": "左侧压紧外框、对齐铅笔线，直接打 2 颗螺钉。"
+    },
+    {
+      "n": 9,
+      "variant": "right",
+      "pages": [
+        14
+      ],
+      "tools": [],
+      "parts": [],
+      "hardware": [],
+      "title": "挂门",
+      "install": [
+        "door"
+      ],
+      "approach": [
+        1,
+        0,
+        1
+      ],
+      "hint": "铰链挂到底座上：先钩住，再按下，再拧紧。"
+    },
+    {
+      "n": 10,
+      "variant": "right",
+      "pages": [
+        15
+      ],
+      "tools": [],
+      "parts": [],
+      "hardware": [
+        {
+          "id": "106266",
+          "count": 1,
+          "placements": [
+            {
+              "position": [
+                14,
+                -0.26,
+                20.6
+              ],
+              "dir": [
+                0,
+                0,
+                1
+              ],
+              "attachTo": "door"
+            }
+          ]
+        },
+        {
+          "id": "100412",
+          "count": 1,
+          "placements": [
+            {
+              "position": [
+                14,
+                -0.26,
+                19.15
+              ],
+              "dir": [
+                0,
+                0,
+                -1
+              ],
+              "attachTo": "door"
+            }
+          ]
+        }
+      ],
+      "title": "拉手",
+      "hint": "装拉手，螺钉从门内侧拧入。"
+    },
+    {
+      "n": 11,
+      "variant": "right",
+      "pages": [
+        15
+      ],
+      "tools": [],
+      "parts": [],
+      "hardware": [
+        {
+          "id": "107091",
+          "count": 1,
+          "placements": [
+            {
+              "position": [
+                15.5,
+                -15.76,
+                17.75
+              ],
+              "dir": [
+                0,
+                0,
+                -1
+              ],
+              "attachTo": "door"
+            },
+            {
+              "position": [
+                15.5,
+                15.24,
+                17.75
+              ],
+              "dir": [
+                0,
+                0,
+                -1
+              ],
+              "attachTo": "door"
+            }
+          ]
+        }
+      ],
+      "title": "防撞垫",
+      "hint": "门背面开启侧的上、下两角各贴一个防撞垫（1 片 = 2 个垫）。"
+    }
+  ]
+}

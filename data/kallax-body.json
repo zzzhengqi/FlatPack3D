@@ -7,12 +7,21 @@
     "manual": "kallax-shelving-unit-white__AA-2334148-2-100.pdf",
     "docId": "AA-2334148-2",
     "analysis": "docs/analysis/kallax-manuals.md",
-    "dimensions": "docs/dimensions.md"
+    "dimensions": "docs/dimensions.md",
+    "reportSection": "## 1."
   },
   "manualPages": {
     "dir": "renders/shelf",
     "pattern": "p{NN}.png"
   },
+  "staging": {
+    "origin": [
+      -191,
+      40
+    ],
+    "width": 400
+  },
+  "explodeScale": 0.6,
   "meta": {
     "overall": [
       182,

@@ -6,16 +6,8 @@
 const fs = require('fs');
 const path = require('path');
 
-const r2 = (n) => Math.round(n * 100) / 100;
-
 // ---- 尺寸（cm），见 docs/dimensions.md ----
-const W = 182, H = 182, D = 39;   // 已确认
-const COLS = 5, ROWS = 5;         // 已确认
-const TO = 4.0;                   // 外框板厚，近似值
-const TI = 1.6;                   // 内板厚，近似值
-const INNER = W - 2 * TO;                     // 174
-const CELL = (INNER - (COLS - 1) * TI) / COLS; // 33.52
-const PITCH = CELL + TI;
+const { r2, vec, W, H, D, COLS, ROWS, TO, TI, INNER, CELL, PITCH } = require('./lib/kallax');
 
 const xDivider = (j) => -INNER / 2 + j * PITCH - TI / 2;      // j = 1..4，从左数
 const yShelf = (k) => INNER / 2 - k * PITCH + TI / 2;          // k = 1..4，从上数
@@ -24,8 +16,6 @@ const DOWEL_Z = [-10, 10];              // 隔板每条边 2 个木销的前后�
 const SHELF_END_Z = [-15, -5, 5, 15];   // 长层板每端 4 个木销（猜测：32 ÷ 4 块 ÷ 2 端）
 const SCREW_Z = [-10, 10];              // 每个角 2 颗长螺钉（猜测）
 const SCREW_LEN = 10;
-
-const vec = (x, y, z) => [r2(x), r2(y), r2(z)];
 
 // ---- 零件 ----
 const partTypes = {
@@ -144,8 +134,11 @@ const data = {
     docId: 'AA-2334148-2',
     analysis: 'docs/analysis/kallax-manuals.md',
     dimensions: 'docs/dimensions.md',
+    reportSection: '## 1.',
   },
   manualPages: { dir: 'renders/shelf', pattern: 'p{NN}.png' },
+  staging: { origin: [-191, 40], width: 400 },
+  explodeScale: 0.6,
   meta: {
     overall: [W, H, D],
     grid: [COLS, ROWS],
