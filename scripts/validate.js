@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // 用分析报告校验装配数据：零件数、五金总数、逐步页码与五金用量、几何；"全套"另查嵌件数量与重叠。
 // 用法：
-//   node scripts/validate.js                    校验 data/ 下的主体、门、抽屉、全套
+//   node scripts/validate.js                    校验 data/ 下的主体、门、抽屉、全套，以及站点文案 data/site.json
 //   node scripts/validate.js <数据.json> [报告.md] 只校验一份（装配数据或全套数据）
 // 装配数据靠 source.reportSection（如 "## 2."）找到报告里对应的一节。有任何不一致就以退出码 1 结束。
 'use strict';
@@ -10,7 +10,7 @@ const path = require('path');
 
 const root = path.resolve(__dirname, '..');
 const DEFAULT_REPORT = path.join(root, 'docs/analysis/kallax-manuals.md');
-const DEFAULT_FILES = ['data/kallax-body.json', 'data/kallax-door.json', 'data/kallax-drawer.json', 'data/kallax-set.json'];
+const DEFAULT_FILES = ['data/kallax-body.json', 'data/kallax-door.json', 'data/kallax-drawer.json', 'data/kallax-set.json', 'data/site.json'];
 // 全套里应有的嵌件数量：来自任务要求，排布依据是 refs/ 商品图（第 3 排 5 个门、第 4 排 5 个双抽屉）
 const EXPECTED_SET = { door: 5, drawer: 5 };
 
@@ -141,6 +141,51 @@ function validateAssembly(data, md, file) {
   const memberOf = {};
   for (const h of data.hardware) for (const m of h.members || []) memberOf[m] = normId(h.id);
   const drawerCount = data.meta && data.meta.drawerCount;
+
+  // 0. 页码、步骤图位置、名称与编号
+  const pageCount = data.manualPages && data.manualPages.count;
+  check(Number.isInteger(pageCount) && pageCount > 0, `说明书共 ${pageCount} 页`, 'manualPages.count 缺失或不是正整数');
+  for (const s of [data.overview, ...data.steps].filter(Boolean)) {
+    const tag = `${s.variant ? `[${s.variant}] ` : ''}第 ${s.n} 步`;
+    const ok = Array.isArray(s.pages) && s.pages.length > 0 && s.pages.every((p) => Number.isInteger(p) && p >= 1 && (!pageCount || p <= pageCount));
+    check(ok, `${tag}有页码 p${s.pages}`, `${tag}页码缺失或超出 1–${pageCount}：${JSON.stringify(s.pages)}`);
+    if (s.figure !== undefined) {
+      const f = s.figure;
+      check(Array.isArray(f) && f.length === 2 && f[0] >= 0 && f[0] < f[1] && f[1] <= 1, `${tag}步骤图位置 [${f}]`, `${tag}步骤图位置无效：${JSON.stringify(f)}`);
+    }
+  }
+  for (const v of data.variants ? Object.keys(data.variants) : [null]) {
+    const seq = data.steps.filter((s) => !s.variant || s.variant === v);
+    for (let a = 0; a < seq.length; a++) for (let b = a + 1; b < seq.length; b++) {
+      const A = seq[a], B = seq[b];
+      if (!A.pages || !B.pages || A.pages[0] !== B.pages[0]) continue;
+      const fa = A.figure || [0, 1], fb = B.figure || [0, 1];
+      if (Math.min(fa[1], fb[1]) - Math.max(fa[0], fb[0]) > EPS) {
+        errors.push(`${v ? `[${v}] ` : ''}第 ${A.n}、${B.n} 步都在 p${A.pages[0]}，步骤图位置重叠（${JSON.stringify(fa)} / ${JSON.stringify(fb)}），点说明书图无法区分`);
+      }
+    }
+  }
+  const ids = new Set();
+  const badNames = [];
+  for (const p of data.parts) {
+    if (typeof p.name !== 'string' || !p.name.trim()) badNames.push(`${p.id || '(无 id)'} 没有名称`);
+    if (typeof p.id !== 'string' || !/^[a-z0-9][a-z0-9-]*$/.test(p.id)) badNames.push(`零件编号无效：${JSON.stringify(p.id)}（${p.name}）`);
+    else if (ids.has(p.id)) badNames.push(`零件编号重复：${p.id}`);
+    ids.add(p.id);
+    if (!data.partTypes[p.type] || !data.partTypes[p.type].name) badNames.push(`${p.id} 的种类 ${p.type} 没有名称`);
+  }
+  const hwIds = new Set();
+  for (const h of data.hardware) {
+    if (typeof h.name !== 'string' || !h.name.trim()) badNames.push(`五金 ${h.id} 没有名称`);
+    if (typeof h.id !== 'string' || !h.id.trim()) badNames.push(`五金编号缺失（${h.name}）`);
+    else if (hwIds.has(h.id)) badNames.push(`五金编号重复：${h.id}`);
+    hwIds.add(h.id);
+  }
+  for (const s of data.steps) for (const h of s.hardware) for (const pl of h.placements) {
+    const def = data.hardware.find((x) => x.id === h.id);
+    if (pl.member && !(def && (def.members || []).includes(pl.member))) badNames.push(`第 ${s.n} 步 ${h.id} 的成员编号 ${pl.member} 不在 members 里`);
+  }
+  check(badNames.length === 0, `${data.parts.length} 块零件、${data.hardware.length} 种五金都有名称和编号`, `名称/编号问题：${badNames.join('；')}`);
 
   // 1. 零件
   const partCount = {};
@@ -322,6 +367,56 @@ function validateSet(set, baseDir) {
   return { errors, passes, summary: `嵌件：${Object.entries(counts).map(([k, v]) => `${k} ${v}`).join(' + ')} = ${total} 个，占 ${cells.size} 格` };
 }
 
+// ---------------- 站点文案校验 ----------------
+// 界面文字都要在文案文件里；分享信息与 index.html 一致；PDF 链接覆盖每份说明书；近似清单能从 dimensions.md 取到
+function validateSite(site, baseDir) {
+  const errors = [], passes = [];
+  const check = (ok, okMsg, errMsg) => (ok ? passes.push(okMsg) : errors.push(errMsg));
+  const at = (p) => path.resolve(baseDir, p);
+  const exists = (p) => fs.existsSync(at(p));
+  check(exists(site.ui), `界面文案 ${site.ui}`, `界面文案文件不存在：${site.ui}`);
+  check(exists(site.product), `产品文案 ${site.product}`, `产品文案文件不存在：${site.product}`);
+  if (errors.length) return { errors, passes, summary: '' };
+  const ui = readJson(at(site.ui));
+  const product = readJson(at(site.product));
+  const html = fs.readFileSync(path.join(baseDir, 'index.html'), 'utf8');
+
+  // index.html 里用到的文案键都要在界面文案里
+  const keys = new Set([...html.matchAll(/data-(?:t|title)="([A-Za-z0-9_]+)"/g), ...html.matchAll(/\bt\('([A-Za-z0-9_]+)'/g)].map((m) => m[1]));
+  const missing = [...keys].filter((k) => !(k in ui));
+  check(missing.length === 0, `index.html 用到的 ${keys.size} 个文案键都在 ${site.ui}`, `${site.ui} 缺少文案键：${missing.join('，')}`);
+  check(Array.isArray(ui.shortcutList) && ui.shortcutList.length >= 8, `快捷键说明 ${ui.shortcutList.length} 条`, '界面文案缺少 shortcutList');
+
+  // 每份装配数据的说明书都要有官方链接，文档号一致
+  const links = (product.about && product.about.links && product.about.links.items) || [];
+  for (const piece of site.pieces) {
+    check(exists(piece.url), `件"${piece.label}"数据 ${piece.url}`, `件"${piece.label}"的数据文件不存在：${piece.url}`);
+    if (!exists(piece.url)) continue;
+    const d = readJson(at(piece.url));
+    if (!d.source || !d.source.manual) continue;
+    const link = links.find((l) => path.basename(new URL(l.url).pathname) === d.source.manual);
+    check(link && link.docId === d.source.docId && /^https:\/\//.test(link.url), `${d.source.docId} 有官方 PDF 链接`,
+      `${d.source.manual}（${d.source.docId}）在 ${site.product} 里没有对应的官方 PDF 链接，或文档号不一致`);
+  }
+
+  // 分享信息
+  const sh = product.share || {};
+  check(sh.title && sh.description && sh.image, '分享标题、描述、图片都已填写', '产品文案 share 缺少 title / description / image');
+  check(sh.image && exists(sh.image), `分享图 ${sh.image} 存在`, `分享图不存在：${sh.image}（运行 node scripts/make-og-image.js 生成）`);
+  const metaOk = html.includes(`<title>${sh.title}</title>`) && html.includes(`<meta name="description" content="${sh.description}">`) && html.includes(`content="${sh.image}"`);
+  check(metaOk, 'index.html 的 <title>、description、og:image 与文案一致', 'index.html 的分享信息与产品文案不一致（运行 node scripts/build-meta.js）');
+
+  // 近似清单来源、声明
+  const ap = product.about && product.about.approximate;
+  const md = ap && exists(ap.source) ? fs.readFileSync(at(ap.source), 'utf8') : '';
+  const sec = md ? sectionOf(md, ap.heading) : '';
+  const items = (sec.match(/^\d+\.\s/gm) || []).length;
+  check(items > 0, `近似清单可从 ${ap && ap.source} 取到 ${items} 条`, `近似清单取不到：${ap ? `${ap.source} 里没有 "${ap.heading}" 或没有编号条目` : '缺少 about.approximate'}`);
+  const disc = (product.about && product.about.disclaimer) || '';
+  check(disc.includes('IKEA') && disc.includes('Inter IKEA Systems B.V.'), '有商标声明', '缺少 IKEA 商标声明');
+  return { errors, passes, summary: `界面文案 ${Object.keys(ui).length} 项；官方 PDF 链接 ${links.length} 个；近似清单 ${items} 条` };
+}
+
 // ---------------- 入口 ----------------
 const args = process.argv.slice(2);
 const files = args.length ? [path.resolve(args[0])] : DEFAULT_FILES.map((f) => path.join(root, f));
@@ -331,7 +426,8 @@ let failed = 0;
 console.log(`报告：${rel(reportPath)}\n`);
 for (const file of files) {
   const data = readJson(file);
-  const res = data.schema && data.schema.startsWith('flatpack3d/set') ? validateSet(data, root) : validateAssembly(data, md, file);
+  const res = data.pieces ? validateSite(data, root)
+    : data.schema && data.schema.startsWith('flatpack3d/set') ? validateSet(data, root) : validateAssembly(data, md, file);
   const head = `${rel(file)}${data.source && data.source.reportSection ? `（报告 ${data.source.reportSection.replace('## ', '第 ').replace('.', ' 节')}）` : ''}`;
   if (res.errors.length) {
     failed++;

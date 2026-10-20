@@ -147,6 +147,22 @@
 ```
 引擎把每份嵌件的成品状态算一次，按 `placements` 用 `InstancedMesh` 复制，不会为每个格子单独建几何体。
 
+## 第三期新增：页码与文案文件
+
+| 位置 | 字段 | 含义 |
+|---|---|---|
+| `manualPages` | `count` | 说明书总页数；左侧可翻页浏览，页码校验以它为上限 |
+| `steps[]` | `figure` | 这一步的步骤图在 `pages[0]` 上的竖直范围 `[y0, y1]`（0 = 页顶，1 = 页底）；同页两步必须写且不重叠，一页一步可省略（整页） |
+
+文字一律不写在代码里：
+
+- `data/site.json`：语言、界面文案文件、产品文案文件、默认件、"件"列表（`pieces`：key、label、数据文件）。
+- `data/ui.zh.json`：界面上的所有文字，`{name}` 为占位符；`shortcutList` 是快捷键说明。换语言就换这个文件。
+- `data/kallax-product.json`：换家具时要改的文案。
+  - `share`：分享标题、描述、图片、图片说明、站点地址；`scripts/build-meta.js` 把它写进 index.html 的 `<head>`，`scripts/make-og-image.js` 生成分享图。
+  - `about`：精确/近似说明（近似清单从 `approximate.source` 的 `approximate.heading` 一节原样读取）、注意事项、商标声明、官方 PDF 链接（`links.items`：label、article、docId、url）。
+  - `explainers`：讲解卡片。
+
 ## 校验规则（scripts/validate.js）
 
 1. 每种零件的实例数等于报告板件清单里的数量，零件总数等于报告合计。
@@ -158,3 +174,6 @@
 7. 有 `variants` 时，第 3–6 条对每条路线分别检查。报告里只写了编号、没写数量的五金按 1 件算；成套五金列出成员就算 1 套；工具型五金只核对编号。
 8. 有 `meta.drawerCount` 时：只在 `repeat` 步骤里用到的五金，清单数 ÷ 报告里每个抽屉的用量，必须等于抽屉数。
 9. 全套：嵌件数量为门 5、双抽屉 5；每格最多一个；嵌件不与主体板件重叠、彼此不重叠、不超出主体外形。
+10. 每一步（含第 0 步）都有页码，且在 1–`manualPages.count` 之内；`figure` 有效；同一路线里同页两步的 `figure` 不重叠。
+11. 每块零件都有名称和编号（`id`，小写字母、数字、连字符，不重复）；每种五金都有名称和编号；`member` 在 `members` 里。
+12. 站点文案：index.html 用到的文案键都在界面文案里；每份说明书都有官方 PDF 链接且文档号一致；分享图存在，index.html 的分享信息与文案一致；近似清单能取到；有商标声明。

@@ -3,7 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FlatPack3D</title>
+<!-- meta:start（由 scripts/build-meta.js 按 data/kallax-product.json 生成，请勿手改） -->
+<title>FlatPack3D · KALLAX 3D 装配演示</title>
+<meta name="description" content="把宜家 KALLAX 置物架、门嵌件和双抽屉嵌件的装配说明书做成可交互的 3D 分步演示：逐步动画、五金计数、说明书对照、线稿视图。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="FlatPack3D · KALLAX 3D 装配演示">
+<meta property="og:description" content="把宜家 KALLAX 置物架、门嵌件和双抽屉嵌件的装配说明书做成可交互的 3D 分步演示：逐步动画、五金计数、说明书对照、线稿视图。">
+<meta property="og:image" content="og-image.png">
+<meta property="og:image:alt" content="KALLAX 5×5 置物架装上 5 个门嵌件和 5 个双抽屉嵌件的 3D 渲染">
+<meta name="twitter:card" content="summary_large_image">
+<!-- meta:end -->
 <style>
   :root {
     --bg: #f6f5f2; --panel: #ffffff; --ink: #1d1d1b; --muted: #6f6d68; --line: #e2e0da;
@@ -20,11 +29,13 @@
     }
   }
   * { box-sizing: border-box; }
-  html, body { margin: 0; height: 100%; }
-  body { background: var(--bg); color: var(--ink); display: grid; grid-template-rows: auto 1fr auto; overflow: hidden; }
+  html, body { margin: 0; }
+  body { background: var(--bg); color: var(--ink); }
   button { font: inherit; color: inherit; }
+  a { color: inherit; }
+  .app { height: 100vh; min-height: 560px; display: grid; grid-template-rows: auto 1fr auto; }
 
-  header { display: flex; align-items: center; gap: 12px; padding: 8px 16px; border-bottom: 1px solid var(--line); background: var(--panel); flex-wrap: wrap; }
+  header { display: flex; align-items: center; gap: 12px; padding: 8px 16px; border-bottom: 1px solid var(--line); background: var(--panel); flex-wrap: wrap; position: relative; }
   header h1 { font-size: 16px; margin: 0; letter-spacing: .02em; }
   header .sub { color: var(--muted); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
   .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; flex: none; }
@@ -35,25 +46,43 @@
   #variantBox { display: none; align-items: center; gap: 6px; }
   .ghost { border: 1px solid var(--line); background: transparent; border-radius: 8px; padding: 4px 10px; cursor: pointer; font-size: 13px; }
   .ghost:hover { border-color: var(--muted); }
+  .ghost[aria-pressed="true"] { background: var(--ink); color: var(--panel); border-color: var(--ink); }
+  kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; background: var(--bg); white-space: nowrap; }
 
-  main { display: grid; grid-template-columns: minmax(260px, 30%) 1fr; min-height: 0; }
+  #shortcuts { position: absolute; right: 16px; top: calc(100% + 6px); z-index: 20; width: 300px; padding: 12px 14px; display: none; }
+  #shortcuts.open { display: block; }
+  #shortcuts h3 { margin: 0 0 8px; font-size: 13px; }
+  #shortcuts dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 6px 10px; font-size: 13px; align-items: baseline; }
+  #shortcuts dd { margin: 0; color: var(--muted); }
+
+  main { display: grid; grid-template-columns: minmax(260px, 30%) 1fr; grid-template-areas: "manual stage"; min-height: 0; }
+  #manual { grid-area: manual; }
+  #stage { grid-area: stage; }
   main.manual-hidden { grid-template-columns: 0 1fr; }
   main.manual-hidden #manual { display: none; }
 
   #manual { border-right: 1px solid var(--line); background: var(--panel); display: flex; flex-direction: column; min-height: 0; }
-  #manual .bar { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 13px; color: var(--muted); }
-  #manual .tabs { display: flex; gap: 4px; margin-left: auto; flex-wrap: wrap; justify-content: flex-end; }
+  #manual .bar { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 13px; color: var(--muted); flex-wrap: wrap; }
+  #manual .tabs { display: flex; gap: 4px; margin-left: auto; flex-wrap: wrap; justify-content: flex-end; align-items: center; }
   #manual .tabs button { border: 1px solid var(--line); background: transparent; border-radius: 6px; padding: 2px 8px; cursor: pointer; font-size: 12px; }
   #manual .tabs button[aria-pressed="true"] { background: var(--ink); color: var(--panel); border-color: var(--ink); }
-  #manual .page { flex: 1; overflow: auto; padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
-  #manual img { max-width: 100%; height: auto; background: #fff; border: 1px solid var(--line); border-radius: 4px; cursor: zoom-in; }
+  #pageNav { display: flex; align-items: center; gap: 4px; font-variant-numeric: tabular-nums; }
+  #pageNav button { border: 1px solid var(--line); background: transparent; border-radius: 6px; width: 26px; height: 24px; cursor: pointer; }
+  #manual .hint { font-size: 12px; color: var(--muted); padding: 6px 12px 0; display: flex; justify-content: space-between; gap: 8px; }
+  #manual .hint.flash { color: var(--accent); }
+  #manual .page { flex: 1; overflow: auto; padding: 8px 12px 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  #manual .sheet { position: relative; max-width: 100%; }
+  #manual img { display: block; max-width: 100%; height: auto; background: #fff; border: 1px solid var(--line); border-radius: 4px; cursor: pointer; }
+  #manual .fig { position: absolute; left: 0; right: 0; border: 2px solid var(--accent); border-radius: 4px; pointer-events: none; }
   #manual .missing, #manual .note { color: var(--muted); font-size: 13px; line-height: 1.6; padding: 8px; }
   #manual .missing { padding: 24px 8px; }
   code { background: var(--bg); padding: 1px 5px; border-radius: 4px; }
 
-  #stage { position: relative; min-width: 0; min-height: 0; background: var(--stage-bg); }
+  #stage { position: relative; min-width: 0; min-height: 0; background: var(--stage-bg); overflow: hidden; }
+  #stage.drawing { background: #fff; }
   #stage canvas { display: block; width: 100%; height: 100%; }
-  .card { position: absolute; background: color-mix(in srgb, var(--panel) 94%, transparent); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 2px 12px rgba(0,0,0,.06); }
+  .card { background: color-mix(in srgb, var(--panel) 94%, transparent); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 2px 12px rgba(0,0,0,.06); }
+  #stage > .card { position: absolute; }
   #stepCard { left: 12px; top: 12px; width: min(340px, calc(100% - 24px)); padding: 12px 14px; }
   #stepCard .kicker { font-size: 12px; color: var(--muted); display: flex; gap: 8px; flex-wrap: wrap; }
   #stepCard h2 { margin: 4px 0 6px; font-size: 18px; }
@@ -79,65 +108,112 @@
   details summary { cursor: pointer; font-size: 12px; }
   details ul { margin: 6px 0 0; padding-left: 16px; font-size: 12px; }
 
-  #viewCard { right: 12px; bottom: 12px; padding: 8px 12px; display: flex; align-items: center; gap: 10px; font-size: 13px; flex-wrap: wrap; }
-  #viewCard input[type=range] { width: 120px; accent-color: var(--accent); }
-  #tip { position: absolute; pointer-events: none; padding: 3px 8px; font-size: 12px; border-radius: 6px; background: var(--ink); color: var(--panel); display: none; white-space: nowrap; }
-  #error { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; padding: 24px; text-align: center; line-height: 1.7; color: var(--muted); background: var(--stage-bg); }
+  #viewCard { right: 12px; bottom: 12px; padding: 8px 12px; display: flex; align-items: center; gap: 8px; font-size: 13px; flex-wrap: wrap; justify-content: flex-end; max-width: calc(100% - 24px); }
+  #viewCard input[type=range] { width: 110px; accent-color: var(--accent); vertical-align: middle; }
+  #tip { position: absolute; pointer-events: none; padding: 3px 8px; font-size: 12px; border-radius: 6px; background: var(--ink); color: var(--panel); display: none; white-space: nowrap; z-index: 6; }
+  #pick { position: absolute; z-index: 7; display: none; padding: 10px 12px; min-width: 180px; max-width: 260px; font-size: 13px; }
+  #pick.open { display: block; }
+  #pick b { display: block; font-size: 15px; margin-bottom: 4px; padding-right: 22px; }
+  #pick .line { color: var(--muted); }
+  #pick .x { position: absolute; right: 6px; top: 4px; border: 0; background: transparent; cursor: pointer; font-size: 16px; color: var(--muted); }
+  #labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+  #labels span { position: absolute; transform: translate(-50%, -50%); font-size: 11px; padding: 1px 6px; border-radius: 4px; background: color-mix(in srgb, var(--panel) 88%, transparent); border: 1px solid var(--line); white-space: nowrap; }
+  #stage.drawing #labels span { background: #fff; color: #111; border-color: #111; }
+  #error { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; padding: 24px; text-align: center; line-height: 1.7; color: var(--muted); background: var(--stage-bg); z-index: 10; }
 
   footer { border-top: 1px solid var(--line); background: var(--panel); display: flex; align-items: center; gap: 8px; padding: 8px 12px; min-width: 0; min-height: 49px; }
   footer.static > :not(#staticNote) { display: none; }
   #staticNote { display: none; color: var(--muted); font-size: 13px; }
   footer.static #staticNote { display: block; }
-  footer .nav { border: 1px solid var(--line); background: transparent; border-radius: 8px; width: 36px; height: 32px; cursor: pointer; flex: none; font-size: 15px; }
+  footer .nav { border: 1px solid var(--line); background: transparent; border-radius: 8px; min-width: 36px; height: 32px; cursor: pointer; flex: none; font-size: 15px; padding: 0 8px; }
   footer .nav:hover { border-color: var(--muted); }
+  footer .nav[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
   #steps { display: flex; gap: 4px; overflow-x: auto; flex: 1; scrollbar-width: thin; padding: 2px; }
   #steps button { flex: none; min-width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line); background: transparent; cursor: pointer; font-size: 13px; font-variant-numeric: tabular-nums; padding: 0 8px; }
   #steps button.done { background: var(--bg); color: var(--muted); }
   #steps button.current { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 700; }
 
+  #about { max-width: 960px; margin: 0 auto; padding: 32px 16px 48px; line-height: 1.7; font-size: 14px; }
+  #about h2 { font-size: 20px; margin: 0 0 16px; }
+  #about h3 { font-size: 16px; margin: 24px 0 8px; }
+  #about h4 { font-size: 14px; margin: 16px 0 4px; color: var(--muted); }
+  #about .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  #about .box { padding: 4px 16px 12px; }
+  #about ol, #about ul { padding-left: 22px; margin: 6px 0; }
+  #about li { margin: 3px 0; }
+  #about .note { background: var(--accent-soft); border-radius: 8px; padding: 8px 12px; margin: 12px 0; }
+  #about .disclaimer { color: var(--muted); border-top: 1px solid var(--line); margin-top: 28px; padding-top: 12px; font-size: 13px; }
+  #about .muted { color: var(--muted); }
+
+  /* 分享图截图模式：只留 3D 画面和标题 */
+  body.shot .app { grid-template-rows: 1fr; height: 100vh; }
+  body.shot header, body.shot footer, body.shot #manual, body.shot #stage > .card, body.shot #about { display: none !important; }
+  body.shot main { grid-template-columns: 1fr; grid-template-rows: 1fr; grid-template-areas: "stage"; }
+  #shotTitle { display: none; }
+  body.shot #shotTitle { display: block; position: absolute; left: 36px; bottom: 30px; font-size: 36px; font-weight: 700; color: var(--ink); }
+  body.shot #shotTitle small { display: block; font-size: 20px; font-weight: 400; color: var(--muted); max-width: 520px; margin-top: 6px; line-height: 1.5; }
+
   @media (max-width: 760px) {
-    main { grid-template-columns: 1fr; grid-template-rows: 34% 1fr; }
+    main { grid-template-columns: 1fr; grid-template-rows: 34% 1fr; grid-template-areas: "manual" "stage"; }
     main.manual-hidden { grid-template-rows: 0 1fr; }
     #manual { border-right: 0; border-bottom: 1px solid var(--line); }
     #hwCard { display: none; }
     #stepCard { width: calc(100% - 24px); }
     header .sub { display: none; }
+    #about .cols { grid-template-columns: 1fr; }
   }
 </style>
 </head>
 <body>
-<header>
-  <h1>FlatPack3D</h1>
-  <div class="seg" id="pieceSeg" role="group" aria-label="件"></div>
-  <div id="variantBox"><span class="seg-label">开门方向</span><div class="seg" id="variantSeg" role="group" aria-label="开门方向"></div></div>
-  <span class="sub" id="subtitle">加载中…</span>
-  <button class="ghost" id="toggleManual">隐藏说明书</button>
-</header>
-<main id="main">
-  <aside id="manual">
-    <div class="bar"><span id="manualLabel">说明书</span><div class="tabs" id="pageTabs"></div></div>
-    <div class="page" id="pageView"></div>
-  </aside>
-  <section id="stage">
-    <div class="card" id="stepCard"></div>
-    <div class="card" id="hwCard"></div>
-    <div class="card" id="viewCard">
-      <label>爆炸视图 <input type="range" id="explode" min="0" max="1" step="0.01" value="0"></label>
-      <button class="ghost" id="viewAll">全景</button>
-      <button class="ghost" id="viewBody">看成品</button>
-    </div>
-    <div id="tip"></div>
-    <div id="error"></div>
-  </section>
-</main>
-<footer id="footer">
-  <button class="nav" id="prev" title="上一步（←）">‹</button>
-  <button class="nav" id="play" title="自动播放（空格）">▶</button>
-  <button class="nav" id="next" title="下一步（→）">›</button>
-  <div id="steps"></div>
-  <button class="nav" id="replay" title="重放本步">↻</button>
-  <span id="staticNote">全套是成品展示，没有分步；拖动"爆炸视图"可把嵌件拉出格子。</span>
-</footer>
+<div class="app">
+  <header>
+    <h1 data-t="appName"></h1>
+    <div class="seg" id="pieceSeg" role="group"></div>
+    <div id="variantBox"><span class="seg-label" data-t="variantLabel"></span><div class="seg" id="variantSeg" role="group"></div></div>
+    <span class="sub" id="subtitle"></span>
+    <button class="ghost" id="shortcutsBtn" aria-expanded="false" data-t="shortcuts" data-title="shortcutsTitle"></button>
+    <button class="ghost" id="toggleManual" data-t="manualHide"></button>
+    <div class="card" id="shortcuts" role="dialog"><h3 data-t="shortcutsTitle"></h3><dl id="shortcutList"></dl></div>
+  </header>
+  <main id="main">
+    <aside id="manual">
+      <div class="bar">
+        <span id="manualLabel"></span>
+        <div class="tabs">
+          <div id="pageTabs" class="tabs"></div>
+          <div id="pageNav"><button id="pagePrev" data-title="pagePrev">‹</button><span id="pageOf"></span><button id="pageNext" data-title="pageNext">›</button></div>
+        </div>
+      </div>
+      <div class="hint" id="pageHint"><span id="pageHintText"></span><a id="pageOpen" target="_blank" rel="noopener" data-t="pageOpen"></a></div>
+      <div class="page" id="pageView"></div>
+    </aside>
+    <section id="stage">
+      <div id="labels"></div>
+      <div class="card" id="stepCard"></div>
+      <div class="card" id="hwCard"></div>
+      <div class="card" id="viewCard">
+        <label><span data-t="explode"></span> <input type="range" id="explode" min="0" max="1" step="0.01" value="0"></label>
+        <button class="ghost" id="drawingBtn" aria-pressed="false" data-t="drawing" data-title="drawingTitle"></button>
+        <button class="ghost" id="labelsBtn" aria-pressed="false" data-t="labels" data-title="labelsTitle"></button>
+        <button class="ghost" id="viewAll" data-t="viewAll"></button>
+        <button class="ghost" id="viewBody"></button>
+      </div>
+      <div class="card" id="pick" role="status"><button class="x" id="pickClose">×</button><div id="pickBody"></div></div>
+      <div id="tip"></div>
+      <div id="shotTitle"></div>
+      <div id="error"></div>
+    </section>
+  </main>
+  <footer id="footer">
+    <button class="nav" id="prev" data-title="prevTitle">‹</button>
+    <button class="nav" id="replay" data-title="replayTitle">▶</button>
+    <button class="nav" id="next" data-title="nextTitle">›</button>
+    <div id="steps"></div>
+    <button class="nav" id="chain" aria-pressed="false" data-title="chainTitle">C ▶▶</button>
+    <span id="staticNote" data-t="staticNote"></span>
+  </footer>
+</div>
+<section id="about"></section>
 
 <script type="importmap">
 { "imports": {
@@ -152,37 +228,46 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 const $ = (id) => document.getElementById(id);
 const V = (a) => new THREE.Vector3(...a);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const PIECES = [
-  { key: 'body', label: '置物架主体', url: 'data/kallax-body.json' },
-  { key: 'door', label: '门嵌件', url: 'data/kallax-door.json' },
-  { key: 'drawer', label: '抽屉嵌件', url: 'data/kallax-drawer.json' },
-  { key: 'set', label: '全套', url: 'data/kallax-set.json' },
-];
+const params = new URLSearchParams(location.search);
+
+// ================= 文案与配置 =================
 const jsonCache = {};
-async function getJson(url) {
+function getJson(url) {
   if (!jsonCache[url]) {
     jsonCache[url] = fetch(url).then((r) => { if (!r.ok) throw new Error(`${url}：${r.status} ${r.statusText}`); return r.json(); });
   }
   return jsonCache[url];
 }
-function showError(msg) {
-  const e = $('error');
-  e.style.display = 'flex';
-  e.innerHTML = msg;
+let SITE, UI, PRODUCT;
+try {
+  SITE = await getJson(new URLSearchParams(location.search).get('site') || 'data/site.json');
+  [UI, PRODUCT] = await Promise.all([getJson(SITE.ui), getJson(SITE.product)]);
+} catch (err) {
+  // 还没读到文案文件，只能显示原始错误
+  document.body.textContent = `${err.message} — python -m http.server 8137`;
+  throw err;
 }
+const t = (key, vars = {}) => String(UI[key] ?? key).replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? '');
+document.documentElement.lang = SITE.lang || 'zh-CN';
+for (const el of document.querySelectorAll('[data-t]')) el.textContent = t(el.dataset.t);
+for (const el of document.querySelectorAll('[data-title]')) { el.title = t(el.dataset.title); el.setAttribute('aria-label', t(el.dataset.title)); }
+$('subtitle').textContent = t('loading');
+$('shortcutList').innerHTML = UI.shortcutList.map((s) => `<dt>${s.keys.split(/\s+/).map((k) => `<kbd>${esc(k)}</kbd>`).join(' ')}</dt><dd>${esc(s.text)}</dd>`).join('');
+function showError(msg) { const e = $('error'); e.style.display = 'flex'; e.textContent = msg; }
 
 // ================= 场景（各视图共用）=================
 const css = getComputedStyle(document.documentElement);
 const cssColor = (name) => new THREE.Color(css.getPropertyValue(name).trim());
 const stage = $('stage');
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: params.has('shot') });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 stage.prepend(renderer.domElement);
 
 const scene = new THREE.Scene();
-scene.background = cssColor('--stage-bg');
+const STAGE_BG = cssColor('--stage-bg');
+scene.background = STAGE_BG.clone();
 const camera = new THREE.PerspectiveCamera(38, 1, 0.5, 6000);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
@@ -214,17 +299,35 @@ const MAT = {
   metal: new THREE.MeshStandardMaterial({ color: 0x8d9298, roughness: 0.35, metalness: 0.8 }),
   pad: new THREE.MeshStandardMaterial({ color: 0xd8d2c4, roughness: 1 }),
 };
+// 线稿视图：白面、黑线、无光照无阴影；高亮和灰面用浅灰，五金用中灰
+const flat = (color, extra = {}) => new THREE.MeshBasicMaterial({ color, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1, ...extra });
+const DRAW = { white: flat(0xffffff), gray: flat(0xd6d6d6), hilite: flat(0xe9e9e9), hw: flat(0x9a9a9a), host: flat(0xffffff, { transparent: true, opacity: 0, depthWrite: false }) };
+function drawEquivalent(m) {
+  if (Array.isArray(m)) return m.map(drawEquivalent);
+  if (m === MAT.gray) return DRAW.gray;
+  if (m === MAT.hilite) return DRAW.hilite;
+  if (m === MAT.host) return DRAW.host;
+  if (m === MAT.mark) return MAT.mark;
+  if (m === MAT.metal || m === MAT.wood || m === MAT.pad) return DRAW.hw;
+  return DRAW.white;
+}
+let drawing = false;
+function setMat(mesh, m) { mesh.userData.baseMat = m; mesh.material = drawing ? drawEquivalent(m) : m; }
+
 const FACE_ORDER = ['+x', '-x', '+y', '-y', '+z', '-z'];
 const geoCache = new Map();
 function cached(key, make) { if (!geoCache.has(key)) geoCache.set(key, make()); return geoCache.get(key); }
 const boxGeo = (s) => cached(`box:${s}`, () => new THREE.BoxGeometry(...s));
 const edgeGeo = (s) => cached(`edge:${s}`, () => new THREE.EdgesGeometry(boxGeo(s)));
 const cylGeo = (r1, r2, h, seg) => cached(`cyl:${r1},${r2},${h},${seg}`, () => new THREE.CylinderGeometry(r1, r2, h, seg));
+const cylEdge = (r1, r2, h, seg) => cached(`cyle:${r1},${r2},${h},${seg}`, () => new THREE.EdgesGeometry(cylGeo(r1, r2, h, seg), 40));
 
+function addEdges(mesh, geo, mat = MAT.edge) { const e = new THREE.LineSegments(geo, mat); e.userData.isEdge = true; mesh.add(e); }
 function boxMesh(size, mats, edges = MAT.edge) {
   const m = new THREE.Mesh(boxGeo(size), mats);
+  m.userData.baseMat = mats;
   m.castShadow = m.receiveShadow = true;
-  if (edges) { const e = new THREE.LineSegments(edgeGeo(size), edges); e.userData.isEdge = true; m.add(e); }
+  if (edges) addEdges(m, edgeGeo(size), edges);
   return m;
 }
 
@@ -235,20 +338,24 @@ const eulerQuat = (r) => new THREE.Quaternion().setFromEuler(new THREE.Euler(...
 function makeHardware(def) {
   const s = def.shape || { diameter: 1, length: 1 };
   const type = s.type || (def.kind === 'screw' ? 'screw' : 'cylinder');
-  if (type === 'box') return boxMesh(s.size, MAT.metal, null);
+  if (type === 'box') return boxMesh(s.size, MAT.metal);
   const r = s.diameter / 2;
+  const cyl = (r1, r2, h, seg, mat) => {
+    const m = new THREE.Mesh(cylGeo(r1, r2, h, seg), mat);
+    m.userData.baseMat = mat;
+    m.castShadow = true;
+    addEdges(m, cylEdge(r1, r2, h, seg));
+    return m;
+  };
   if (type === 'screw') {
     const g = new THREE.Group();
-    const shaft = new THREE.Mesh(cylGeo(r, r * 0.6, s.length, 10), MAT.metal);
-    const head = new THREE.Mesh(cylGeo(s.headDiameter / 2, r, Math.min(0.5, s.length / 4), 14), MAT.metal);
-    head.position.y = s.length / 2 - Math.min(0.25, s.length / 8); // 钉头在 +y 端
-    g.add(shaft, head);
+    const hh = Math.min(0.5, s.length / 4);
+    const head = cyl(s.headDiameter / 2, r, hh, 14, MAT.metal);
+    head.position.y = s.length / 2 - hh / 2; // 钉头在 +y 端
+    g.add(cyl(r, r * 0.6, s.length, 10, MAT.metal), head);
     return g;
   }
-  const mat = { dowel: MAT.wood, pad: MAT.pad }[def.kind] || MAT.metal;
-  const m = new THREE.Mesh(cylGeo(r, r, s.length, def.kind === 'dowel' ? 10 : 24), mat);
-  m.castShadow = true;
-  return m;
+  return cyl(r, r, s.length, def.kind === 'dowel' ? 10 : 24, { dowel: MAT.wood, pad: MAT.pad }[def.kind] || MAT.metal);
 }
 
 // 让最小尺寸朝上、最大尺寸沿 x 的"平放"姿态
@@ -273,11 +380,11 @@ function tween(dur, fn, delay = 0) {
 }
 function runTweens(now) {
   for (let i = tweens.length - 1; i >= 0; i--) {
-    const t = tweens[i];
-    const k = (now - t.t0) / t.dur;
+    const tw = tweens[i];
+    const k = (now - tw.t0) / tw.dur;
     if (k < 0) continue;
-    t.fn(Math.min(1, k));
-    if (k >= 1) { tweens.splice(i, 1); t.resolve(); }
+    tw.fn(Math.min(1, k));
+    if (k >= 1) { tweens.splice(i, 1); tw.resolve(); }
   }
 }
 function stopTweens() { gen++; tweens.length = 0; }
@@ -310,15 +417,16 @@ class AssemblyView {
   buildHost() {
     const h = this.data.host;
     if (!h || !this.interactive) return;
-    const [w, ht, d] = h.cell, t = h.wall;
+    const [w, ht, d] = h.cell, tk = h.wall;
     for (const [c, s] of [
-      [[0, -ht / 2 - t / 2, 0], [w + 2 * t, t, d]], [[0, ht / 2 + t / 2, 0], [w + 2 * t, t, d]],
-      [[-w / 2 - t / 2, 0, 0], [t, ht, d]], [[w / 2 + t / 2, 0, 0], [t, ht, d]],
+      [[0, -ht / 2 - tk / 2, 0], [w + 2 * tk, tk, d]], [[0, ht / 2 + tk / 2, 0], [w + 2 * tk, tk, d]],
+      [[-w / 2 - tk / 2, 0, 0], [tk, ht, d]], [[w / 2 + tk / 2, 0, 0], [tk, ht, d]],
     ]) {
       const m = boxMesh(s, MAT.host, MAT.hostEdge);
       m.castShadow = false;
       m.position.set(...c);
-      m.userData.label = '格子（示意）';
+      m.userData.label = t('hostLabel');
+      m.userData.kind = 'host';
       this.asm.add(m);
     }
   }
@@ -333,15 +441,9 @@ class AssemblyView {
       const mats = (hi) => FACE_ORDER.map((f) => (p.faces && p.faces[f] === 'gray' ? MAT.gray : hi ? MAT.hilite : baseMat));
       const meshes = [];
       const pieces = [];
-      if (p.pieces) {
-        for (const pc of p.pieces) {
-          const m = boxMesh(pc.size, mats(false));
-          pieces.push({ mesh: m, folded: { pos: V(pc.offset), quat: new THREE.Quaternion() }, unfolded: { pos: V(pc.unfolded.offset), quat: eulerQuat(pc.unfolded.rotation) } });
-          meshes.push(m);
-          group.add(m);
-        }
-      } else {
-        const m = boxMesh(p.size, mats(false));
+      for (const pc of p.pieces || [{ size: p.size }]) {
+        const m = boxMesh(pc.size, mats(false));
+        if (pc.offset) pieces.push({ mesh: m, folded: { pos: V(pc.offset), quat: new THREE.Quaternion() }, unfolded: { pos: V(pc.unfolded.offset), quat: eulerQuat(pc.unfolded.rotation) } });
         meshes.push(m);
         group.add(m);
       }
@@ -372,10 +474,10 @@ class AssemblyView {
           if (pl.dir) out = V(pl.dir).normalize();
           else { const ai = 'xyz'.indexOf(pl.axis); out = AXIS[pl.axis].clone().multiplyScalar(Math.sign(local.getComponent(ai)) || 1); }
           const isBox = def.shape && def.shape.type === 'box';
-          obj.userData = {
-            kind: 'hw', stepIdx: i + 1, hwId: h.id, label: `${def.name} ${pl.member || def.id}`, final: local, base: new THREE.Vector3(),
+          Object.assign(obj.userData, { // 保留 makeHardware 写入的 baseMat
+            kind: 'hw', def, member: pl.member, stepIdx: i + 1, hwId: h.id, label: `${def.name} ${pl.member || def.id}`, final: local, base: new THREE.Vector3(),
             quat: isBox ? new THREE.Quaternion() : new THREE.Quaternion().setFromUnitVectors(UP, out), out, parentPart,
-          };
+          });
           this.hw.push(obj);
         }
       }
@@ -387,8 +489,8 @@ class AssemblyView {
     this.seq.forEach((s, i) => {
       for (const mk of s.marks || []) {
         const m = new THREE.Mesh(boxGeo(mk.size), MAT.mark);
+        m.userData = { stepIdx: i + 1, label: t('markLabel'), kind: 'mark', baseMat: MAT.mark };
         m.position.set(...mk.position);
-        m.userData = { stepIdx: i + 1, label: '铅笔线' };
         this.asm.add(m);
         this.marks.push(m);
       }
@@ -402,12 +504,12 @@ class AssemblyView {
     for (const p of this.data.parts) {
       const g = this.parts[p.id];
       let pose;
-      if (p.pieces) {
+      if (g.userData.pieces.length) {
         const box = new THREE.Box3();
         for (const pc of g.userData.pieces) {
-          const b = new THREE.Box3().setFromCenterAndSize(new THREE.Vector3(), V(pc.mesh.geometry.parameters ? [pc.mesh.geometry.parameters.width, pc.mesh.geometry.parameters.height, pc.mesh.geometry.parameters.depth] : [1, 1, 1]));
-          b.applyMatrix4(new THREE.Matrix4().compose(pc.unfolded.pos, pc.unfolded.quat, new THREE.Vector3(1, 1, 1)));
-          box.union(b);
+          const gp = pc.mesh.geometry.parameters;
+          const b = new THREE.Box3().setFromCenterAndSize(new THREE.Vector3(), new THREE.Vector3(gp.width, gp.height, gp.depth));
+          box.union(b.applyMatrix4(new THREE.Matrix4().compose(pc.unfolded.pos, pc.unfolded.quat, new THREE.Vector3(1, 1, 1))));
         }
         const size = box.getSize(new THREE.Vector3());
         pose = { quat: new THREE.Quaternion(), w: size.x, d: size.z, h: size.y };
@@ -537,7 +639,7 @@ class AssemblyView {
     const hi = new Set([...(s.parts || []), ...(s.install || []), ...(s.fold || [])]);
     for (const h of s.hardware || []) for (const pl of h.placements) if (pl.attachTo) hi.add(pl.attachTo);
     for (const [id, g] of Object.entries(this.parts)) {
-      for (const m of g.userData.meshes) m.material = hi.has(id) ? g.userData.hiMats : g.userData.normalMats;
+      for (const m of g.userData.meshes) setMat(m, hi.has(id) ? g.userData.hiMats : g.userData.normalMats);
     }
   }
 
@@ -551,6 +653,10 @@ class AssemblyView {
 
   objects() { return [...Object.values(this.parts), ...this.hw]; }
   bodyObjects() { return Object.values(this.parts).filter((g) => g.parent === this.asm); }
+  labelTargets() {
+    const cur = new Set(this.stepsList[this.current].parts || []);
+    return Object.values(this.parts).filter((g) => g.parent === this.asm || cur.has(g.userData.def.id));
+  }
 
   update() {
     for (const o of this.objects()) {
@@ -573,6 +679,7 @@ class SetView {
     this.instanced = [];
     this.lines = [];
     this.inserts = [];
+    this.explode = 0;
     for (const ins of set.inserts) {
       const data = await getJson(ins.data);
       this.inserts.push({ ins, data });
@@ -584,22 +691,26 @@ class SetView {
       tpl.root.updateMatrixWorld(true);
       const entries = [];
       tpl.asm.traverse((o) => {
-        if (o.isMesh && o.material !== MAT.mark) entries.push({ o, matrix: o.matrixWorld.clone() });
+        if (!o.isMesh || o.userData.kind === 'mark') return;
+        let owner = o;
+        while (owner && !(owner.userData.kind === 'part' || owner.userData.kind === 'hw')) owner = owner.parent;
+        entries.push({ o, matrix: o.matrixWorld.clone(), owner: owner && owner.userData });
       });
       tpl.dispose();
-      for (const { o, matrix } of entries) {
-        const inst = new THREE.InstancedMesh(o.geometry, o.material, ins.placements.length);
+      for (const { o, matrix, owner } of entries) {
+        const inst = new THREE.InstancedMesh(o.geometry, o.userData.baseMat, ins.placements.length);
         inst.castShadow = inst.receiveShadow = true;
-        inst.userData = { matrix, placements: ins.placements, label: data.title };
+        inst.userData = { matrix, placements: ins.placements, title: data.title, owner, label: owner ? owner.label : data.title, baseMat: o.userData.baseMat };
+        setMat(inst, o.userData.baseMat);
         this.instanced.push(inst);
         this.body.asm.add(inst);
         const edge = o.children.find((c) => c.userData.isEdge);
         if (edge) {
           // 线框不能用 InstancedMesh：每格一个 LineSegments，共用同一份 EdgesGeometry
           for (const pl of ins.placements) {
-            const line = new THREE.LineSegments(edge.geometry, MAT.edge);
+            const line = new THREE.LineSegments(edge.geometry, edge.material);
             line.matrixAutoUpdate = false;
-            line.userData = { matrix, origin: V(pl.origin) };
+            line.userData = { matrix, origin: V(pl.origin), isEdge: true };
             this.lines.push(line);
             this.body.asm.add(line);
           }
@@ -610,6 +721,7 @@ class SetView {
     return this;
   }
   setExplode(e) {
+    this.explode = e;
     const m = new THREE.Matrix4();
     const out = new THREE.Vector3(0, 0, e * 45);
     for (const inst of this.instanced) {
@@ -627,6 +739,7 @@ class SetView {
   }
   objects() { return [...this.body.objects(), ...this.instanced]; }
   bodyObjects() { return this.body.bodyObjects(); }
+  labelTargets() { return this.body.bodyObjects(); }
   update() { this.body.update(); }
   dispose() { this.body.dispose(); }
 }
@@ -657,37 +770,75 @@ function frame(name, instant = false) {
     controls.target.lerpVectors(t0, t1, e);
   });
 }
+const defaultFrame = () => (view instanceof SetView ? 'body' : 'all');
+
+// ================= 线稿视图 =================
+function setDrawing(on) {
+  drawing = on;
+  $('drawingBtn').setAttribute('aria-pressed', on);
+  stage.classList.toggle('drawing', on);
+  scene.background = on ? new THREE.Color(0xffffff) : STAGE_BG.clone();
+  floor.visible = !on;
+  sun.castShadow = !on;
+  MAT.edge.color.set(on ? 0x000000 : 0x2a2a28);
+  MAT.hostEdge.color.set(on ? 0x9a9a9a : 0x8a877f);
+  if (view) view.root.traverse((o) => { if (o.isMesh && o.userData.baseMat) setMat(o, o.userData.baseMat); });
+}
+
+// ================= 零件标签 =================
+let showLabels = false;
+const labelEls = new Map();
+function setLabels(on) {
+  showLabels = on;
+  $('labelsBtn').setAttribute('aria-pressed', on);
+  if (!on) { $('labels').innerHTML = ''; labelEls.clear(); }
+}
+const tmpV = new THREE.Vector3();
+function updateLabels() {
+  if (!showLabels || !view) return;
+  const targets = new Set(view.labelTargets());
+  for (const [g, el] of labelEls) if (!targets.has(g)) { el.remove(); labelEls.delete(g); }
+  const w = stage.clientWidth, h = stage.clientHeight;
+  for (const g of targets) {
+    let el = labelEls.get(g);
+    if (!el) { el = document.createElement('span'); el.textContent = g.userData.label; $('labels').append(el); labelEls.set(g, el); }
+    g.getWorldPosition(tmpV).project(camera);
+    const visible = tmpV.z < 1 && Math.abs(tmpV.x) < 1.05 && Math.abs(tmpV.y) < 1.05;
+    el.style.display = visible ? '' : 'none';
+    if (visible) { el.style.left = `${((tmpV.x + 1) / 2) * w}px`; el.style.top = `${((1 - tmpV.y) / 2) * h}px`; }
+  }
+}
 
 // ================= 界面 =================
 let view = null;
-let state = { piece: 'body', variant: null };
-const params = new URLSearchParams(location.search);
+let state = { piece: SITE.defaultPiece, variant: null };
 
-$('pieceSeg').innerHTML = PIECES.map((p) => `<button data-key="${p.key}">${p.label}</button>`).join('');
+$('pieceSeg').setAttribute('aria-label', t('pieceGroup'));
+$('variantSeg').setAttribute('aria-label', t('variantLabel'));
+$('pieceSeg').innerHTML = SITE.pieces.map((p) => `<button data-key="${esc(p.key)}">${esc(p.label)}</button>`).join('');
 for (const b of $('pieceSeg').children) b.onclick = () => load(b.dataset.key, null);
 
 function syncUrl() {
-  const q = new URLSearchParams();
+  const q = new URLSearchParams(location.search);
   q.set('piece', state.piece);
-  if (state.variant) q.set('variant', state.variant);
+  if (state.variant) q.set('variant', state.variant); else q.delete('variant');
   history.replaceState(null, '', `?${q}`);
 }
 
 async function load(piece, variant, keepStep = false) {
-  const info = PIECES.find((p) => p.key === piece) || PIECES[0];
-  setPlaying(false);
+  const info = SITE.pieces.find((p) => p.key === piece) || SITE.pieces[0];
+  setChain(false);
+  closePick();
   let data;
-  try { data = await getJson(info.url); } catch (err) {
-    showError(`读不到装配数据（${esc(err.message)}）。<br>请在项目根目录启动本地服务后再打开，例如：<code>python -m http.server 8137</code>`);
-    throw err;
-  }
+  try { data = await getJson(info.url); } catch (err) { showError(t('loadError', { msg: err.message })); throw err; }
   const keep = keepStep && view instanceof AssemblyView ? view.current : 0;
   if (view) view.dispose();
   view = null;
+  setLabels(showLabels);
   state = { piece: info.key, variant: null };
   for (const b of $('pieceSeg').children) b.setAttribute('aria-pressed', b.dataset.key === info.key);
   $('explode').value = 0;
-  if (info.key === 'set') {
+  if (data.schema && data.schema.startsWith('flatpack3d/set')) {
     view = await new SetView().init(data);
     renderSetUi(data);
   } else {
@@ -698,9 +849,10 @@ async function load(piece, variant, keepStep = false) {
     renderAssemblyUi(data);
     go(keep, false);
   }
+  setDrawing(drawing);
   syncUrl();
   scene.updateMatrixWorld(true);
-  frame(info.key === 'set' ? 'body' : 'all', true);
+  frame(defaultFrame(), true);
 }
 
 function renderVariantSeg(data) {
@@ -708,76 +860,75 @@ function renderVariantSeg(data) {
   if (!data || !data.variants) { box.style.display = 'none'; return; }
   box.style.display = 'flex';
   $('variantSeg').innerHTML = Object.entries(data.variants).map(([k, v]) =>
-    `<button data-k="${k}" title="${esc(v.note || '')}" aria-pressed="${k === state.variant}">${esc(v.label)}</button>`).join('');
+    `<button data-k="${esc(k)}" title="${esc(v.note || '')}" aria-pressed="${k === state.variant}">${esc(v.label)}</button>`).join('');
   for (const b of $('variantSeg').children) b.onclick = () => { if (b.dataset.k !== state.variant) load(state.piece, b.dataset.k, true); };
 }
 
 function renderAssemblyUi(data) {
   $('footer').classList.remove('static');
-  $('viewBody').textContent = '看成品';
+  $('viewBody').textContent = t('viewBody');
+  $('pageNav').style.display = '';
   renderVariantSeg(data);
   $('subtitle').textContent = `${data.title} · ${data.scope}`;
-  document.title = `FlatPack3D · ${data.title}`;
-  $('manualLabel').textContent = `说明书 ${data.source.docId}`;
+  document.title = `${t('appName')} · ${data.title}`;
+  $('manualLabel').textContent = t('manualLabel', { docId: data.source.docId });
   const stepsEl = $('steps');
   stepsEl.innerHTML = '';
   view.stepsList.forEach((s, i) => {
     const b = document.createElement('button');
-    b.textContent = i === 0 ? '清点' : s.n;
-    b.title = `${i === 0 ? '' : `第 ${s.n} 步 · `}${s.title}`;
+    b.textContent = i === 0 ? t('stepOverview') : s.n;
+    b.title = i === 0 ? s.title : t('stepTitle', { n: s.n, title: s.title });
     b.onclick = () => go(i);
     b.dataset.i = i;
     stepsEl.append(b);
   });
-  // 五金面板
   const hw = data.hardware;
   const body = hw.filter((h) => h.scope !== 'wall' && h.kind !== 'tool');
   const tools = hw.filter((h) => h.kind === 'tool');
   const wall = hw.filter((h) => h.scope === 'wall');
   $('hwCard').innerHTML = `
-    <h3>板件</h3>
-    <div class="row" data-id="__parts"><span class="name">已装板件</span><span class="num"></span><div class="meter"><i></i></div></div>
-    <h3>五金</h3>
-    ${body.map((h) => `<div class="row" data-id="${esc(h.id)}"><span class="name">${esc(h.name)}</span><span class="num"></span><span class="id">${esc(h.id)}${h.unit ? ` · 按${esc(h.unit)}计` : ''}</span><div class="meter"><i></i></div></div>`).join('')}
-    ${tools.map((h) => `<div class="tool" data-tool="${esc(h.id)}"><span>${esc(h.name)} <span style="color:var(--muted)">${esc(h.id)}</span></span><span class="tag">本步使用</span></div>`).join('')}
-    ${wall.length ? `<details><summary>上墙五金 ${wall.length} 种（本次不含）</summary><ul>${wall.map((h) => `<li>${esc(h.name)} ${esc(h.id)} ×${h.quantity}</li>`).join('')}</ul></details>` : ''}`;
+    <h3>${esc(t('hwParts'))}</h3>
+    <div class="row" data-id="__parts"><span class="name">${esc(t('hwPartsPlaced'))}</span><span class="num"></span><div class="meter"><i></i></div></div>
+    <h3>${esc(t('hwHardware'))}</h3>
+    ${body.map((h) => `<div class="row" data-id="${esc(h.id)}"><span class="name">${esc(h.name)}</span><span class="num"></span><span class="id">${esc(h.id)}${h.unit ? ` · ${esc(t('hwUnit', { unit: h.unit }))}` : ''}</span><div class="meter"><i></i></div></div>`).join('')}
+    ${tools.map((h) => `<div class="tool" data-tool="${esc(h.id)}"><span>${esc(h.name)} <span style="color:var(--muted)">${esc(h.id)}</span></span><span class="tag">${esc(t('toolInUse'))}</span></div>`).join('')}
+    ${wall.length ? `<details><summary>${esc(t('wallSummary', { n: wall.length }))}</summary><ul>${wall.map((h) => `<li>${esc(h.name)} ${esc(h.id)} ×${h.quantity}</li>`).join('')}</ul></details>` : ''}`;
 }
 
 function renderSetUi(set) {
   $('footer').classList.add('static');
-  $('viewBody').textContent = '看柜体';
+  $('viewBody').textContent = t('viewBodySet');
   renderVariantSeg(null);
-  $('subtitle').textContent = `${set.title} · 嵌件排布来自商品图`;
-  document.title = `FlatPack3D · ${set.title}`;
+  $('subtitle').textContent = t('setSubtitle', { title: set.title });
+  document.title = `${t('appName')} · ${set.title}`;
   const counts = view.inserts.map(({ ins, data }) => `<span class="chip">${esc(data.title)}${ins.variant && data.variants ? `（${esc(data.variants[ins.variant].label)}）` : ''} ×${ins.placements.length}</span>`).join('');
   $('stepCard').innerHTML = `
-    <div class="kicker"><span>全套</span><span>实例化渲染</span></div>
+    <div class="kicker"><span>${esc(t('setKicker'))}</span><span>${esc(t('setKicker2'))}</span></div>
     <h2>${esc(set.title)}</h2>
     <p>${esc(set.layoutSource)}</p>
     <div class="chips">${counts}</div>`;
   const bodyData = view.body.data;
   const partTotal = bodyData.parts.length + view.inserts.reduce((a, { ins, data }) => a + ins.placements.length * data.parts.length, 0);
-  const rows = [[`${bodyData.title}`, 1, `${bodyData.parts.length} 块板`], ...view.inserts.map(({ ins, data }) => [data.title, ins.placements.length, `每个 ${data.parts.length} 块板`])];
-  $('hwCard').innerHTML = `<h3>组成</h3>${rows.map(([n, c, d]) => `<div class="row"><span class="name">${esc(n)}</span><span class="num">×${c}</span><span class="id">${esc(d)}</span></div>`).join('')}
-    <div class="tool"><span>板件合计</span><span class="num">${partTotal} 块</span></div>
-    <div class="tool"><span>嵌件网格</span><span class="num">${view.instanced.length} 个 InstancedMesh</span></div>`;
+  const rows = [[bodyData.title, 1, t('setBodyRow', { n: bodyData.parts.length })], ...view.inserts.map(({ ins, data }) => [data.title, ins.placements.length, t('setInsertRow', { n: data.parts.length })])];
+  $('hwCard').innerHTML = `<h3>${esc(t('setCompose'))}</h3>${rows.map(([n, c, d]) => `<div class="row"><span class="name">${esc(n)}</span><span class="num">×${c}</span><span class="id">${esc(d)}</span></div>`).join('')}
+    <div class="tool"><span>${esc(t('setPartTotal'))}</span><span class="num">${esc(t('setPartTotalVal', { n: partTotal }))}</span></div>
+    <div class="tool"><span>${esc(t('setInstanced'))}</span><span class="num">${esc(t('setInstancedVal', { n: view.instanced.length }))}</span></div>`;
   // 左侧显示商品图（refs/ 不入库，可能不存在）
-  $('manualLabel').textContent = '商品图（排布依据）';
+  $('manualLabel').textContent = t('refsLabel');
+  $('pageNav').style.display = 'none';
+  $('pageHintText').textContent = t('setLayoutNote');
   const tabs = $('pageTabs');
-  tabs.innerHTML = set.references.map((_, i) => `<button aria-pressed="${i === 0}" data-i="${i}">图 ${i + 1}</button>`).join('');
+  tabs.innerHTML = set.references.map((_, i) => `<button aria-pressed="${i === 0}" data-i="${i}">${esc(t('refImage', { n: i + 1 }))}</button>`).join('');
   const show = (i) => {
     for (const b of tabs.children) b.setAttribute('aria-pressed', Number(b.dataset.i) === i);
     const url = set.references[i];
+    $('pageOpen').href = url;
     $('pageView').innerHTML = '';
     const img = new Image();
-    img.alt = '商品图';
-    img.onclick = () => window.open(url, '_blank');
-    img.onerror = () => { $('pageView').innerHTML = `<div class="missing">找不到 <code>${esc(url)}</code>。<br>商品图放在 refs/，没有提交到仓库。</div>`; };
+    img.alt = set.layoutSource;
+    img.onerror = () => { $('pageView').innerHTML = `<div class="missing">${esc(t('refsMissing', { url }))}</div>`; };
     img.src = url;
-    const note = document.createElement('div');
-    note.className = 'note';
-    note.textContent = '此排布来自商品图，不是说明书内容。';
-    $('pageView').append(img, note);
+    $('pageView').append(img);
   };
   for (const b of tabs.children) b.onclick = () => show(Number(b.dataset.i));
   show(0);
@@ -788,21 +939,19 @@ function renderStepCard(i) {
   const s = view.stepsList[i];
   const chips = [];
   const counts = {};
-  for (const id of s.parts || []) { const t = data.parts.find((p) => p.id === id).type; counts[t] = (counts[t] || 0) + 1; }
-  for (const [t, c] of Object.entries(counts)) chips.push(`<span class="chip">${esc(data.partTypes[t].name)} ×${c}</span>`);
-  if ((s.install || []).length) chips.push(`<span class="chip">推入格子 ${s.install.length} 件</span>`);
+  for (const id of s.parts || []) { const tp = data.parts.find((p) => p.id === id).type; counts[tp] = (counts[tp] || 0) + 1; }
+  for (const [tp, c] of Object.entries(counts)) chips.push(`<span class="chip">${esc(data.partTypes[tp].name)} ×${c}</span>`);
+  if ((s.install || []).length) chips.push(`<span class="chip">${esc(t('install', { n: s.install.length }))}</span>`);
   for (const h of s.hardware || []) { const d = view.hwDef[h.id]; chips.push(`<span class="chip hw">${esc(d.name)} ${esc(h.id)} ×${h.count}${d.unit ? ` ${esc(d.unit)}` : ''}</span>`); }
-  for (const t of s.tools || []) chips.push(`<span class="chip">${esc(view.hwDef[t] ? `${view.hwDef[t].name} ${t}` : t)}</span>`);
-  const meta = [];
-  if (i > 0) meta.push(`<span>第 ${s.n} 步（${i} / ${view.seq.length}）</span>`); else meta.push('<span>准备</span>');
-  meta.push(`<span>说明书 ${s.pages.map((p) => `p${p}`).join('、')}</span>`);
-  if (state.variant) meta.push(`<span>${esc(data.variants[state.variant].label)}</span>`);
-  if (s.repeat) meta.push(`<span>×${s.repeat} 个抽屉</span>`);
+  for (const tl of s.tools || []) chips.push(`<span class="chip">${esc(view.hwDef[tl] ? `${view.hwDef[tl].name} ${tl}` : tl)}</span>`);
+  const meta = [i > 0 ? t('stepN', { n: s.n, i, total: view.seq.length }) : t('stepPrep'), t('manualPages', { pages: s.pages.map((p) => `p${p}`).join('、') })];
+  if (state.variant) meta.push(data.variants[state.variant].label);
+  if (s.repeat) meta.push(t('repeat', { n: s.repeat }));
   $('stepCard').innerHTML = `
-    <div class="kicker">${meta.join('')}</div>
+    <div class="kicker">${meta.map((m) => `<span>${esc(m)}</span>`).join('')}</div>
     <h2>${esc(s.title)}</h2>
     <p>${esc(s.hint)}</p>
-    <div class="chips">${chips.join('') || '<span class="chip">无新零件</span>'}</div>`;
+    <div class="chips">${chips.join('') || `<span class="chip">${esc(t('noNew'))}</span>`}</div>`;
 }
 
 function renderCounters(i) {
@@ -825,20 +974,55 @@ function renderCounters(i) {
   for (const el of $('hwCard').querySelectorAll('[data-tool]')) el.querySelector('.tag').classList.toggle('on', (cur.tools || []).includes(el.dataset.tool));
 }
 
+// ---------- 说明书页：浏览、点图跳步 ----------
+let manualPage = 1;
 const pageUrl = (p) => `${view.data.manualPages.dir}/${view.data.manualPages.pattern.replace('{NN}', String(p).padStart(2, '0'))}`;
-function renderManual(s, idx = 0) {
-  $('pageTabs').innerHTML = s.pages.map((p, i) => `<button aria-pressed="${i === idx}" data-i="${i}">p${p}</button>`).join('');
-  for (const b of $('pageTabs').querySelectorAll('button')) b.onclick = () => renderManual(s, Number(b.dataset.i));
-  const url = pageUrl(s.pages[idx]);
+// 某一页上属于当前路线的步骤（含第 0 步清点），以及它们在页面上的竖直范围
+function stepsOnPage(p) {
+  return view.stepsList.map((s, i) => ({ s, i })).filter(({ s }) => s.pages.includes(p))
+    .map(({ s, i }) => ({ i, y: (s.pages[0] === p && s.figure) || [0, 1] }));
+}
+function showPage(p) {
+  const count = view.data.manualPages.count;
+  manualPage = Math.max(1, Math.min(count, p));
+  const s = view.stepsList[view.current];
+  $('pageTabs').innerHTML = s.pages.map((pg) => `<button aria-pressed="${pg === manualPage}" data-p="${pg}">p${pg}</button>`).join('');
+  for (const b of $('pageTabs').querySelectorAll('button')) b.onclick = () => showPage(Number(b.dataset.p));
+  $('pageOf').textContent = t('pageOf', { p: manualPage, count });
+  const url = pageUrl(manualPage);
+  $('pageOpen').href = url;
+  const here = stepsOnPage(manualPage);
+  $('pageHintText').textContent = here.length ? t('pageHint') : t('pageNoStep');
+  $('pageHint').classList.remove('flash');
   const pv = $('pageView');
   pv.innerHTML = '';
+  const sheet = document.createElement('div');
+  sheet.className = 'sheet';
   const img = new Image();
-  img.alt = `说明书第 ${s.pages[idx]} 页`;
-  img.onclick = () => window.open(url, '_blank');
-  img.onerror = () => { pv.innerHTML = `<div class="missing">找不到 <code>${esc(url)}</code>。<br>说明书页面图片不入库，请先运行 <code>python scripts/render-pages.py</code> 生成。</div>`; };
+  img.alt = t('pageAlt', { p: manualPage });
+  img.onerror = () => { pv.innerHTML = `<div class="missing">${esc(t('pageMissing', { url }))}</div>`; };
+  img.onclick = (e) => {
+    const r = img.getBoundingClientRect();
+    const y = (e.clientY - r.top) / r.height;
+    const hit = here.find((h) => y >= h.y[0] && y <= h.y[1]);
+    if (!hit) { $('pageHintText').textContent = t('pageNoStep'); $('pageHint').classList.add('flash'); return; }
+    go(hit.i);
+  };
   img.src = url;
-  pv.append(img);
+  sheet.append(img);
+  // 当前步在这一页上的位置框
+  const mine = here.find((h) => h.i === view.current);
+  if (mine && view.current > 0) {
+    const f = document.createElement('div');
+    f.className = 'fig';
+    f.style.top = `${mine.y[0] * 100}%`;
+    f.style.height = `${(mine.y[1] - mine.y[0]) * 100}%`;
+    sheet.append(f);
+  }
+  pv.append(sheet);
 }
+$('pagePrev').onclick = () => showPage(manualPage - 1);
+$('pageNext').onclick = () => showPage(manualPage + 1);
 
 function go(i, animate = true) {
   if (!(view instanceof AssemblyView)) return;
@@ -852,66 +1036,201 @@ function go(i, animate = true) {
   view.go(i, animate);
   renderStepCard(i);
   renderCounters(i);
-  renderManual(view.stepsList[i]);
+  showPage(view.stepsList[i].pages[0]);
 }
 const current = () => (view instanceof AssemblyView ? view.current : 0);
 
-// 控件
-$('prev').onclick = () => go(current() - 1);
-$('next').onclick = () => go(current() + 1);
-$('replay').onclick = () => go(current());
-$('viewAll').onclick = () => frame('all');
-$('viewBody').onclick = () => frame('body');
-$('explode').oninput = (e) => {
-  const v = Number(e.target.value);
-  if (view instanceof SetView) view.setExplode(v); else if (view) view.explode = v;
-};
-$('toggleManual').onclick = () => {
-  const hidden = $('main').classList.toggle('manual-hidden');
-  $('toggleManual').textContent = hidden ? '显示说明书' : '隐藏说明书';
-  resize();
-};
-let playTimer = null;
-function setPlaying(on) {
-  clearInterval(playTimer);
-  playTimer = null;
-  $('play').textContent = on ? '❚❚' : '▶';
-  if (!on || !(view instanceof AssemblyView)) return;
-  if (current() >= view.seq.length) go(0);
-  playTimer = setInterval(() => (current() >= view.seq.length ? setPlaying(false) : go(current() + 1)), 3200);
-}
-$('play').onclick = () => setPlaying(!playTimer);
-addEventListener('keydown', (e) => {
-  if (e.target.closest('input')) return;
-  if (e.key === 'ArrowRight') go(current() + 1);
-  else if (e.key === 'ArrowLeft') go(current() - 1);
-  else if (e.key === ' ') { e.preventDefault(); setPlaying(!playTimer); }
-});
-
-// 悬停提示
+// ---------- 点击零件 ----------
 const ray = new THREE.Raycaster();
 const ndc = new THREE.Vector2();
-renderer.domElement.addEventListener('pointermove', (e) => {
-  if (!view) return;
+function hitAt(e) {
   const r = renderer.domElement.getBoundingClientRect();
   ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
   ray.setFromCamera(ndc, camera);
   const hit = ray.intersectObjects(view.objects(), true).find((h) => h.object.isMesh);
-  const tip = $('tip');
-  if (!hit) { tip.style.display = 'none'; return; }
+  if (!hit) return null;
+  if (hit.object.isInstancedMesh) return { inst: hit.object, k: hit.instanceId, r };
   let o = hit.object;
   while (o && !o.userData.label) o = o.parent;
-  if (!o) { tip.style.display = 'none'; return; }
-  tip.textContent = o.userData.label;
+  return o ? { obj: o, r } : null;
+}
+function closePick() { $('pick').classList.remove('open'); }
+function openPick(e, h) {
+  let html;
+  const line = (s) => `<div class="line">${esc(s)}</div>`;
+  if (h.inst) {
+    const u = h.inst.userData;
+    const pl = u.placements[h.k];
+    const o = u.owner;
+    html = `<b>${esc(o ? o.label : u.title)}</b>`;
+    if (o && o.kind === 'part') html += line(t('pickId', { id: o.def.id }));
+    if (o && o.kind === 'hw') html += line(t('pickHwId', { id: o.member || o.def.id }));
+    html += line(t('pickInsert', { title: u.title, c: pl.cell[0], r: pl.cell[1] }));
+  } else {
+    const u = h.obj.userData;
+    if (u.kind === 'part') {
+      const owner = view instanceof SetView ? view.body.data : view.data;
+      html = `<b>${esc(u.def.name)}</b>${line(t('pickId', { id: u.def.id }))}${line(t('pickType', { type: owner.partTypes[u.def.type].name }))}${line(t('pickPartNote'))}`;
+    } else if (u.kind === 'hw') {
+      html = `<b>${esc(u.def.name)}</b>${line(t('pickHwId', { id: u.member || u.def.id }))}`;
+    } else html = `<b>${esc(u.label)}</b>`;
+  }
+  $('pickBody').innerHTML = html;
+  const pick = $('pick');
+  pick.classList.add('open');
+  const x = Math.min(e.clientX - h.r.left + 14, stage.clientWidth - pick.offsetWidth - 8);
+  const y = Math.min(e.clientY - h.r.top + 14, stage.clientHeight - pick.offsetHeight - 8);
+  pick.style.left = `${Math.max(8, x)}px`;
+  pick.style.top = `${Math.max(8, y)}px`;
+}
+let downAt = null;
+renderer.domElement.addEventListener('pointerdown', (e) => { downAt = [e.clientX, e.clientY]; });
+renderer.domElement.addEventListener('pointerup', (e) => {
+  if (!view || !downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 5) return;
+  const h = hitAt(e);
+  if (h) openPick(e, h); else closePick();
+});
+$('pickClose').onclick = closePick;
+renderer.domElement.addEventListener('pointermove', (e) => {
+  if (!view || e.buttons) return;
+  const h = hitAt(e);
+  const tip = $('tip');
+  if (!h) { tip.style.display = 'none'; return; }
+  tip.textContent = h.inst ? (h.inst.userData.label || h.inst.userData.title) : h.obj.userData.label;
   tip.style.display = 'block';
-  tip.style.left = `${e.clientX - r.left + 12}px`;
-  tip.style.top = `${e.clientY - r.top + 12}px`;
+  tip.style.left = `${e.clientX - h.r.left + 12}px`;
+  tip.style.top = `${e.clientY - h.r.top + 12}px`;
 });
 renderer.domElement.addEventListener('pointerleave', () => { $('tip').style.display = 'none'; });
 
-// 渲染循环
+// ---------- 控件与快捷键 ----------
+let chainTimer = null;
+function setChain(on) {
+  clearInterval(chainTimer);
+  chainTimer = null;
+  $('chain').setAttribute('aria-pressed', on && view instanceof AssemblyView);
+  if (!on || !(view instanceof AssemblyView)) return;
+  if (current() >= view.seq.length) go(0);
+  chainTimer = setInterval(() => (current() >= view.seq.length ? setChain(false) : go(current() + 1)), 3200);
+}
+function setExplode(v) {
+  $('explode').value = v;
+  if (view instanceof SetView) view.setExplode(v); else if (view) view.explode = v;
+}
+const resetView = () => frame(defaultFrame());
+$('prev').onclick = () => go(current() - 1);
+$('next').onclick = () => go(current() + 1);
+$('replay').onclick = () => go(current());
+$('chain').onclick = () => setChain(!chainTimer);
+$('viewAll').onclick = () => frame('all');
+$('viewBody').onclick = () => frame('body');
+$('explode').oninput = (e) => setExplode(Number(e.target.value));
+$('drawingBtn').onclick = () => setDrawing(!drawing);
+$('labelsBtn').onclick = () => setLabels(!showLabels);
+$('toggleManual').onclick = () => {
+  const hidden = $('main').classList.toggle('manual-hidden');
+  $('toggleManual').textContent = t(hidden ? 'manualShow' : 'manualHide');
+  resize();
+};
+$('shortcutsBtn').onclick = (e) => {
+  e.stopPropagation();
+  const open = $('shortcuts').classList.toggle('open');
+  $('shortcutsBtn').setAttribute('aria-expanded', open);
+};
+document.addEventListener('click', (e) => { if (!(e.target instanceof Element && e.target.closest('#shortcuts'))) { $('shortcuts').classList.remove('open'); $('shortcutsBtn').setAttribute('aria-expanded', false); } });
+
+let digits = '', digitTimer = null;
+function commitDigits() {
+  clearTimeout(digitTimer);
+  const n = Number(digits);
+  digits = '';
+  if (!(view instanceof AssemblyView)) return;
+  if (n === 0) return go(0);
+  const i = view.seq.findIndex((s) => s.n === n);
+  if (i >= 0) go(i + 1);
+}
+addEventListener('keydown', (e) => {
+  if ((e.target instanceof Element && e.target.closest('input, textarea, select')) || e.ctrlKey || e.metaKey || e.altKey) return;
+  const k = e.key;
+  if (/^[0-9]$/.test(k)) {
+    digits += k;
+    clearTimeout(digitTimer);
+    if (digits.length >= 2) commitDigits(); else digitTimer = setTimeout(commitDigits, 600);
+    return;
+  }
+  const actions = {
+    '[': () => go(current() - 1), ']': () => go(current() + 1),
+    ArrowLeft: () => go(current() - 1), ArrowRight: () => go(current() + 1),
+    ' ': () => go(current()),
+    c: () => setChain(!chainTimer), r: resetView,
+    x: () => setExplode(Number($('explode').value) > 0 ? 0 : 0.6),
+    n: () => setLabels(!showLabels), d: () => setDrawing(!drawing),
+    Escape: () => { closePick(); $('shortcuts').classList.remove('open'); },
+  };
+  const fn = actions[k] || actions[k.toLowerCase()];
+  if (!fn) return;
+  e.preventDefault();
+  fn();
+});
+
+// ---------- 页面底部：精确与近似、讲解、声明、链接 ----------
+function inlineMd(s) {
+  return esc(s).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/`([^`]+)`/g, '<code>$1</code>');
+}
+// 从 docs/dimensions.md 的猜测清单原样取出：### 小标题、编号条目、列表项和段落（跳过表格）
+function parseGuesses(md, heading) {
+  const start = md.indexOf(heading);
+  if (start < 0) return '';
+  const end = md.indexOf('\n## ', start + heading.length);
+  const lines = md.slice(start + heading.length, end < 0 ? undefined : end).split(/\r?\n/);
+  let html = '', list = null;
+  const close = () => { if (list) { html += `</${list}>`; list = null; } };
+  for (const raw of lines) {
+    const line = raw.trim();
+    let m;
+    if (!line || line.startsWith('|')) { close(); continue; }
+    if ((m = /^###\s+(.*)$/.exec(line))) { close(); html += `<h4>${inlineMd(m[1])}</h4>`; continue; }
+    if ((m = /^(\d+)\.\s+(.*)$/.exec(line))) {
+      if (list !== 'ol') { close(); html += `<ol start="${m[1]}">`; list = 'ol'; }
+      html += `<li>${inlineMd(m[2])}</li>`;
+      continue;
+    }
+    if ((m = /^-\s+(.*)$/.exec(line))) {
+      if (list !== 'ul') { close(); html += '<ul>'; list = 'ul'; }
+      html += `<li>${inlineMd(m[1])}</li>`;
+      continue;
+    }
+    close();
+    html += `<p class="muted">${inlineMd(line)}</p>`;
+  }
+  close();
+  return html;
+}
+async function renderAbout() {
+  const a = PRODUCT.about;
+  let guesses = '';
+  try { guesses = parseGuesses(await (await fetch(a.approximate.source)).text(), a.approximate.heading); } catch { guesses = ''; }
+  const ex = PRODUCT.explainers;
+  $('about').innerHTML = `
+    <h2>${esc(a.title)}</h2>
+    <div class="cols">
+      <div class="card box"><h3>${esc(a.exact.title)}</h3><ul>${a.exact.items.map((s) => `<li>${inlineMd(s)}</li>`).join('')}</ul></div>
+      <div class="card box"><h3>${esc(a.approximate.title)}</h3><p>${inlineMd(a.approximate.intro)}</p></div>
+    </div>
+    ${a.notes.map((n) => `<p class="note">${inlineMd(n)}</p>`).join('')}
+    <details open><summary>${esc(a.approximate.source)} · ${esc(a.approximate.heading.replace(/^#+\s*/, ''))}</summary>${guesses}</details>
+    <h3>${esc(ex.title)}</h3>
+    <div class="cols">${ex.items.map((it) => `<div class="card box"><h4>${esc(it.title)}</h4><ul>${it.points.map((p) => `<li>${inlineMd(p)}</li>`).join('')}</ul></div>`).join('')}</div>
+    <h3>${esc(a.links.title)}</h3>
+    <ul>${a.links.items.map((l) => `<li><a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)}</a> <span class="muted">${esc(l.article)} · ${esc(l.docId)}</span></li>`).join('')}</ul>
+    <p class="muted"><a href="${esc(a.links.source.url)}" target="_blank" rel="noopener">${esc(a.links.source.label)}</a></p>
+    <p class="disclaimer">${esc(a.disclaimer)}</p>`;
+}
+
+// ---------- 渲染循环 ----------
 function resize() {
   const w = stage.clientWidth, h = stage.clientHeight;
+  if (!w || !h) return; // 布局切换的瞬间可能为 0，别把相机比例算成无效值
   renderer.setSize(w, h, false);
   camera.aspect = w / h;
   camera.updateProjectionMatrix();
@@ -923,10 +1242,24 @@ renderer.setAnimationLoop((now) => {
   if (view) view.update();
   controls.update();
   renderer.render(scene, camera);
+  updateLabels();
 });
 
-await load(params.get('piece') || 'body', params.get('variant'));
-window.__flatpack = { go, load, frame, get view() { return view; } }; // 调试用
+renderAbout();
+if (params.has('shot')) {
+  document.body.classList.add('shot');
+  $('shotTitle').innerHTML = `${esc(PRODUCT.share.title)}<small>${esc(PRODUCT.share.description)}</small>`;
+}
+await load(params.get('piece') || SITE.defaultPiece, params.get('variant'));
+if (params.has('drawing')) setDrawing(true);
+if (params.has('shot')) { // 截图模式布局变了，按最终画面尺寸重新取景；画面整体左移、下移，给左下角标题让位
+  resize();
+  frame(defaultFrame(), true);
+  const shift = new THREE.Vector3(-115, -25, 0);
+  camera.position.add(shift);
+  controls.target.add(shift);
+}
+window.__flatpack = { go, load, frame, setDrawing, setLabels, camera, controls, get view() { return view; } }; // 调试用
 </script>
 </body>
 </html>

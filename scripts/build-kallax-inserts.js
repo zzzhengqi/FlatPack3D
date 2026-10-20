@@ -11,7 +11,7 @@ const fs = require('fs');
 const path = require('path');
 const K = require('./lib/kallax');
 
-const { r2, vec } = K;
+const { r2, vec, assignFigures } = K;
 
 // ---- 格子（来自主体）----
 const CH = K.CELL / 2;      // 16.76 格子内腔半宽/半高
@@ -127,7 +127,7 @@ function buildDoor() {
     title: 'KALLAX 门嵌件',
     scope: '说明书第 1–11 步（两条路线）。安装在一个格子里；不含上墙固定。',
     source: { manual: 'kallax-insert-with-door-white__AA-1009339-8-100.pdf', docId: 'AA-1009339-8', analysis: 'docs/analysis/kallax-manuals.md', dimensions: 'docs/dimensions.md', reportSection: '## 2.' },
-    manualPages: { dir: 'renders/door', pattern: 'p{NN}.png' },
+    manualPages: { dir: 'renders/door', pattern: 'p{NN}.png', count: 16 },
     staging: { origin: [-110, 150], width: 230 },
     explodeScale: 1.6,
     placeApproach: [0, 1, 0],
@@ -215,7 +215,7 @@ function buildDrawer() {
     title: 'KALLAX 双抽屉嵌件',
     scope: '说明书第 1–15 步。2 个抽屉；安装在一个格子里；不含上墙固定。',
     source: { manual: 'kallax-insert-with-2-drawers-white__AA-1009361-5-100.pdf', docId: 'AA-1009361-5', analysis: 'docs/analysis/kallax-manuals.md', dimensions: 'docs/dimensions.md', reportSection: '## 3.' },
-    manualPages: { dir: 'renders/drawers', pattern: 'p{NN}.png' },
+    manualPages: { dir: 'renders/drawers', pattern: 'p{NN}.png', count: 12 },
     staging: { origin: [-110, 150], width: 230 },
     explodeScale: 1.6,
     placeApproach: [0, 1, 0],
@@ -297,8 +297,13 @@ function buildSet() {
   };
 }
 
+const door = buildDoor();
+// 门：p5 上半是第 2 步、下半是两条路线的缩略图；p10 上半是左开第 11 步、下半是 ⓘ 铰链调节；p11 上半是缩略图、下半是右开第 3 步
+assignFigures(door.steps, { 2: [0, 0.45], 'left:11': [0, 0.45], 'right:3': [0.38, 1] });
+const drawer = buildDrawer();
+assignFigures(drawer.steps);
 const outDir = path.join(__dirname, '..', 'data');
-for (const [file, data] of [['kallax-door.json', buildDoor()], ['kallax-drawer.json', buildDrawer()], ['kallax-set.json', buildSet()]]) {
+for (const [file, data] of [['kallax-door.json', door], ['kallax-drawer.json', drawer], ['kallax-set.json', buildSet()]]) {
   fs.writeFileSync(path.join(outDir, file), JSON.stringify(data, null, 2) + '\n');
   console.log(`已写入 data/${file}`);
 }

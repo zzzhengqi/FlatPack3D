@@ -7,7 +7,7 @@ const fs = require('fs');
 const path = require('path');
 
 // ---- 尺寸（cm），见 docs/dimensions.md ----
-const { r2, vec, W, H, D, COLS, ROWS, TO, TI, INNER, CELL, PITCH } = require('./lib/kallax');
+const { r2, vec, W, H, D, COLS, ROWS, TO, TI, INNER, CELL, PITCH, assignFigures } = require('./lib/kallax');
 
 const xDivider = (j) => -INNER / 2 + j * PITCH - TI / 2;      // j = 1..4，从左数
 const yShelf = (k) => INNER / 2 - k * PITCH + TI / 2;          // k = 1..4，从上数
@@ -123,6 +123,7 @@ const steps = [
     hint: '两人把柜体翻转竖起。下一步是上墙固定（本次不做）。', hardware: [] },
 ];
 for (const s of steps) { s.tools = s.tools || []; }
+assignFigures(steps);
 
 const data = {
   schema: 'flatpack3d/assembly@1',
@@ -136,7 +137,7 @@ const data = {
     dimensions: 'docs/dimensions.md',
     reportSection: '## 1.',
   },
-  manualPages: { dir: 'renders/shelf', pattern: 'p{NN}.png' },
+  manualPages: { dir: 'renders/shelf', pattern: 'p{NN}.png', count: 36 },
   staging: { origin: [-191, 40], width: 400 },
   explodeScale: 0.6,
   meta: {
