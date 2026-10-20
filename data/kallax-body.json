@@ -1,0 +1,1904 @@
+{
+  "schema": "flatpack3d/assembly@1",
+  "id": "kallax-body",
+  "title": "KALLAX 置物架主体（5×5）",
+  "scope": "说明书第 1–24 步：框体组装与竖起。不含上墙固定（p27–p35）和任何嵌件。",
+  "source": {
+    "manual": "kallax-shelving-unit-white__AA-2334148-2-100.pdf",
+    "docId": "AA-2334148-2",
+    "analysis": "docs/analysis/kallax-manuals.md",
+    "dimensions": "docs/dimensions.md"
+  },
+  "manualPages": {
+    "dir": "renders/shelf",
+    "pattern": "p{NN}.png"
+  },
+  "meta": {
+    "overall": [
+      182,
+      182,
+      39
+    ],
+    "grid": [
+      5,
+      5
+    ],
+    "approximate": [
+      "外框板厚 4、内板厚 1.6、格子内径 33.52：由整体尺寸反推的近似值",
+      "顶/底板盖住侧板端面、长层板插在两侧板之间：根据第 1/18/21 步螺钉位置推断",
+      "木销、螺钉、毡垫的位置和尺寸：猜测"
+    ]
+  },
+  "poses": {
+    "pivotLocal": [
+      0,
+      -91,
+      -19.5
+    ],
+    "pivotWorld": [
+      0,
+      0.4,
+      -19.5
+    ],
+    "flat": {
+      "tilt": -90,
+      "label": "平放（背面朝下）"
+    },
+    "lift": {
+      "tilt": -72,
+      "label": "抬起"
+    },
+    "upright": {
+      "tilt": 0,
+      "label": "竖立"
+    }
+  },
+  "partTypes": {
+    "side": {
+      "name": "侧板",
+      "quantity": 2,
+      "report": "厚长板，面上有成组孔位"
+    },
+    "shelf": {
+      "name": "长层板",
+      "quantity": 4,
+      "report": "较薄长板，两端有销孔"
+    },
+    "bottom": {
+      "name": "底板",
+      "quantity": 1,
+      "report": "长板，表面涂灰"
+    },
+    "top": {
+      "name": "顶板",
+      "quantity": 1,
+      "report": "长板，白色"
+    },
+    "divider": {
+      "name": "隔板",
+      "quantity": 20,
+      "report": "小方板"
+    }
+  },
+  "parts": [
+    {
+      "id": "top",
+      "type": "top",
+      "name": "顶板",
+      "size": [
+        182,
+        4,
+        39
+      ],
+      "position": [
+        0,
+        89,
+        0
+      ]
+    },
+    {
+      "id": "bottom",
+      "type": "bottom",
+      "name": "底板（灰面朝下）",
+      "size": [
+        182,
+        4,
+        39
+      ],
+      "position": [
+        0,
+        -89,
+        0
+      ],
+      "faces": {
+        "-y": "gray"
+      }
+    },
+    {
+      "id": "side-left",
+      "type": "side",
+      "name": "左侧板（第 1 步）",
+      "size": [
+        4,
+        174,
+        39
+      ],
+      "position": [
+        -89,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "side-right",
+      "type": "side",
+      "name": "右侧板（第 17 步）",
+      "size": [
+        4,
+        174,
+        39
+      ],
+      "position": [
+        89,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "shelf-1",
+      "type": "shelf",
+      "name": "长层板 1（从上数）",
+      "size": [
+        174,
+        1.6,
+        39
+      ],
+      "position": [
+        0,
+        52.68,
+        0
+      ]
+    },
+    {
+      "id": "shelf-2",
+      "type": "shelf",
+      "name": "长层板 2（从上数）",
+      "size": [
+        174,
+        1.6,
+        39
+      ],
+      "position": [
+        0,
+        17.56,
+        0
+      ]
+    },
+    {
+      "id": "shelf-3",
+      "type": "shelf",
+      "name": "长层板 3（从上数）",
+      "size": [
+        174,
+        1.6,
+        39
+      ],
+      "position": [
+        0,
+        -17.56,
+        0
+      ]
+    },
+    {
+      "id": "shelf-4",
+      "type": "shelf",
+      "name": "长层板 4（从上数）",
+      "size": [
+        174,
+        1.6,
+        39
+      ],
+      "position": [
+        0,
+        -52.68,
+        0
+      ]
+    },
+    {
+      "id": "divider-r1-1",
+      "type": "divider",
+      "name": "隔板 第1排-1",
+      "size": [
+        1.6,
+        33.52,
+        39
+      ],
+      "position": [
+        -52.68,
+        70.24,
+        0
+      ]
+    },
+    {
+      "id": "divider-r1-2",
+      "type": "divider",
+      "name": "隔板 第1排-2",
+      "size": [
+        1.6,
+        33.52,
+        39
+      ],
+      "position": [
+        -17.56,
+        70.24,
+        0
+      ]
+    },
+    {
+      "id": "divider-r1-3",
+      "type": "divider",
+      "name": "隔板 第1排-3",
+      "size": [
+        1.6,
+        33.52,
+        39
+      ],
+      "position": [
+        17.56,
+        70.24,
+        0
+      ]
+    },
+    {
+      "id": "divider-r1-4",
+      "type": "divider",
+      "name": "隔板 第1排-4",
+      "size": [
+        1.6,
+        33.52,
+        39
+      ],
+      "position": [
+        52.68,
+        70.24,
+        0
+      ]
+    },
+    {
+      "id": "divider-r2-1",
+      "type": "divider",
+      "name": "隔板 第2排-1",
+      "size": [
+        1.6,
+        33.52,
+        39
+      ],
+      "position": [
+        -52.68,
+        35.12,
+        0
+      ]
+    },
+    {
+      "id": "divider-r2-2",
+      "type": "divider",
+      "name": "隔板 第2排-2",
+      "size": [
+        1.6,
+        33.52,
+        39
+      ],
+      "position": [
+        -17.56,
+        35.12,
+        0
+      ]
+    },
+    {
+      "id": "divider-r2-3",
+      "type": "divider",
+      "name": "隔板 第2排-3",
+      "size": [
+        1.6,
+        33.52,
+        39
+      ],
+      "position": [
+        17.56,
+        35.12,
+        0
+      ]
+    },
+    {
+      "id": "divider-r2-4",
+      "type": "divider",
+      "name": "隔板 第2排-4",
+      "size": [
+        1.6,
+        33.52,
+        39
+      ],
+      "position": [
+        52.68,
+        35.12,
+        0
+      ]
+    },
+    {
+      "id": "divider-r3-1",
+      "type": "divider",
+      "name": "隔板 第3排-1",
+      "size": [
+        1.6,
+        33.52,
+        39
+      ],
+      "position": [
+        -52.68,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "divider-r3-2",
+      "type": "divider",
+      "name": "隔板 第3排-2",
+      "size": [
+        1.6,
+        33.52,
+        39
+      ],
+      "position": [
+        -17.56,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "divider-r3-3",
+      "type": "divider",
+      "name": "隔板 第3排-3",
+      "size": [
+        1.6,
+        33.52,
+        39
+      ],
+      "position": [
+        17.56,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "divider-r3-4",
+      "type": "divider",
+      "name": "隔板 第3排-4",
+      "size": [
+        1.6,
+        33.52,
+        39
+      ],
+      "position": [
+        52.68,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "divider-r4-1",
+      "type": "divider",
+      "name": "隔板 第4排-1",
+      "size": [
+        1.6,
+        33.52,
+        39
+      ],
+      "position": [
+        -52.68,
+        -35.12,
+        0
+      ]
+    },
+    {
+      "id": "divider-r4-2",
+      "type": "divider",
+      "name": "隔板 第4排-2",
+      "size": [
+        1.6,
+        33.52,
+        39
+      ],
+      "position": [
+        -17.56,
+        -35.12,
+        0
+      ]
+    },
+    {
+      "id": "divider-r4-3",
+      "type": "divider",
+      "name": "隔板 第4排-3",
+      "size": [
+        1.6,
+        33.52,
+        39
+      ],
+      "position": [
+        17.56,
+        -35.12,
+        0
+      ]
+    },
+    {
+      "id": "divider-r4-4",
+      "type": "divider",
+      "name": "隔板 第4排-4",
+      "size": [
+        1.6,
+        33.52,
+        39
+      ],
+      "position": [
+        52.68,
+        -35.12,
+        0
+      ]
+    },
+    {
+      "id": "divider-r5-1",
+      "type": "divider",
+      "name": "隔板 第5排-1",
+      "size": [
+        1.6,
+        33.52,
+        39
+      ],
+      "position": [
+        -52.68,
+        -70.24,
+        0
+      ]
+    },
+    {
+      "id": "divider-r5-2",
+      "type": "divider",
+      "name": "隔板 第5排-2",
+      "size": [
+        1.6,
+        33.52,
+        39
+      ],
+      "position": [
+        -17.56,
+        -70.24,
+        0
+      ]
+    },
+    {
+      "id": "divider-r5-3",
+      "type": "divider",
+      "name": "隔板 第5排-3",
+      "size": [
+        1.6,
+        33.52,
+        39
+      ],
+      "position": [
+        17.56,
+        -70.24,
+        0
+      ]
+    },
+    {
+      "id": "divider-r5-4",
+      "type": "divider",
+      "name": "隔板 第5排-4",
+      "size": [
+        1.6,
+        33.52,
+        39
+      ],
+      "position": [
+        52.68,
+        -70.24,
+        0
+      ]
+    }
+  ],
+  "hardware": [
+    {
+      "id": "100001",
+      "name": "Z 形内六角扳手",
+      "quantity": 1,
+      "kind": "tool",
+      "scope": "body"
+    },
+    {
+      "id": "103693",
+      "name": "带葫芦孔的金属片",
+      "quantity": 2,
+      "kind": "other",
+      "scope": "wall"
+    },
+    {
+      "id": "104321/104322",
+      "name": "长沉头内六角螺钉",
+      "quantity": 8,
+      "kind": "screw",
+      "scope": "body",
+      "shape": {
+        "diameter": 0.7,
+        "length": 10,
+        "headDiameter": 1.4
+      }
+    },
+    {
+      "id": "101339",
+      "name": "木销",
+      "quantity": 80,
+      "kind": "dowel",
+      "scope": "body",
+      "shape": {
+        "diameter": 0.8,
+        "length": 4
+      }
+    },
+    {
+      "id": "100372",
+      "name": "短十字自攻螺钉",
+      "quantity": 4,
+      "kind": "other",
+      "scope": "wall"
+    },
+    {
+      "id": "153550",
+      "name": "圆形自粘毡垫",
+      "quantity": 12,
+      "kind": "pad",
+      "scope": "body",
+      "shape": {
+        "diameter": 4.2,
+        "length": 0.3
+      }
+    },
+    {
+      "id": "10091413",
+      "name": "L 形金属角码",
+      "quantity": 2,
+      "kind": "other",
+      "scope": "wall"
+    },
+    {
+      "id": "115753",
+      "name": "合页式墙固定件",
+      "quantity": 2,
+      "kind": "other",
+      "scope": "wall"
+    },
+    {
+      "id": "115754/118673/118225/119509",
+      "name": "L 形转角盖帽",
+      "quantity": 2,
+      "kind": "other",
+      "scope": "wall"
+    }
+  ],
+  "overview": {
+    "n": 0,
+    "pages": [
+      5,
+      6,
+      7
+    ],
+    "title": "清点零件",
+    "hint": "对照 p5–p7 清点板件和五金。本次只用到框体五金，上墙五金先放一边。"
+  },
+  "steps": [
+    {
+      "n": 1,
+      "pages": [
+        8
+      ],
+      "title": "顶板 + 左侧板",
+      "pose": "flat",
+      "tools": [
+        "100001"
+      ],
+      "parts": [
+        "top",
+        "side-left"
+      ],
+      "hint": "顶板与左侧板拼成直角，用 Z 形扳手拧入 2 颗长螺钉。",
+      "hardware": [
+        {
+          "id": "104321/104322",
+          "count": 2,
+          "placements": [
+            {
+              "position": [
+                -89,
+                86,
+                -10
+              ],
+              "axis": "y"
+            },
+            {
+              "position": [
+                -89,
+                86,
+                10
+              ],
+              "axis": "y"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "n": 2,
+      "pages": [
+        9
+      ],
+      "title": "第 1 排隔板装木销",
+      "tools": [
+        "锤子"
+      ],
+      "parts": [],
+      "hint": "第 1 排 4 块隔板，每块一侧边敲入 2 个木销。",
+      "hardware": [
+        {
+          "id": "101339",
+          "count": 8,
+          "placements": [
+            {
+              "position": [
+                -52.68,
+                87,
+                -10
+              ],
+              "axis": "y",
+              "attachTo": "divider-r1-1"
+            },
+            {
+              "position": [
+                -52.68,
+                87,
+                10
+              ],
+              "axis": "y",
+              "attachTo": "divider-r1-1"
+            },
+            {
+              "position": [
+                -17.56,
+                87,
+                -10
+              ],
+              "axis": "y",
+              "attachTo": "divider-r1-2"
+            },
+            {
+              "position": [
+                -17.56,
+                87,
+                10
+              ],
+              "axis": "y",
+              "attachTo": "divider-r1-2"
+            },
+            {
+              "position": [
+                17.56,
+                87,
+                -10
+              ],
+              "axis": "y",
+              "attachTo": "divider-r1-3"
+            },
+            {
+              "position": [
+                17.56,
+                87,
+                10
+              ],
+              "axis": "y",
+              "attachTo": "divider-r1-3"
+            },
+            {
+              "position": [
+                52.68,
+                87,
+                -10
+              ],
+              "axis": "y",
+              "attachTo": "divider-r1-4"
+            },
+            {
+              "position": [
+                52.68,
+                87,
+                10
+              ],
+              "axis": "y",
+              "attachTo": "divider-r1-4"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "n": 3,
+      "pages": [
+        10
+      ],
+      "title": "第 1 排隔板",
+      "parts": [
+        "divider-r1-1",
+        "divider-r1-2",
+        "divider-r1-3",
+        "divider-r1-4"
+      ],
+      "hint": "把 4 块隔板插到顶板上。",
+      "hardware": [],
+      "tools": []
+    },
+    {
+      "n": 4,
+      "pages": [
+        11
+      ],
+      "title": "长层板装木销",
+      "tools": [
+        "锤子"
+      ],
+      "parts": [],
+      "hint": "4 块长层板两端敲入木销，共 32 个。",
+      "hardware": [
+        {
+          "id": "101339",
+          "count": 32,
+          "placements": [
+            {
+              "position": [
+                -87,
+                52.68,
+                -15
+              ],
+              "axis": "x",
+              "attachTo": "shelf-1"
+            },
+            {
+              "position": [
+                -87,
+                52.68,
+                -5
+              ],
+              "axis": "x",
+              "attachTo": "shelf-1"
+            },
+            {
+              "position": [
+                -87,
+                52.68,
+                5
+              ],
+              "axis": "x",
+              "attachTo": "shelf-1"
+            },
+            {
+              "position": [
+                -87,
+                52.68,
+                15
+              ],
+              "axis": "x",
+              "attachTo": "shelf-1"
+            },
+            {
+              "position": [
+                87,
+                52.68,
+                -15
+              ],
+              "axis": "x",
+              "attachTo": "shelf-1"
+            },
+            {
+              "position": [
+                87,
+                52.68,
+                -5
+              ],
+              "axis": "x",
+              "attachTo": "shelf-1"
+            },
+            {
+              "position": [
+                87,
+                52.68,
+                5
+              ],
+              "axis": "x",
+              "attachTo": "shelf-1"
+            },
+            {
+              "position": [
+                87,
+                52.68,
+                15
+              ],
+              "axis": "x",
+              "attachTo": "shelf-1"
+            },
+            {
+              "position": [
+                -87,
+                17.56,
+                -15
+              ],
+              "axis": "x",
+              "attachTo": "shelf-2"
+            },
+            {
+              "position": [
+                -87,
+                17.56,
+                -5
+              ],
+              "axis": "x",
+              "attachTo": "shelf-2"
+            },
+            {
+              "position": [
+                -87,
+                17.56,
+                5
+              ],
+              "axis": "x",
+              "attachTo": "shelf-2"
+            },
+            {
+              "position": [
+                -87,
+                17.56,
+                15
+              ],
+              "axis": "x",
+              "attachTo": "shelf-2"
+            },
+            {
+              "position": [
+                87,
+                17.56,
+                -15
+              ],
+              "axis": "x",
+              "attachTo": "shelf-2"
+            },
+            {
+              "position": [
+                87,
+                17.56,
+                -5
+              ],
+              "axis": "x",
+              "attachTo": "shelf-2"
+            },
+            {
+              "position": [
+                87,
+                17.56,
+                5
+              ],
+              "axis": "x",
+              "attachTo": "shelf-2"
+            },
+            {
+              "position": [
+                87,
+                17.56,
+                15
+              ],
+              "axis": "x",
+              "attachTo": "shelf-2"
+            },
+            {
+              "position": [
+                -87,
+                -17.56,
+                -15
+              ],
+              "axis": "x",
+              "attachTo": "shelf-3"
+            },
+            {
+              "position": [
+                -87,
+                -17.56,
+                -5
+              ],
+              "axis": "x",
+              "attachTo": "shelf-3"
+            },
+            {
+              "position": [
+                -87,
+                -17.56,
+                5
+              ],
+              "axis": "x",
+              "attachTo": "shelf-3"
+            },
+            {
+              "position": [
+                -87,
+                -17.56,
+                15
+              ],
+              "axis": "x",
+              "attachTo": "shelf-3"
+            },
+            {
+              "position": [
+                87,
+                -17.56,
+                -15
+              ],
+              "axis": "x",
+              "attachTo": "shelf-3"
+            },
+            {
+              "position": [
+                87,
+                -17.56,
+                -5
+              ],
+              "axis": "x",
+              "attachTo": "shelf-3"
+            },
+            {
+              "position": [
+                87,
+                -17.56,
+                5
+              ],
+              "axis": "x",
+              "attachTo": "shelf-3"
+            },
+            {
+              "position": [
+                87,
+                -17.56,
+                15
+              ],
+              "axis": "x",
+              "attachTo": "shelf-3"
+            },
+            {
+              "position": [
+                -87,
+                -52.68,
+                -15
+              ],
+              "axis": "x",
+              "attachTo": "shelf-4"
+            },
+            {
+              "position": [
+                -87,
+                -52.68,
+                -5
+              ],
+              "axis": "x",
+              "attachTo": "shelf-4"
+            },
+            {
+              "position": [
+                -87,
+                -52.68,
+                5
+              ],
+              "axis": "x",
+              "attachTo": "shelf-4"
+            },
+            {
+              "position": [
+                -87,
+                -52.68,
+                15
+              ],
+              "axis": "x",
+              "attachTo": "shelf-4"
+            },
+            {
+              "position": [
+                87,
+                -52.68,
+                -15
+              ],
+              "axis": "x",
+              "attachTo": "shelf-4"
+            },
+            {
+              "position": [
+                87,
+                -52.68,
+                -5
+              ],
+              "axis": "x",
+              "attachTo": "shelf-4"
+            },
+            {
+              "position": [
+                87,
+                -52.68,
+                5
+              ],
+              "axis": "x",
+              "attachTo": "shelf-4"
+            },
+            {
+              "position": [
+                87,
+                -52.68,
+                15
+              ],
+              "axis": "x",
+              "attachTo": "shelf-4"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "n": 5,
+      "pages": [
+        12
+      ],
+      "title": "第 1 块长层板",
+      "parts": [
+        "shelf-1"
+      ],
+      "hint": "长层板压到隔板上，并插进左侧板。",
+      "hardware": [],
+      "tools": []
+    },
+    {
+      "n": 6,
+      "pages": [
+        13
+      ],
+      "title": "第 2 排木销",
+      "tools": [
+        "锤子"
+      ],
+      "parts": [],
+      "hint": "在第 1 块层板上为下一排隔板敲入 8 个木销。",
+      "hardware": [
+        {
+          "id": "101339",
+          "count": 8,
+          "placements": [
+            {
+              "position": [
+                -52.68,
+                51.88,
+                -10
+              ],
+              "axis": "y",
+              "attachTo": "shelf-1"
+            },
+            {
+              "position": [
+                -52.68,
+                51.88,
+                10
+              ],
+              "axis": "y",
+              "attachTo": "shelf-1"
+            },
+            {
+              "position": [
+                -17.56,
+                51.88,
+                -10
+              ],
+              "axis": "y",
+              "attachTo": "shelf-1"
+            },
+            {
+              "position": [
+                -17.56,
+                51.88,
+                10
+              ],
+              "axis": "y",
+              "attachTo": "shelf-1"
+            },
+            {
+              "position": [
+                17.56,
+                51.88,
+                -10
+              ],
+              "axis": "y",
+              "attachTo": "shelf-1"
+            },
+            {
+              "position": [
+                17.56,
+                51.88,
+                10
+              ],
+              "axis": "y",
+              "attachTo": "shelf-1"
+            },
+            {
+              "position": [
+                52.68,
+                51.88,
+                -10
+              ],
+              "axis": "y",
+              "attachTo": "shelf-1"
+            },
+            {
+              "position": [
+                52.68,
+                51.88,
+                10
+              ],
+              "axis": "y",
+              "attachTo": "shelf-1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "n": 7,
+      "pages": [
+        13
+      ],
+      "title": "第 2 排隔板",
+      "parts": [
+        "divider-r2-1",
+        "divider-r2-2",
+        "divider-r2-3",
+        "divider-r2-4"
+      ],
+      "hint": "装第 2 排 4 块隔板。",
+      "hardware": [],
+      "tools": []
+    },
+    {
+      "n": 8,
+      "pages": [
+        14
+      ],
+      "title": "第 2 块长层板",
+      "parts": [
+        "shelf-2"
+      ],
+      "hint": "第 2 块长层板压到隔板上，插进左侧板。",
+      "hardware": [],
+      "tools": []
+    },
+    {
+      "n": 9,
+      "pages": [
+        14
+      ],
+      "title": "第 3 排木销",
+      "tools": [
+        "锤子"
+      ],
+      "parts": [],
+      "hint": "在第 2 块层板上敲入 8 个木销。",
+      "hardware": [
+        {
+          "id": "101339",
+          "count": 8,
+          "placements": [
+            {
+              "position": [
+                -52.68,
+                16.76,
+                -10
+              ],
+              "axis": "y",
+              "attachTo": "shelf-2"
+            },
+            {
+              "position": [
+                -52.68,
+                16.76,
+                10
+              ],
+              "axis": "y",
+              "attachTo": "shelf-2"
+            },
+            {
+              "position": [
+                -17.56,
+                16.76,
+                -10
+              ],
+              "axis": "y",
+              "attachTo": "shelf-2"
+            },
+            {
+              "position": [
+                -17.56,
+                16.76,
+                10
+              ],
+              "axis": "y",
+              "attachTo": "shelf-2"
+            },
+            {
+              "position": [
+                17.56,
+                16.76,
+                -10
+              ],
+              "axis": "y",
+              "attachTo": "shelf-2"
+            },
+            {
+              "position": [
+                17.56,
+                16.76,
+                10
+              ],
+              "axis": "y",
+              "attachTo": "shelf-2"
+            },
+            {
+              "position": [
+                52.68,
+                16.76,
+                -10
+              ],
+              "axis": "y",
+              "attachTo": "shelf-2"
+            },
+            {
+              "position": [
+                52.68,
+                16.76,
+                10
+              ],
+              "axis": "y",
+              "attachTo": "shelf-2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "n": 10,
+      "pages": [
+        15
+      ],
+      "title": "第 3 排隔板",
+      "parts": [
+        "divider-r3-1",
+        "divider-r3-2",
+        "divider-r3-3",
+        "divider-r3-4"
+      ],
+      "hint": "装第 3 排 4 块隔板。",
+      "hardware": [],
+      "tools": []
+    },
+    {
+      "n": 11,
+      "pages": [
+        15
+      ],
+      "title": "第 3 块长层板",
+      "parts": [
+        "shelf-3"
+      ],
+      "hint": "第 3 块长层板压到隔板上，插进左侧板。",
+      "hardware": [],
+      "tools": []
+    },
+    {
+      "n": 12,
+      "pages": [
+        16
+      ],
+      "title": "第 4 排木销",
+      "tools": [
+        "锤子"
+      ],
+      "parts": [],
+      "hint": "在第 3 块层板上敲入 8 个木销。",
+      "hardware": [
+        {
+          "id": "101339",
+          "count": 8,
+          "placements": [
+            {
+              "position": [
+                -52.68,
+                -18.36,
+                -10
+              ],
+              "axis": "y",
+              "attachTo": "shelf-3"
+            },
+            {
+              "position": [
+                -52.68,
+                -18.36,
+                10
+              ],
+              "axis": "y",
+              "attachTo": "shelf-3"
+            },
+            {
+              "position": [
+                -17.56,
+                -18.36,
+                -10
+              ],
+              "axis": "y",
+              "attachTo": "shelf-3"
+            },
+            {
+              "position": [
+                -17.56,
+                -18.36,
+                10
+              ],
+              "axis": "y",
+              "attachTo": "shelf-3"
+            },
+            {
+              "position": [
+                17.56,
+                -18.36,
+                -10
+              ],
+              "axis": "y",
+              "attachTo": "shelf-3"
+            },
+            {
+              "position": [
+                17.56,
+                -18.36,
+                10
+              ],
+              "axis": "y",
+              "attachTo": "shelf-3"
+            },
+            {
+              "position": [
+                52.68,
+                -18.36,
+                -10
+              ],
+              "axis": "y",
+              "attachTo": "shelf-3"
+            },
+            {
+              "position": [
+                52.68,
+                -18.36,
+                10
+              ],
+              "axis": "y",
+              "attachTo": "shelf-3"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "n": 13,
+      "pages": [
+        17
+      ],
+      "title": "第 4 排隔板",
+      "parts": [
+        "divider-r4-1",
+        "divider-r4-2",
+        "divider-r4-3",
+        "divider-r4-4"
+      ],
+      "hint": "装第 4 排 4 块隔板。",
+      "hardware": [],
+      "tools": []
+    },
+    {
+      "n": 14,
+      "pages": [
+        17
+      ],
+      "title": "第 4 块长层板",
+      "parts": [
+        "shelf-4"
+      ],
+      "hint": "第 4 块长层板压到隔板上，插进左侧板。",
+      "hardware": [],
+      "tools": []
+    },
+    {
+      "n": 15,
+      "pages": [
+        18
+      ],
+      "title": "第 5 排木销",
+      "tools": [
+        "锤子"
+      ],
+      "parts": [],
+      "hint": "在第 4 块层板上敲入 8 个木销。",
+      "hardware": [
+        {
+          "id": "101339",
+          "count": 8,
+          "placements": [
+            {
+              "position": [
+                -52.68,
+                -53.48,
+                -10
+              ],
+              "axis": "y",
+              "attachTo": "shelf-4"
+            },
+            {
+              "position": [
+                -52.68,
+                -53.48,
+                10
+              ],
+              "axis": "y",
+              "attachTo": "shelf-4"
+            },
+            {
+              "position": [
+                -17.56,
+                -53.48,
+                -10
+              ],
+              "axis": "y",
+              "attachTo": "shelf-4"
+            },
+            {
+              "position": [
+                -17.56,
+                -53.48,
+                10
+              ],
+              "axis": "y",
+              "attachTo": "shelf-4"
+            },
+            {
+              "position": [
+                17.56,
+                -53.48,
+                -10
+              ],
+              "axis": "y",
+              "attachTo": "shelf-4"
+            },
+            {
+              "position": [
+                17.56,
+                -53.48,
+                10
+              ],
+              "axis": "y",
+              "attachTo": "shelf-4"
+            },
+            {
+              "position": [
+                52.68,
+                -53.48,
+                -10
+              ],
+              "axis": "y",
+              "attachTo": "shelf-4"
+            },
+            {
+              "position": [
+                52.68,
+                -53.48,
+                10
+              ],
+              "axis": "y",
+              "attachTo": "shelf-4"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "n": 16,
+      "pages": [
+        19
+      ],
+      "title": "第 5 排隔板",
+      "parts": [
+        "divider-r5-1",
+        "divider-r5-2",
+        "divider-r5-3",
+        "divider-r5-4"
+      ],
+      "hint": "装最后一排 4 块隔板。",
+      "hardware": [],
+      "tools": []
+    },
+    {
+      "n": 17,
+      "pages": [
+        20
+      ],
+      "title": "右侧板",
+      "parts": [
+        "side-right"
+      ],
+      "approach": [
+        1,
+        0,
+        0
+      ],
+      "hint": "第二块侧板翻过来，套到所有长层板端部，注意孔位方向。",
+      "hardware": [],
+      "tools": []
+    },
+    {
+      "n": 18,
+      "pages": [
+        21
+      ],
+      "title": "右上角螺钉",
+      "tools": [
+        "100001"
+      ],
+      "parts": [],
+      "hint": "右侧板与顶板的角拧入 2 颗长螺钉。",
+      "hardware": [
+        {
+          "id": "104321/104322",
+          "count": 2,
+          "placements": [
+            {
+              "position": [
+                89,
+                86,
+                -10
+              ],
+              "axis": "y"
+            },
+            {
+              "position": [
+                89,
+                86,
+                10
+              ],
+              "axis": "y"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "n": 19,
+      "pages": [
+        22
+      ],
+      "title": "最后一排木销",
+      "tools": [
+        "锤子"
+      ],
+      "parts": [],
+      "hint": "最后一排隔板的外露端敲入 8 个木销。",
+      "hardware": [
+        {
+          "id": "101339",
+          "count": 8,
+          "placements": [
+            {
+              "position": [
+                -52.68,
+                -87,
+                -10
+              ],
+              "axis": "y",
+              "attachTo": "divider-r5-1"
+            },
+            {
+              "position": [
+                -52.68,
+                -87,
+                10
+              ],
+              "axis": "y",
+              "attachTo": "divider-r5-1"
+            },
+            {
+              "position": [
+                -17.56,
+                -87,
+                -10
+              ],
+              "axis": "y",
+              "attachTo": "divider-r5-2"
+            },
+            {
+              "position": [
+                -17.56,
+                -87,
+                10
+              ],
+              "axis": "y",
+              "attachTo": "divider-r5-2"
+            },
+            {
+              "position": [
+                17.56,
+                -87,
+                -10
+              ],
+              "axis": "y",
+              "attachTo": "divider-r5-3"
+            },
+            {
+              "position": [
+                17.56,
+                -87,
+                10
+              ],
+              "axis": "y",
+              "attachTo": "divider-r5-3"
+            },
+            {
+              "position": [
+                52.68,
+                -87,
+                -10
+              ],
+              "axis": "y",
+              "attachTo": "divider-r5-4"
+            },
+            {
+              "position": [
+                52.68,
+                -87,
+                10
+              ],
+              "axis": "y",
+              "attachTo": "divider-r5-4"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "n": 20,
+      "pages": [
+        23
+      ],
+      "title": "底板",
+      "parts": [
+        "bottom"
+      ],
+      "approach": [
+        0,
+        -1,
+        0
+      ],
+      "hint": "灰色底板翻上来盖住。",
+      "hardware": [],
+      "tools": []
+    },
+    {
+      "n": 21,
+      "pages": [
+        24
+      ],
+      "title": "底板螺钉",
+      "tools": [
+        "100001"
+      ],
+      "parts": [],
+      "hint": "底板两角各拧入 2 颗长螺钉，共 4 颗。",
+      "hardware": [
+        {
+          "id": "104321/104322",
+          "count": 4,
+          "placements": [
+            {
+              "position": [
+                -89,
+                -86,
+                -10
+              ],
+              "axis": "y"
+            },
+            {
+              "position": [
+                -89,
+                -86,
+                10
+              ],
+              "axis": "y"
+            },
+            {
+              "position": [
+                89,
+                -86,
+                -10
+              ],
+              "axis": "y"
+            },
+            {
+              "position": [
+                89,
+                -86,
+                10
+              ],
+              "axis": "y"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "n": 22,
+      "pages": [
+        25
+      ],
+      "title": "毡垫",
+      "parts": [],
+      "hint": "在底板灰色面贴 12 个毡垫。",
+      "hardware": [
+        {
+          "id": "153550",
+          "count": 12,
+          "placements": [
+            {
+              "position": [
+                -89,
+                -91.15,
+                -15
+              ],
+              "axis": "y",
+              "attachTo": "bottom"
+            },
+            {
+              "position": [
+                -89,
+                -91.15,
+                15
+              ],
+              "axis": "y",
+              "attachTo": "bottom"
+            },
+            {
+              "position": [
+                -52.68,
+                -91.15,
+                -15
+              ],
+              "axis": "y",
+              "attachTo": "bottom"
+            },
+            {
+              "position": [
+                -52.68,
+                -91.15,
+                15
+              ],
+              "axis": "y",
+              "attachTo": "bottom"
+            },
+            {
+              "position": [
+                -17.56,
+                -91.15,
+                -15
+              ],
+              "axis": "y",
+              "attachTo": "bottom"
+            },
+            {
+              "position": [
+                -17.56,
+                -91.15,
+                15
+              ],
+              "axis": "y",
+              "attachTo": "bottom"
+            },
+            {
+              "position": [
+                17.56,
+                -91.15,
+                -15
+              ],
+              "axis": "y",
+              "attachTo": "bottom"
+            },
+            {
+              "position": [
+                17.56,
+                -91.15,
+                15
+              ],
+              "axis": "y",
+              "attachTo": "bottom"
+            },
+            {
+              "position": [
+                52.68,
+                -91.15,
+                -15
+              ],
+              "axis": "y",
+              "attachTo": "bottom"
+            },
+            {
+              "position": [
+                52.68,
+                -91.15,
+                15
+              ],
+              "axis": "y",
+              "attachTo": "bottom"
+            },
+            {
+              "position": [
+                89,
+                -91.15,
+                -15
+              ],
+              "axis": "y",
+              "attachTo": "bottom"
+            },
+            {
+              "position": [
+                89,
+                -91.15,
+                15
+              ],
+              "axis": "y",
+              "attachTo": "bottom"
+            }
+          ]
+        }
+      ],
+      "tools": []
+    },
+    {
+      "n": 23,
+      "pages": [
+        26
+      ],
+      "title": "抬起",
+      "pose": "lift",
+      "parts": [],
+      "hint": "两人抬起柜体，注意手扶的位置。",
+      "hardware": [],
+      "tools": []
+    },
+    {
+      "n": 24,
+      "pages": [
+        26
+      ],
+      "title": "竖起",
+      "pose": "upright",
+      "parts": [],
+      "hint": "两人把柜体翻转竖起。下一步是上墙固定（本次不做）。",
+      "hardware": [],
+      "tools": []
+    }
+  ]
+}

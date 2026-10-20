@@ -1,0 +1,13 @@
+# 原始说明书 PDF（版权归原厂，不提交）
+manuals/
+
+# 由 PDF 渲染出的页面图片（派生自说明书，同样不提交）
+renders/
+
+# 常见临时文件
+node_modules/
+dist/
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db

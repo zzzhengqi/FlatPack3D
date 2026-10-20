@@ -1,0 +1,28 @@
+# FlatPack3D
+
+把平板家具的纸质/PDF 装配说明书，转换成可交互的 3D 分步装配演示。
+
+当前样例：宜家 KALLAX 置物架主体（5×5，说明书第 1–24 步，不含上墙固定和嵌件）。
+
+## 运行
+
+```bash
+python scripts/render-pages.py      # 首次：把 manuals/ 里的 PDF 渲染到 renders/（需 pip install pymupdf）
+node scripts/build-kallax-body.js   # 生成 data/kallax-body.json
+node scripts/validate.js            # 用分析报告校验数据，不一致时退出码为 1
+python -m http.server 8137          # 然后打开 http://localhost:8137/
+```
+
+## 目录
+
+```
+manuals/          原始说明书 PDF（已 gitignore，不入库）
+renders/          PDF 逐页渲染图（已 gitignore，由 scripts/render-pages.py 生成）
+refs/             商品参考图片
+docs/analysis/    说明书分析报告（数据的基准）
+docs/spec.md      装配数据 JSON 规范
+docs/dimensions.md 尺寸来源与近似值
+data/             装配数据 JSON
+scripts/          生成、校验、渲染脚本
+index.html        单文件 Three.js 演示引擎（?data= 可指定其他 JSON）
+```
