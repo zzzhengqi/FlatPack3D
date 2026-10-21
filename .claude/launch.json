@@ -3,8 +3,11 @@
   "configurations": [
     {
       "name": "flatpack3d",
-      "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8137"],
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "scripts/serve.js",
+        "8137"
+      ],
       "port": 8137
     }
   ]

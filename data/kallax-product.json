@@ -17,7 +17,7 @@
     },
     "approximate": {
       "title": "近似",
-      "intro": "说明书里没有尺寸数字。板厚、孔位、嵌件内部尺寸等是按图纸比例推算的；下面每一条直接取自 docs/dimensions.md 的猜测清单。",
+      "intro": "说明书里没有尺寸数字。板厚、孔位、嵌件内部尺寸等是按图纸比例推算的；下面每一条直接取自 docs/dimensions.md 的猜测清单。英文界面里的部件英文名是描述性译名，不是宜家官方叫法。",
       "source": "docs/dimensions.md",
       "heading": "## 猜测清单"
     },
@@ -32,9 +32,24 @@
         "url": "https://www.ikea.com/jp/en/p/kallax-shelving-unit-with-10-inserts-white-s89278339/"
       },
       "items": [
-        { "label": "KALLAX 置物架", "article": "103.535.86", "docId": "AA-2334148-2", "url": "https://www.ikea.com/jp/en/assembly_instructions/kallax-shelving-unit-white__AA-2334148-2-100.pdf" },
-        { "label": "KALLAX 门嵌件", "article": "603.518.77", "docId": "AA-1009339-8", "url": "https://www.ikea.com/jp/en/assembly_instructions/kallax-insert-with-door-white__AA-1009339-8-100.pdf" },
-        { "label": "KALLAX 双抽屉嵌件", "article": "203.518.79", "docId": "AA-1009361-5", "url": "https://www.ikea.com/jp/en/assembly_instructions/kallax-insert-with-2-drawers-white__AA-1009361-5-100.pdf" }
+        {
+          "label": "KALLAX 置物架",
+          "article": "103.535.86",
+          "docId": "AA-2334148-2",
+          "url": "https://www.ikea.com/jp/en/assembly_instructions/kallax-shelving-unit-white__AA-2334148-2-100.pdf"
+        },
+        {
+          "label": "KALLAX 门嵌件",
+          "article": "603.518.77",
+          "docId": "AA-1009339-8",
+          "url": "https://www.ikea.com/jp/en/assembly_instructions/kallax-insert-with-door-white__AA-1009339-8-100.pdf"
+        },
+        {
+          "label": "KALLAX 双抽屉嵌件",
+          "article": "203.518.79",
+          "docId": "AA-1009361-5",
+          "url": "https://www.ikea.com/jp/en/assembly_instructions/kallax-insert-with-2-drawers-white__AA-1009361-5-100.pdf"
+        }
       ]
     }
   },
@@ -53,10 +68,15 @@
         "title": "Z 形内六角扳手（100001 ×1）",
         "points": [
           "主体五金清单里唯一的工具件（p5），两端是六角头。",
-          "只在第 1、18、21 步用到：拧入 4 个外角的长沉头内六角螺钉 104321/104322，每角 2 颗，共 8 颗。",
-          "上墙固定方案 B（p33–p35，本演示不含）也用它拧出、再拧回其中 2 颗螺钉。"
+          "组装时在第 1、18、21 步用到：拧入 4 个外角的长沉头内六角螺钉 104321/104322，每角 2 颗，共 8 颗。",
+          "上墙固定方案 B 的第 27、29 步（p33、p35）也用它：先拧出顶板左端的 2 颗螺钉，套上角码后再拧回去。"
         ]
       }
     ]
+  },
+  "safety": {
+    "title": "安全提示",
+    "text": "说明书的第一条警告（p2）：家具倾倒可能造成严重甚至致命的压伤，为防止倾倒，必须用附带的上墙固定配件把柜体固定在墙上。墙用螺钉和螺塞（膨胀管）不随包装提供，要按墙体材质另购；不确定该用哪种时，请向专业人士咨询。",
+    "short": "说明书要求：必须把柜体固定在墙上以防倾倒。墙用螺钉和螺塞不随包装提供，按墙体材质另购。"
   }
 }

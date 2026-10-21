@@ -136,9 +136,11 @@ function buildDoor() {
       overall: vec(N, N, Z_FRONT - ZB),
       approximate: ['嵌件外形 33×33 来自商品页；深度、板厚、门厚、铰链位置均为近似值，见 docs/dimensions.md'],
     },
+    // 按铰链位置命名：p9 第 9 步铰链在格子左侧外侧板上（p6–p10 路线），p14 第 9 步在右侧隔板上（p11–p15 路线），见报告第 7 节
+    variantTitle: '铰链位置',
     variants: {
-      left: { label: '左开', note: '铰链在左，门往左开（说明书 p6–p10）', default: true },
-      right: { label: '右开', note: '铰链在右，门往右开（说明书 p11–p15）' },
+      left: { label: '铰链在左', note: '铰链装在格子左侧壁上，门向左打开（说明书 p6–p10；依据 p7、p9）', default: true },
+      right: { label: '铰链在右', note: '铰链装在格子右侧壁上，门向右打开（说明书 p11–p15；依据 p13、p14）' },
     },
     defaultPose: 'upright',
     poses,
@@ -163,7 +165,7 @@ function buildDoor() {
       { n: 1, pages: [4], title: '折叠外框', tools: [], parts: ['frame'], fold: ['frame'], bench: [-60, 0, 80], hardware: [],
         hint: '展开折叠外框，沿折缝折成 U 形，两端窄边条折到侧板外侧。' },
       { n: 2, pages: [5], title: '装铰链', tools: [], parts: ['door'], bench: [55, 0, 80],
-        hardware: [hw('109337', 2, hinges), hw('100344', 4, hingeScrews)], hint: '两个铰链装到门板上，每个 2 颗螺钉。之后按开门方向分成两条路线。' },
+        hardware: [hw('109337', 2, hinges), hw('100344', 4, hingeScrews)], hint: '两个铰链装到门板上，每个 2 颗螺钉。之后按铰链装在哪一侧分成两条路线。' },
       ...branch('left', -1, [6, 6, 7, 7, 8, 8, 9, 9, 10]),
       ...branch('right', 1, [11, 12, 12, 13, 13, 14, 14, 15, 15]),
     ],
@@ -285,7 +287,9 @@ function buildSet() {
     id: 'kallax-set',
     title: 'KALLAX 全套（主体 + 5 门 + 5 双抽屉）',
     body: 'data/kallax-body.json',
-    layoutSource: '商品图 refs/…pe748007_s5.png、refs/…pe618893_s5.png：第 3 排 5 个门（拉手在右）、第 4 排 5 个双抽屉，其余格子空。此排布来自商品图，不是说明书内容。',
+    layoutSource: '商品图 refs/…pe748007_s5.png、refs/…pe618893_s5.png：第 3 排 5 个门（拉手在右，铰链在左）、第 4 排 5 个双抽屉，其余格子空。此排布来自商品图，不是说明书内容。',
+    // 嵌件说明书 p3 ⓘ（报告第 4、6 节）：装了墙固定件的左上、右上两格如果装嵌件，要拿掉转角盖帽
+    notes: ['嵌件说明书 p3 提示：柜体用墙固定件 115753 上墙时，左上、右上两格如果要装嵌件，需要拿掉那里的转角盖帽。当前排布的嵌件都在第 3、4 排，不受影响。'],
     references: [
       'refs/imageye___-_imgi_1338_kallax-shelving-unit-with-10-inserts-black-brown__0754648_pe748007_s5.png',
       'refs/imageye___-_imgi_1339_kallax-shelving-unit-with-10-inserts-white-stained-oak-effect__0480309_pe618893_s5.png',
@@ -297,13 +301,53 @@ function buildSet() {
   };
 }
 
+// ======================= Room =======================
+// 地面 + 墙，全套靠墙放置；轮廓画在墙面上：柜体贴墙的那一面，以及每种方案的固定件位置
+function buildRoom(body) {
+  const outline = (variant) => {
+    const wall = body.room.walls[variant];
+    const items = [];
+    const fixings = body.steps.filter((st) => st.variant === variant).flatMap((st) => st.hardware.filter((h) => h.action !== 'remove'));
+    if (variant === 'a') {
+      const z = wall.center[2] + wall.size[2] / 2 + 0.05;    // 墙面
+      items.push({ kind: 'cabinet', plane: 'z', at: r2(z), rect: [-K.W / 2, -K.H / 2 - 0.4, K.W / 2, K.H / 2] });
+      for (const pl of fixings.find((h) => h.id === '115753').placements) {
+        items.push({ kind: 'fixing', id: '115753', plane: 'z', at: r2(z), rect: [pl.position[0] - (pl.mirrorX ? 3 : 0), pl.position[1] - 2.25, pl.position[0] + (pl.mirrorX ? 0 : 3), pl.position[1] + 2.25] });
+      }
+    } else {
+      const x = wall.center[0] + wall.size[0] / 2 + 0.05;
+      items.push({ kind: 'cabinet', plane: 'x', at: r2(x), rect: [-K.D / 2, -K.H / 2 - 0.4, K.D / 2, K.H / 2] });
+      for (const pl of fixings.find((h) => h.id === '10091413').placements) {
+        items.push({ kind: 'fixing', id: '10091413', plane: 'x', at: r2(x), rect: [pl.position[2] - 1.5, pl.position[1] - 5, pl.position[2] + 1.5, pl.position[1]] });
+      }
+    }
+    return items.map((it) => ({ ...it, rect: it.rect.map(r2) }));
+  };
+  return {
+    schema: 'flatpack3d/room@1',
+    id: 'kallax-room',
+    title: 'KALLAX 靠墙摆放（Room）',
+    set: 'data/kallax-set.json',
+    variantTitle: '上墙方案',
+    variants: {
+      a: { label: '墙固定件', note: '柜体背面贴墙（方案 A，p27–p30）', default: true },
+      b: { label: 'L 形角码', note: '柜体左侧板贴墙（方案 B，p31–p35；墙在左侧是按图判断）' },
+    },
+    outlines: { a: outline('a'), b: outline('b') },
+    outlineColor: '#00bcd4',
+    eyeHeight: 160,
+    note: '青色轮廓：柜体贴墙的那一面和固定件在墙上的最终位置。',
+  };
+}
+
 const door = buildDoor();
 // 门：p5 上半是第 2 步、下半是两条路线的缩略图；p10 上半是左开第 11 步、下半是 ⓘ 铰链调节；p11 上半是缩略图、下半是右开第 3 步
 assignFigures(door.steps, { 2: [0, 0.45], 'left:11': [0, 0.45], 'right:3': [0.38, 1] });
 const drawer = buildDrawer();
 assignFigures(drawer.steps);
 const outDir = path.join(__dirname, '..', 'data');
-for (const [file, data] of [['kallax-door.json', door], ['kallax-drawer.json', drawer], ['kallax-set.json', buildSet()]]) {
+const body = JSON.parse(fs.readFileSync(path.join(outDir, 'kallax-body.json'), 'utf8'));
+for (const [file, data] of [['kallax-door.json', door], ['kallax-drawer.json', drawer], ['kallax-set.json', buildSet()], ['kallax-room.json', buildRoom(body)]]) {
   fs.writeFileSync(path.join(outDir, file), JSON.stringify(data, null, 2) + '\n');
   console.log(`已写入 data/${file}`);
 }

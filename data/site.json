@@ -4,11 +4,13 @@
   "languages": [
     {
       "code": "zh",
-      "label": "中文"
+      "label": "中文",
+      "path": "./"
     },
     {
       "code": "en",
-      "label": "English"
+      "label": "English",
+      "path": "en/"
     }
   ],
   "ui": "data/ui.zh.json",
@@ -34,6 +36,11 @@
       "key": "set",
       "label": "全套",
       "url": "data/kallax-set.json"
+    },
+    {
+      "key": "room",
+      "label": "靠墙摆放",
+      "url": "data/kallax-room.json"
     }
   ]
 }

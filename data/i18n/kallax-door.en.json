@@ -7,12 +7,12 @@
   },
   "variants": {
     "left": {
-      "label": "Opens left",
-      "note": "Hinges on the left, door opens to the left (manual p6–p10)"
+      "label": "Hinges on left",
+      "note": "Hinges on the left wall of the compartment, door opens to the left (manual p6–p10; based on p7, p9)"
     },
     "right": {
-      "label": "Opens right",
-      "note": "Hinges on the right, door opens to the right (manual p11–p15)"
+      "label": "Hinges on right",
+      "note": "Hinges on the right wall of the compartment, door opens to the right (manual p11–p15; based on p13, p14)"
     }
   },
   "poses": {
@@ -69,7 +69,7 @@
     },
     "2": {
       "title": "Fit the hinges",
-      "hint": "Fit the two hinges to the door panel, 2 screws each. After this the manual splits into two routes by opening direction."
+      "hint": "Fit the two hinges to the door panel, 2 screws each. After this the manual splits into two routes by which side the hinges go on."
     },
     "left:3": {
       "title": "Mark line (Left)",
@@ -143,5 +143,6 @@
       "title": "Bumper pads",
       "hint": "Stick one bumper pad on each of the upper and lower corners on the opening side of the back of the door (1 sheet = 2 pads)."
     }
-  }
+  },
+  "variantTitle": "Hinge side"
 }

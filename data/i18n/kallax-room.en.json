@@ -1,0 +1,15 @@
+{
+  "title": "KALLAX against the wall (Room)",
+  "variantTitle": "Wall attachment",
+  "variants": {
+    "a": {
+      "label": "Wall fitting",
+      "note": "Back of the unit against the wall (option A, p27–p30)"
+    },
+    "b": {
+      "label": "L-shaped bracket",
+      "note": "Left side panel against the wall (option B, p31–p35; the wall being on the left is judged from the drawings)"
+    }
+  },
+  "note": "Cyan outlines: the face of the unit that touches the wall, and the final positions of the fittings on the wall."
+}

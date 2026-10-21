@@ -11,7 +11,7 @@ const path = require('path');
 
 const root = path.resolve(__dirname, '..');
 const DEFAULT_REPORT = path.join(root, 'docs/analysis/kallax-manuals.md');
-const DEFAULT_FILES = ['data/kallax-body.json', 'data/kallax-door.json', 'data/kallax-drawer.json', 'data/kallax-set.json', 'data/site.json', 'data/site.en.json'];
+const DEFAULT_FILES = ['data/kallax-body.json', 'data/kallax-door.json', 'data/kallax-drawer.json', 'data/kallax-set.json', 'data/kallax-room.json', 'data/site.json', 'data/site.en.json'];
 const BASE_SITE = 'data/site.json'; // 其他语言的站点文案都要与它逐项对齐
 // 全套里应有的嵌件数量：来自任务要求，排布依据是 refs/ 商品图（第 3 排 5 个门、第 4 排 5 个双抽屉）
 const EXPECTED_SET = { door: 5, drawer: 5 };
@@ -31,12 +31,14 @@ function sectionOf(md, heading) {
 
 function tables(text) {
   const out = [];
-  let cur = null;
+  let cur = null, label = '';
   for (const line of text.split(/\r?\n/)) {
-    if (line.trim().startsWith('|')) {
-      const cells = line.trim().replace(/^\||\|$/g, '').split('|').map((c) => c.trim());
+    const tl = line.trim();
+    if (/^###\s/.test(tl) || /^\*\*.+\*\*$/.test(tl)) label = tl;
+    if (tl.startsWith('|')) {
+      const cells = tl.replace(/^\||\|$/g, '').split('|').map((c) => c.trim());
       if (cells.every((c) => /^-+$/.test(c))) continue;
-      if (!cur) { cur = { header: cells, rows: [] }; out.push(cur); } else cur.rows.push(cells);
+      if (!cur) { cur = { header: cells, rows: [], label }; out.push(cur); } else cur.rows.push(cells);
     } else cur = null;
   }
   return out;
@@ -54,17 +56,22 @@ function hwItems(col) {
 function parseReport(md, heading) {
   const sec = sectionOf(md, heading);
   const ts = tables(sec);
-  const rep = { found: !!sec, parts: [], hw: {}, steps: {}, altPages: {} };
+  const rep = { found: !!sec, parts: [], hw: {}, steps: {}, altPages: {}, stepTables: [] };
   for (const t of ts) {
     if (t.header[0] === '图示' && t.header[1] === '数量') rep.parts.push(...t.rows.map((r) => ({ label: r[0], qty: r[1] })));
     if (t.header[0] === '编号' && t.header[1] === '数量') for (const r of t.rows) rep.hw[normId(r[0])] = parseInt(r[1], 10);
     if (t.header[0] === '页' && t.header[1] === '步骤') {
+      const own = { label: t.label, steps: {} };
+      rep.stepTables.push(own);
       for (const r of t.rows) {
         const page = /^p(\d+)$/.exec(r[0]);
         if (!page || !/^\d+$/.test(r[1])) continue;
-        const s = (rep.steps[r[1]] = rep.steps[r[1]] || { pages: new Set(), items: [] });
-        s.pages.add(Number(page[1]));
-        s.items.push(...hwItems(r[3] || ''));
+        for (const into of [rep.steps, own.steps]) {
+          const st = (into[r[1]] = into[r[1]] || { pages: new Set(), items: [], raw: '' });
+          st.pages.add(Number(page[1]));
+          st.items.push(...hwItems(r[3] || ''));
+          st.raw += ` ${r[3] || ''}`;
+        }
       }
     }
   }
@@ -222,9 +229,27 @@ function validateAssembly(data, md, file) {
   const dataHwTotal = data.hardware.reduce((a, h) => a + h.quantity, 0);
   check(reportHwTotal === dataHwTotal, `五金总数 ${reportHwTotal}`, `五金总数：报告 ${reportHwTotal}，数据 ${dataHwTotal}`);
 
+  // 某条路线在报告里的步骤：有 variants[v].report 关键字时，只取标题含该关键字的表和不属于任何方案的表
+  const keys = Object.values(data.variants || {}).map((x) => x.report).filter(Boolean);
+  const stepsFor = (v) => {
+    const k = v && data.variants[v].report;
+    if (!keys.length) return rep.steps;
+    const merged = {};
+    for (const t of rep.stepTables) {
+      const owner = keys.find((kk) => t.label.includes(kk));
+      if (owner && owner !== k) continue;
+      for (const [n, st] of Object.entries(t.steps)) {
+        const m = (merged[n] = merged[n] || { pages: new Set(), items: [], raw: '' });
+        for (const pg of st.pages) m.pages.add(pg);
+        m.items.push(...st.items);
+        m.raw += st.raw;
+      }
+    }
+    return merged;
+  };
   // 报告里一步的用量（每个抽屉 / 每次）：数量 + 工具编号
-  const expectStep = (n) => {
-    const s = rep.steps[n];
+  const expectStep = (n, v = null) => {
+    const s = stepsFor(v)[n];
     const use = {}, tools = new Set();
     if (!s) return { use, tools };
     const setsSeen = new Set();
@@ -243,8 +268,9 @@ function validateAssembly(data, md, file) {
   // 3–5. 逐个变体（路线）检查
   const variants = data.variants ? Object.keys(data.variants) : [null];
   const scopeMax = Math.max(...data.steps.map((s) => s.n));
-  const reportNs = Object.keys(rep.steps).map(Number).filter((n) => n <= scopeMax).sort((a, b) => a - b);
   for (const v of variants) {
+    const repSteps = stepsFor(v);
+    const reportNs = Object.keys(repSteps).map(Number).filter((n) => n <= scopeMax).sort((a, b) => a - b);
     const tag = v ? `[${data.variants[v].label}] ` : '';
     const seq = data.steps.filter((s) => !s.variant || s.variant === v);
     const ns = seq.map((s) => s.n);
@@ -253,19 +279,37 @@ function validateAssembly(data, md, file) {
     const consumed = {};
     const placed = {};
     for (const s of seq) {
-      const repPages = (v && v !== 'left' && rep.altPages[s.n]) || (rep.steps[s.n] && rep.steps[s.n].pages);
+      const repPages = (v && v !== 'left' && rep.altPages[s.n]) || (repSteps[s.n] && repSteps[s.n].pages);
       if (repPages) check(sameList(repPages, s.pages), `${tag}第 ${s.n} 步页码 p${s.pages}`, `${tag}第 ${s.n} 步页码：报告 p${[...repPages]}，数据 p${s.pages}`);
       else if (v && v !== 'left') errors.push(`${tag}第 ${s.n} 步：报告的路线列表里找不到页码`);
       const repeat = s.repeat || 1;
       if (s.repeat) check(s.repeat === drawerCount, `${tag}第 ${s.n} 步按 ${s.repeat} 个抽屉重复`, `${tag}第 ${s.n} 步 repeat=${s.repeat}，与 meta.drawerCount=${drawerCount} 不符`);
-      const { use, tools } = expectStep(s.n);
-      const got = {};
-      for (const h of s.hardware) got[normId(h.id)] = (got[normId(h.id)] || 0) + h.count;
+      const { use, tools } = expectStep(s.n, v);
+      const got = {}, removed = {};
+      for (const h of s.hardware) {
+        got[normId(h.id)] = (got[normId(h.id)] || 0) + h.count;
+        if (h.action === 'remove') removed[normId(h.id)] = (removed[normId(h.id)] || 0) + h.count;
+      }
       for (const id of new Set([...Object.keys(use), ...Object.keys(got)])) {
         const want = (use[id] || 0) * repeat;
         check(want === (got[id] || 0), `${tag}第 ${s.n} 步 ${id} ×${got[id]}`,
           `${tag}第 ${s.n} 步 ${id}：报告 ×${use[id] || 0}${repeat > 1 ? `（×${repeat} 个抽屉 = ${want}）` : ''}，数据 ×${got[id] || 0}`);
-        consumed[id] = (consumed[id] || 0) + (got[id] || 0);
+        consumed[id] = (consumed[id] || 0) + (got[id] || 0) - 2 * (removed[id] || 0);
+      }
+      // 拧出：位置必须是之前步骤装上的同一种五金
+      for (const h of s.hardware.filter((x) => x.action === 'remove')) {
+        const before = seq.slice(0, seq.indexOf(s)).flatMap((x) => x.hardware.filter((y) => y.id === h.id && y.action !== 'remove').flatMap((y) => y.placements));
+        const miss = h.placements.filter((pl) => !before.some((b) => b.position.every((c, i) => Math.abs(c - pl.position[i]) < 0.01)));
+        check(!miss.length, `${tag}第 ${s.n} 步拧出的 ${h.id} 都是之前装上的`, `${tag}第 ${s.n} 步拧出的 ${h.id} 有 ${miss.length} 处在之前步骤里没有装过`);
+      }
+      // 不随包装提供的东西（墙用螺钉）：报告写了"墙钉（不含）"的步骤必须有，反之亦然
+      const extraIds = (s.extras || []).map((x) => x.id);
+      const repSays = /墙钉（不含）/.test((repSteps[s.n] && repSteps[s.n].raw) || '');
+      check(repSays === extraIds.length > 0, `${tag}第 ${s.n} 步墙用螺钉与报告一致`,
+        `${tag}第 ${s.n} 步：报告${repSays ? '写了' : '没写'}"墙钉（不含）"，数据${extraIds.length ? '有' : '没有'} extras`);
+      for (const x of s.extras || []) {
+        const def = (data.extras || []).find((e) => e.id === x.id);
+        if (!def || !def.notIncluded) errors.push(`${tag}第 ${s.n} 步 extras ${x.id} 不在 data.extras 里或没有标 notIncluded`);
       }
       const dataTools = (s.tools || []).filter((t) => /^\d+$/.test(t));
       check(sameList(tools, dataTools), `${tag}第 ${s.n} 步工具编号 [${dataTools}]`, `${tag}第 ${s.n} 步工具编号：报告 [${[...tools]}]，数据 [${dataTools}]`);
@@ -286,7 +330,9 @@ function validateAssembly(data, md, file) {
     for (const h of data.hardware) {
       const id = normId(h.id);
       if (h.kind === 'tool') continue;
-      if (h.scope === 'wall') check(!consumed[id], `${tag}上墙五金 ${id} 本次未使用`, `${tag}上墙五金 ${id} 不应出现在步骤里`);
+      // 只在某些方案里用的五金（variants），其他方案里用量为 0；没有 variants 的上墙五金一律不用
+      const usedHere = h.variants ? h.variants.includes(v) : h.scope !== 'wall';
+      if (!usedHere) check(!consumed[id], `${tag}${id} 在本路线不使用`, `${tag}${id} 不应出现在本路线的步骤里（用量 ${consumed[id]}）`);
       else check(consumed[id] === h.quantity, `${tag}${id} 各步合计 ${h.quantity}，用完`, `${tag}${id}：各步合计 ${consumed[id] || 0}，清单 ${h.quantity}`);
     }
     const badPlace = data.parts.filter((p) => !placed[p.id] || placed[p.id].length !== 1);
@@ -328,6 +374,39 @@ function validateAssembly(data, md, file) {
 }
 
 // ---------------- 全套校验 ----------------
+function validateRoom(room, baseDir) {
+  const errors = [], passes = [];
+  const check = (ok, okMsg, errMsg) => (ok ? passes.push(okMsg) : errors.push(errMsg));
+  const set = readJson(path.join(baseDir, room.set));
+  const body = readJson(path.join(baseDir, set.body));
+  const near = (a, b, tol = 0.5) => Math.abs(a - b) <= tol;
+  const boxes = body.parts.flatMap((p) => partBoxes(p, null));
+  const lo = [0, 1, 2].map((i) => Math.min(...boxes.map((b) => b.box[0][i])));
+  const hi = [0, 1, 2].map((i) => Math.max(...boxes.map((b) => b.box[1][i])));
+  for (const v of Object.keys(room.variants)) {
+    if (!body.variants || !body.variants[v]) { errors.push(`Room 方案 ${v} 在主体数据里不存在`); continue; }
+    const wall = body.room && body.room.walls[v];
+    if (!wall) { errors.push(`主体数据没有方案 ${v} 的墙`); continue; }
+    const items = room.outlines[v] || [];
+    const cab = items.find((o) => o.kind === 'cabinet');
+    if (!cab) { errors.push(`[${v}] 没有柜体轮廓`); continue; }
+    // 轮廓所在平面 = 墙面（墙盒朝柜体的那一面）
+    const axis = 'xyz'.indexOf(cab.plane);
+    const face = wall.center[axis] + wall.size[axis] / 2;
+    check(items.every((o) => o.plane === cab.plane && near(o.at, face, 0.2)), `[${v}] 轮廓都画在墙面上（${cab.plane} = ${face.toFixed(2)}）`, `[${v}] 轮廓不在墙面上：墙面 ${cab.plane} = ${face.toFixed(2)}`);
+    // 柜体轮廓 = 柜体在墙面上的投影（含毡垫 0.4）
+    const a = cab.plane === 'z' ? 0 : 2;
+    const ok = near(cab.rect[0], lo[a]) && near(cab.rect[2], hi[a]) && near(cab.rect[1], lo[1], 0.6) && near(cab.rect[3], hi[1]);
+    check(ok, `[${v}] 柜体轮廓与柜体外形一致`, `[${v}] 柜体轮廓 ${cab.rect} 与柜体外形 ${[lo[a], lo[1], hi[a], hi[1]].map((x) => x.toFixed(1))} 不一致`);
+    // 固定件轮廓：每个本方案的固定件定位点都落在某个轮廓里
+    const fixIds = new Set(items.filter((o) => o.kind === 'fixing').map((o) => o.id));
+    const placements = body.steps.filter((st) => st.variant === v).flatMap((st) => st.hardware.filter((h) => fixIds.has(h.id) && h.action !== 'remove').flatMap((h) => h.placements));
+    const inside = (pt) => items.some((o) => o.kind === 'fixing' && pt[a] >= o.rect[0] - 0.01 && pt[a] <= o.rect[2] + 0.01 && pt[1] >= o.rect[1] - 0.01 && pt[1] <= o.rect[3] + 0.01);
+    check(placements.length > 0 && placements.every((pl) => inside(pl.position)), `[${v}] ${placements.length} 个固定件都有轮廓`, `[${v}] 有固定件不在任何轮廓里，或没有固定件轮廓`);
+  }
+  return { errors, passes, summary: `方案 ${Object.keys(room.variants).join('、')}；轮廓 ${Object.values(room.outlines).flat().length} 个` };
+}
+
 function validateSet(set, baseDir) {
   const errors = [], passes = [];
   const check = (ok, okMsg, errMsg) => (ok ? passes.push(okMsg) : errors.push(errMsg));
@@ -417,6 +496,13 @@ function validateSite(site, baseDir) {
   const sec = md ? sectionOf(md, ap.heading) : '';
   const items = (sec.match(/^\d+\.\s/gm) || []).length;
   check(items > 0, `近似清单可从 ${ap && ap.source} 取到 ${items} 条`, `近似清单取不到：${ap ? `${ap.source} 里没有 "${ap.heading}" 或没有编号条目` : '缺少 about.approximate'}`);
+  const sf = product.safety || {};
+  check(sf.title && sf.text && sf.short && /p2/.test(sf.text), '有安全提示（转述说明书 p2 的警告）', '产品文案缺少 safety（title / text / short），或没有注明出自说明书 p2');
+  if (path.resolve(baseDir, site.__file || '') === path.resolve(baseDir, BASE_SITE)) {
+    const built = require('./build-meta').build();
+    const stale = Object.entries(built).filter(([f, html]) => !fs.existsSync(at(f)) || fs.readFileSync(at(f), 'utf8') !== html).map(([f]) => f);
+    check(!stale.length, `各语言页面头部与文案一致（${Object.keys(built).join('、')}）`, `${stale.join('、')} 与文案不一致（运行 node scripts/build-meta.js）`);
+  }
   const disc = (product.about && product.about.disclaimer) || '';
   check(disc.includes('IKEA') && disc.includes('Inter IKEA Systems B.V.'), '有商标声明', '缺少 IKEA 商标声明');
   // 语言切换列表
@@ -438,6 +524,7 @@ function validateSite(site, baseDir) {
     const shape = (pr) => JSON.stringify({
       exact: pr.about.exact.items.length, notes: pr.about.notes.length,
       ex: pr.explainers.items.map((it) => it.points.length),
+      safety: pr.safety ? Object.keys(pr.safety).sort() : null,
       links: pr.about.links.items.map((l) => [l.url, l.docId, l.article]), source: pr.about.links.source.url,
     });
     check(shape(product) === shape(bp), `产品文案结构与 ${baseSite.product} 一致`, `产品文案结构与 ${baseSite.product} 不一致（条目数、讲解要点数或链接不同）`);
@@ -454,7 +541,13 @@ function validateSite(site, baseDir) {
     const miss = [], unknown = [];
     const need = (cond, what) => { if (!cond) miss.push(what); };
     need(o.title, 'title');
+    if (d.variantTitle) need(o.variantTitle, 'variantTitle');
+    if (d.note) need(o.note, 'note');
+    if (d.notes) need(o.notes && o.notes.length === d.notes.length, 'notes');
+    for (const x of d.extras || []) need(o.extras && o.extras[x.id] && o.extras[x.id].name, `extras.${x.id}`);
+    if (d.schema && d.schema.startsWith('flatpack3d/room')) for (const k of Object.keys(d.variants)) need(o.variants && o.variants[k] && o.variants[k].label && o.variants[k].note, `variants.${k}`);
     if (d.schema && d.schema.startsWith('flatpack3d/set')) need(o.layoutSource, 'layoutSource');
+    else if (d.schema && d.schema.startsWith('flatpack3d/room')) { /* Room 只有标题、说明和方案名 */ }
     else {
       need(o.scope, 'scope');
       need(o.overview && o.overview.title && o.overview.hint, 'overview');
@@ -489,6 +582,7 @@ for (const file of files) {
   const data = readJson(file);
   if (data.pieces) data.__file = path.relative(root, file).split(path.sep).join('/');
   const res = data.pieces ? validateSite(data, root)
+    : data.schema && data.schema.startsWith('flatpack3d/room') ? validateRoom(data, root)
     : data.schema && data.schema.startsWith('flatpack3d/set') ? validateSet(data, root) : validateAssembly(data, md, file);
   const head = `${rel(file)}${data.source && data.source.reportSection ? `（报告 ${data.source.reportSection.replace('## ', '第 ').replace('.', ' 节')}）` : ''}`;
   if (res.errors.length) {

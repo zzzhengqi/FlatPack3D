@@ -52,7 +52,7 @@ Chain of reasoning: nominal insert size 33×33 (product page) → front face of 
 25. Drawer box width 27.6 = frame inner width 30.2 minus two runners (0.65 + 0.65) on each side; sides and back 1.2 thick, bottom 0.3 thick, box depth 35.7 (back about 1 from the frame back panel). All guesses.
 26. The runners on the frame are part of the frame (report: already fitted to the side panels) and are not counted as hardware; cross-section 0.65×2.5, length 35; the drawer-side runners are 34 long, 1.25 above the box bottom.
 27. Positions of the connecting bolts 118331, dowels 101345, cam locks 119030 and nails 110519 in the drawers are schematic: symmetric left and right, the first three at the front end and the nails at the back end; their sizes have no source.
-28. For a door that opens to the right, the same door panel is rotated 180° about its own centre (hinges move to the right, knob to the left). Basis: step 2 of the instructions fits the hinges to the door before the routes split, so it can only be the same door turned over. This item is an inference.
+28. On the hinges-on-right route, the same door panel is rotated 180° about its own centre (hinges move to the right, knob to the left). Basis: step 2 of the instructions fits the hinges to the door before the routes split, so it can only be the same door turned over. This item is an inference.
 29. The pencil lines drawn with the marking gauge are drawn on the inside of the front edge of the compartment floor, 2 from the side walls, at the frame front edge z = 17.6. The size of the gauge itself is unknown; the gauge is not drawn in 3D.
 30. For clarity, the demo shows the folding frame (door step 1, drawer step 1), the door (door step 2) and the two drawers (drawer steps 2–9) standing upright in front of the compartment, and pushes them in at later steps. The instructions assemble them lying flat on the floor.
 
@@ -62,12 +62,28 @@ Chain of reasoning: nominal insert size 33×33 (product page) → front face of 
 32. The step drawings on door-insert p5 and p10 are taken as the top 45%, and on p11 as the bottom 62% (these three pages also have route thumbnails or the ⓘ adjustment notes). The proportions are judged by eye.
 33. The light and mid greys used in the line-art view for highlighted parts, the grey face of the bottom panel and the hardware are there to tell parts apart; they are not the instructions' colours. The instructions use grey only on a few faces.
 
+### Phase 4: wall attachment, Room view
+
+34. In option A the wall fittings 115753 sit in the top corners of the top-left and top-right compartments: against the line where the inside face of the outer side panel meets the back plane, about 3 below the top panel. p27 only shows them in the top corners of these two compartments; the exact distance is a guess.
+35. The sizes of the wall fittings, keyhole plates 103693, corner cover caps and L-shaped brackets 10091413 have no source; in 3D they are schematic plates and blocks.
+36. In option A the wall is behind the unit, with a 0.3 gap between the back of the unit and the wall; in option B the wall is on the left of the unit (judged from the drawings in report section 7), with the vertical leg of the bracket, taken as 0.25 thick, between the left side panel and the wall.
+37. The two brackets in option B are at the left end of the top panel, at ±10 in the depth direction, lined up with the two long screws from step 1 (whose positions are themselves the guess in item 8).
+38. In step 26 of option B the demo first moves the unit 25 to the right, fixes the brackets, and pushes the unit back in step 28. The instructions only show step 28 "push the unit towards the wall"; the distance and timing of moving it away are inferred.
+39. One wall screw (not included) is drawn per wall fitting or bracket, shaped Ø0.5×5; the close-ups on p28 and p32 both say "2x". Which screw to actually use depends on the wall; in 3D it is only schematic.
+40. In Room view the wall sizes (option A 400×260, option B 300×260), the eye height of 160, the walking speed of 150 per second and the turning speed of 60° per second are demo settings, not from the instructions; the cyan outlines are drawn on the wall from the unit's outline and the fitting positions.
+
+### Hinge positions of the two door-insert routes (basis in the instructions)
+
+- The p6–p10 route: steps 6 and 7 on p7 and p8 fit the two hinge mounting plates on the left wall of the compartment; step 9 on p9 hangs the hinges on the left and the door opens to the left. Hence "**hinges on left**".
+- The p11–p15 route: steps 6 and 7 on p13 fit the two mounting plates on the right wall; step 9 on p14 hangs the hinges on the right and the door opens to the right. Hence "**hinges on right**".
+- Based on p7, p9, p13 and p14 re-rendered at 2× resolution; see section 7 of the analysis report.
+
 ### Full-set layout (this layout comes from the product images, not from the assembly instructions)
 
 Based on two "KALLAX shelving unit + 10 inserts" product images in `refs/` (black-brown pe748007, white stained oak effect pe618893), which have the same layout:
 
 - Rows 1 and 2 from the top: empty;
-- Row 3: 5 door inserts, all with the knob on the right, so they **open to the left** (hinges on the left);
+- Row 3: 5 door inserts, all with the knob on the right, so they have their **hinges on the left** (the door opens to the left);
 - Row 4: 5 double-drawer inserts;
 - Row 5: empty.
 

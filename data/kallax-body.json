@@ -2,7 +2,7 @@
   "schema": "flatpack3d/assembly@1",
   "id": "kallax-body",
   "title": "KALLAX 置物架主体（5×5）",
-  "scope": "说明书第 1–24 步：框体组装与竖起。不含上墙固定（p27–p35）和任何嵌件。",
+  "scope": "说明书第 1–29 步：框体组装、竖起和上墙固定（两种方案）。不含嵌件。",
   "source": {
     "manual": "kallax-shelving-unit-white__AA-2334148-2-100.pdf",
     "docId": "AA-2334148-2",
@@ -61,8 +61,74 @@
     "upright": {
       "tilt": 0,
       "label": "竖立"
+    },
+    "awayB": {
+      "tilt": 0,
+      "shift": [
+        25,
+        0,
+        0
+      ],
+      "label": "竖立，离开墙面"
     }
   },
+  "variantTitle": "上墙方案",
+  "variants": {
+    "a": {
+      "label": "墙固定件",
+      "note": "方案 A：墙固定件 115753，柜体立在地上、背面贴墙（p27–p30）",
+      "report": "方案 A",
+      "default": true
+    },
+    "b": {
+      "label": "L 形角码",
+      "note": "方案 B：L 形角码 10091413，按图判断为左侧板贴墙（p31–p35）",
+      "report": "方案 B"
+    }
+  },
+  "room": {
+    "fromStep": 25,
+    "walls": {
+      "a": {
+        "center": [
+          0,
+          38.6,
+          -20.8
+        ],
+        "size": [
+          400,
+          260,
+          2
+        ]
+      },
+      "b": {
+        "center": [
+          -92.26,
+          38.6,
+          0
+        ],
+        "size": [
+          2,
+          260,
+          300
+        ]
+      }
+    }
+  },
+  "extras": [
+    {
+      "id": "wall-screw",
+      "name": "墙用螺钉（不含）",
+      "note": "不随包装提供，按墙体材质另购（说明书 p2）",
+      "notIncluded": true,
+      "shape": {
+        "type": "screw",
+        "diameter": 0.5,
+        "length": 5,
+        "headDiameter": 1
+      }
+    }
+  ],
   "partTypes": {
     "side": {
       "name": "侧板",
@@ -527,8 +593,19 @@
       "id": "103693",
       "name": "带葫芦孔的金属片",
       "quantity": 2,
-      "kind": "other",
-      "scope": "wall"
+      "kind": "plate",
+      "scope": "wall",
+      "variants": [
+        "a"
+      ],
+      "shape": {
+        "type": "box",
+        "size": [
+          2.2,
+          3,
+          0.15
+        ]
+      }
     },
     {
       "id": "104321/104322",
@@ -557,8 +634,17 @@
       "id": "100372",
       "name": "短十字自攻螺钉",
       "quantity": 4,
-      "kind": "other",
-      "scope": "wall"
+      "kind": "screw",
+      "scope": "wall",
+      "variants": [
+        "a"
+      ],
+      "shape": {
+        "type": "screw",
+        "diameter": 0.4,
+        "length": 1.6,
+        "headDiameter": 0.8
+      }
     },
     {
       "id": "153550",
@@ -575,22 +661,97 @@
       "id": "10091413",
       "name": "L 形金属角码",
       "quantity": 2,
-      "kind": "other",
-      "scope": "wall"
+      "kind": "bracket",
+      "scope": "wall",
+      "variants": [
+        "b"
+      ],
+      "shape": {
+        "type": "plates",
+        "plates": [
+          {
+            "size": [
+              0.25,
+              5,
+              3
+            ],
+            "offset": [
+              -0.125,
+              -2.5,
+              0
+            ]
+          },
+          {
+            "size": [
+              6,
+              0.25,
+              3
+            ],
+            "offset": [
+              2.75,
+              0.125,
+              0
+            ]
+          }
+        ]
+      }
     },
     {
       "id": "115753",
       "name": "合页式墙固定件",
       "quantity": 2,
-      "kind": "other",
-      "scope": "wall"
+      "kind": "bracket",
+      "scope": "wall",
+      "variants": [
+        "a"
+      ],
+      "shape": {
+        "type": "plates",
+        "plates": [
+          {
+            "size": [
+              0.2,
+              4.5,
+              3
+            ],
+            "offset": [
+              0.1,
+              0,
+              1.5
+            ]
+          },
+          {
+            "size": [
+              3,
+              4.5,
+              0.2
+            ],
+            "offset": [
+              1.5,
+              0,
+              0.1
+            ]
+          }
+        ]
+      }
     },
     {
       "id": "115754/118673/118225/119509",
       "name": "L 形转角盖帽",
       "quantity": 2,
-      "kind": "other",
-      "scope": "wall"
+      "kind": "cap",
+      "scope": "wall",
+      "variants": [
+        "a"
+      ],
+      "shape": {
+        "type": "box",
+        "size": [
+          3.4,
+          5.2,
+          3.4
+        ]
+      }
     }
   ],
   "overview": {
@@ -601,7 +762,7 @@
       7
     ],
     "title": "清点零件",
-    "hint": "对照 p5–p7 清点板件和五金。本次只用到框体五金，上墙五金先放一边。"
+    "hint": "对照 p5–p7 清点板件和五金。上墙五金按所选方案只用其中一套。"
   },
   "steps": [
     {
@@ -1942,12 +2103,452 @@
       "title": "竖起",
       "pose": "upright",
       "parts": [],
-      "hint": "两人把柜体翻转竖起。下一步是上墙固定（本次不做）。",
+      "hint": "两人把柜体翻转竖起。接下来按摆放情况选上墙方案（p27）。",
       "hardware": [],
       "tools": [],
       "figure": [
         0.5,
         1
+      ]
+    },
+    {
+      "n": 25,
+      "variant": "a",
+      "pages": [
+        27
+      ],
+      "title": "装墙固定件",
+      "parts": [],
+      "hint": "柜体立在地上、背面贴墙时用这个方案。在左上、右上两格的顶板下沿各装 1 个墙固定件，每个 2 颗螺钉。",
+      "hardware": [
+        {
+          "id": "115753",
+          "count": 2,
+          "placements": [
+            {
+              "position": [
+                -87,
+                84,
+                -19.5
+              ],
+              "dir": [
+                0,
+                0,
+                1
+              ]
+            },
+            {
+              "position": [
+                87,
+                84,
+                -19.5
+              ],
+              "dir": [
+                0,
+                0,
+                1
+              ],
+              "mirrorX": true
+            }
+          ]
+        },
+        {
+          "id": "100372",
+          "count": 4,
+          "placements": [
+            {
+              "position": [
+                -87.6,
+                82.7,
+                -17.2
+              ],
+              "dir": [
+                1,
+                0,
+                0
+              ]
+            },
+            {
+              "position": [
+                -87.6,
+                85.3,
+                -17.2
+              ],
+              "dir": [
+                1,
+                0,
+                0
+              ]
+            },
+            {
+              "position": [
+                87.6,
+                82.7,
+                -17.2
+              ],
+              "dir": [
+                -1,
+                0,
+                0
+              ]
+            },
+            {
+              "position": [
+                87.6,
+                85.3,
+                -17.2
+              ],
+              "dir": [
+                -1,
+                0,
+                0
+              ]
+            }
+          ]
+        }
+      ],
+      "tools": []
+    },
+    {
+      "n": 26,
+      "variant": "a",
+      "pages": [
+        28
+      ],
+      "title": "固定到墙上",
+      "tools": [
+        "水平尺"
+      ],
+      "parts": [],
+      "hint": "用水平尺校正。墙用螺钉要用圆头，穿过葫芦孔片和固定件的大孔打进墙里。墙用螺钉和螺塞不随包装提供，要按墙体材质另购。",
+      "hardware": [
+        {
+          "id": "103693",
+          "count": 2,
+          "placements": [
+            {
+              "position": [
+                -85.5,
+                84,
+                -19.23
+              ],
+              "dir": [
+                0,
+                0,
+                1
+              ]
+            },
+            {
+              "position": [
+                85.5,
+                84,
+                -19.23
+              ],
+              "dir": [
+                0,
+                0,
+                1
+              ]
+            }
+          ]
+        }
+      ],
+      "extras": [
+        {
+          "id": "wall-screw",
+          "placements": [
+            {
+              "position": [
+                -85.5,
+                84,
+                -21.65
+              ],
+              "dir": [
+                0,
+                0,
+                1
+              ],
+              "frame": "wall"
+            },
+            {
+              "position": [
+                85.5,
+                84,
+                -21.65
+              ],
+              "dir": [
+                0,
+                0,
+                1
+              ],
+              "frame": "wall"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "n": 27,
+      "variant": "a",
+      "pages": [
+        29
+      ],
+      "title": "调整并拧紧",
+      "parts": [],
+      "hint": "葫芦孔片可以左右、上下调整位置，调好后拧紧。",
+      "hardware": [],
+      "tools": []
+    },
+    {
+      "n": 28,
+      "variant": "a",
+      "pages": [
+        30
+      ],
+      "title": "盖帽",
+      "parts": [],
+      "hint": "盖上 2 个转角盖帽。",
+      "hardware": [
+        {
+          "id": "115754/118673/118225/119509",
+          "count": 2,
+          "placements": [
+            {
+              "position": [
+                -85.3,
+                84,
+                -17.8
+              ],
+              "dir": [
+                0,
+                0,
+                1
+              ]
+            },
+            {
+              "position": [
+                85.3,
+                84,
+                -17.8
+              ],
+              "dir": [
+                0,
+                0,
+                1
+              ]
+            }
+          ]
+        }
+      ],
+      "tools": []
+    },
+    {
+      "n": 25,
+      "variant": "b",
+      "pages": [
+        31
+      ],
+      "title": "放角码、划线",
+      "parts": [],
+      "hint": "把 2 个角码放在顶板左端，孔对准顶板上的螺钉孔，用铅笔在墙上划出角码的位置。",
+      "tools": [
+        "铅笔"
+      ],
+      "hardware": [
+        {
+          "id": "10091413",
+          "count": 2,
+          "placements": [
+            {
+              "position": [
+                -91,
+                91,
+                -10
+              ],
+              "dir": [
+                0,
+                1,
+                0
+              ],
+              "frame": "wall"
+            },
+            {
+              "position": [
+                -91,
+                91,
+                10
+              ],
+              "dir": [
+                0,
+                1,
+                0
+              ],
+              "frame": "wall"
+            }
+          ]
+        }
+      ],
+      "marks": [
+        {
+          "position": [
+            -91.29,
+            91,
+            -10
+          ],
+          "size": [
+            0.06,
+            0.15,
+            4
+          ],
+          "frame": "wall"
+        },
+        {
+          "position": [
+            -91.29,
+            91,
+            10
+          ],
+          "size": [
+            0.06,
+            0.15,
+            4
+          ],
+          "frame": "wall"
+        }
+      ]
+    },
+    {
+      "n": 26,
+      "variant": "b",
+      "pages": [
+        32
+      ],
+      "title": "角码固定到墙上",
+      "pose": "awayB",
+      "parts": [],
+      "hint": "角码用圆头墙用螺钉固定到墙上的划线处。墙用螺钉和螺塞不随包装提供，要按墙体材质另购。",
+      "hardware": [],
+      "extras": [
+        {
+          "id": "wall-screw",
+          "placements": [
+            {
+              "position": [
+                -93.5,
+                88,
+                -10
+              ],
+              "dir": [
+                1,
+                0,
+                0
+              ],
+              "frame": "wall"
+            },
+            {
+              "position": [
+                -93.5,
+                88,
+                10
+              ],
+              "dir": [
+                1,
+                0,
+                0
+              ],
+              "frame": "wall"
+            }
+          ]
+        }
+      ],
+      "tools": []
+    },
+    {
+      "n": 27,
+      "variant": "b",
+      "pages": [
+        33
+      ],
+      "title": "拧出 2 颗长螺钉",
+      "tools": [
+        "100001"
+      ],
+      "parts": [],
+      "hint": "用 Z 形扳手从顶板左端拧出 2 颗长螺钉（第 1 步装的那两颗）。",
+      "hardware": [
+        {
+          "id": "104321/104322",
+          "count": 2,
+          "action": "remove",
+          "placements": [
+            {
+              "position": [
+                -89,
+                86,
+                -10
+              ],
+              "axis": "y"
+            },
+            {
+              "position": [
+                -89,
+                86,
+                10
+              ],
+              "axis": "y"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "n": 28,
+      "variant": "b",
+      "pages": [
+        34
+      ],
+      "title": "推到角码下",
+      "pose": "upright",
+      "parts": [],
+      "hint": "把柜体推向墙，让角码卡在顶板上。",
+      "hardware": [],
+      "tools": []
+    },
+    {
+      "n": 29,
+      "variant": "b",
+      "pages": [
+        35
+      ],
+      "title": "拧回螺钉",
+      "tools": [
+        "100001"
+      ],
+      "parts": [],
+      "hint": "把 2 颗长螺钉穿过角码拧回顶板。",
+      "hardware": [
+        {
+          "id": "104321/104322",
+          "count": 2,
+          "placements": [
+            {
+              "position": [
+                -89,
+                86.25,
+                -10
+              ],
+              "axis": "y"
+            },
+            {
+              "position": [
+                -89,
+                86.25,
+                10
+              ],
+              "axis": "y"
+            }
+          ]
+        }
       ]
     }
   ]

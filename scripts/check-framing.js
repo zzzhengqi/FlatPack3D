@@ -33,8 +33,8 @@ async function run({ lang = '', only = null, sizes = Object.keys(SIZES), quiet =
         if (only && piece.key !== only) continue;
         const data = JSON.parse(fs.readFileSync(path.join(root, piece.url), 'utf8'));
         const variants = data.variants ? Object.keys(data.variants) : [null];
-        const isSet = data.schema && data.schema.startsWith('flatpack3d/set');
-        for (const v of isSet ? [null] : variants) {
+        const isSet = data.schema && /^flatpack3d\/(set|room)/.test(data.schema);
+        for (const v of isSet && !data.variants ? [null] : variants) {
           const q = new URLSearchParams({ piece: piece.key, ...(v ? { variant: v } : {}), ...(lang ? { lang } : {}) });
           await page.goto(`${server.url}?${q}`);
           const steps = isSet ? [null] : [data.overview.n, ...data.steps.filter((s) => !s.variant || s.variant === v).map((s) => s.n)];

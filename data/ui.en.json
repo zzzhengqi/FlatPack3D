@@ -2,7 +2,7 @@
   "appName": "FlatPack3D",
   "loading": "Loading…",
   "pieceGroup": "Piece",
-  "variantLabel": "Door opens",
+  "variantLabel": "Route",
   "manualHide": "Hide manual",
   "manualShow": "Show manual",
   "manualLabel": "Manual {docId}",
@@ -68,16 +68,66 @@
   "pickClose": "Close",
   "hostLabel": "Compartment (schematic)",
   "markLabel": "Pencil line",
+  "autoFrameOn": "Auto framing: on",
+  "autoFrameOff": "Auto framing: paused",
+  "autoFrameTitle": "Pauses when you drag, zoom or walk in Room view; press R or \"Overview\" to resume",
+  "wallLabel": "Wall",
+  "removeChip": "Remove",
+  "otherVariantHw": "Hardware for the other option: {n} types (not used on this route)",
+  "outlineCabinet": "Final position of the unit (cyan outline)",
+  "outlineFixing": "Final position of fitting {id} (cyan outline)",
+  "roomKicker": "Room view",
+  "roomFixings": "Fittings for this option",
+  "roomFooter": "Room view: WASD to move, Q/E to turn, the mouse still orbits and zooms; the cyan outlines show through the unit.",
+  "roomPagesHint": "p2 is the safety warning page of the manual; the others are the wall-attachment pages for this option",
   "shortcutList": [
-    { "keys": "[  ]", "text": "Previous / next step (← → also work)" },
-    { "keys": "0–9", "text": "Jump to a step, 0 is the parts check; type two digits quickly for steps 10+" },
-    { "keys": "Space", "text": "Play current step" },
-    { "keys": "C", "text": "Play all steps / stop" },
-    { "keys": "R", "text": "Reset view" },
-    { "keys": "X", "text": "Toggle exploded view" },
-    { "keys": "N", "text": "Toggle part labels" },
-    { "keys": "D", "text": "Toggle line art" },
-    { "keys": "Click a part", "text": "Show its name and code" },
-    { "keys": "Click a manual drawing", "text": "Jump to that step" }
+    {
+      "keys": "[  ]",
+      "text": "Previous / next step (← → also work)"
+    },
+    {
+      "keys": "0–9",
+      "text": "Jump to a step, 0 is the parts check; type two digits quickly for steps 10+"
+    },
+    {
+      "keys": "Space",
+      "text": "Play current step"
+    },
+    {
+      "keys": "C",
+      "text": "Play all steps / stop"
+    },
+    {
+      "keys": "R",
+      "text": "Reset view and resume auto framing"
+    },
+    {
+      "keys": "X",
+      "text": "Toggle exploded view"
+    },
+    {
+      "keys": "N",
+      "text": "Toggle part labels"
+    },
+    {
+      "keys": "L",
+      "text": "Toggle line art"
+    },
+    {
+      "keys": "W A S D",
+      "text": "Move forward / left / back / right in Room view"
+    },
+    {
+      "keys": "Q E",
+      "text": "Turn left / right in Room view"
+    },
+    {
+      "keys": "Click a part",
+      "text": "Show its name and code"
+    },
+    {
+      "keys": "Click a manual drawing",
+      "text": "Jump to that step"
+    }
   ]
 }

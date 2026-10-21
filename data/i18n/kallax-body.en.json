@@ -1,9 +1,9 @@
 {
   "title": "KALLAX shelving unit (5×5)",
-  "scope": "Manual steps 1–24: assembling and raising the frame. Excludes wall attachment (p27–p35) and all inserts.",
+  "scope": "Manual steps 1–29: assembling the frame, raising it and fixing it to the wall (two options). Excludes inserts.",
   "overview": {
     "title": "Check the parts",
-    "hint": "Check the panels and hardware against p5–p7. Only the frame hardware is used here; set the wall-attachment hardware aside."
+    "hint": "Check the panels and hardware against p5–p7. Only one set of the wall-attachment hardware is used, depending on the option chosen."
   },
   "poses": {
     "flat": {
@@ -14,6 +14,9 @@
     },
     "upright": {
       "label": "Upright"
+    },
+    "awayB": {
+      "label": "Upright, moved away from the wall"
     }
   },
   "partTypes": {
@@ -93,7 +96,9 @@
     }
   },
   "tools": {
-    "锤子": "Hammer"
+    "锤子": "Hammer",
+    "水平尺": "Spirit level",
+    "铅笔": "Pencil"
   },
   "steps": {
     "1": {
@@ -190,7 +195,60 @@
     },
     "24": {
       "title": "Raise",
-      "hint": "Two people turn the unit upright. The next step is wall attachment (not covered here)."
+      "hint": "Two people turn the unit upright. Next, choose the wall-attachment option that fits how the unit stands (p27)."
+    },
+    "a:25": {
+      "title": "Fit the wall fittings",
+      "hint": "Use this option when the unit stands on the floor with its back against the wall. Fit one wall fitting under the top panel in the top-left and top-right compartments, 2 screws each."
+    },
+    "a:26": {
+      "title": "Fix to the wall",
+      "hint": "Check with a spirit level. Use round-head wall screws, driven through the keyhole plate and the large hole of the fitting into the wall. Wall screws and plugs are not included; buy them to suit your wall material."
+    },
+    "a:27": {
+      "title": "Adjust and tighten",
+      "hint": "The keyhole plate can be adjusted left-right and up-down; tighten once it is in place."
+    },
+    "a:28": {
+      "title": "Cover caps",
+      "hint": "Fit the 2 corner cover caps."
+    },
+    "b:25": {
+      "title": "Place brackets, mark",
+      "hint": "Place the 2 brackets on the left end of the top panel with their holes over the screw holes in the top panel, and mark the bracket positions on the wall with a pencil."
+    },
+    "b:26": {
+      "title": "Fix brackets to the wall",
+      "hint": "Fix the brackets to the wall at the marks with round-head wall screws. Wall screws and plugs are not included; buy them to suit your wall material."
+    },
+    "b:27": {
+      "title": "Take out 2 long screws",
+      "hint": "Use the Z-shaped hex key to take out the 2 long screws at the left end of the top panel (the two fitted in step 1)."
+    },
+    "b:28": {
+      "title": "Push under the brackets",
+      "hint": "Push the unit towards the wall so that the brackets sit over the top panel."
+    },
+    "b:29": {
+      "title": "Put the screws back",
+      "hint": "Put the 2 long screws back through the brackets into the top panel."
+    }
+  },
+  "variantTitle": "Wall attachment",
+  "variants": {
+    "a": {
+      "label": "Wall fitting",
+      "note": "Option A: wall fitting 115753, unit standing on the floor with its back against the wall (p27–p30)"
+    },
+    "b": {
+      "label": "L-shaped bracket",
+      "note": "Option B: L-shaped bracket 10091413, judged from the drawings to be the left side panel against the wall (p31–p35)"
+    }
+  },
+  "extras": {
+    "wall-screw": {
+      "name": "Wall screw (not included)",
+      "note": "Not included; buy to suit your wall material (manual p2)"
     }
   }
 }

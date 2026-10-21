@@ -2,7 +2,7 @@
   "share": {
     "title": "FlatPack3D · KALLAX 3D assembly demo",
     "description": "The assembly instructions for the IKEA KALLAX shelving unit, insert with door and insert with 2 drawers, turned into an interactive step-by-step 3D demo: step animations, hardware counters, side-by-side manual pages and a line-art view.",
-    "image": "og-image.png",
+    "image": "og-image.en.png",
     "imageAlt": "3D render of a KALLAX 5×5 shelving unit fitted with 5 door inserts and 5 double-drawer inserts",
     "siteUrl": ""
   },
@@ -17,7 +17,7 @@
     },
     "approximate": {
       "title": "Approximate",
-      "intro": "The assembly instructions contain no dimensions. Panel thicknesses, hole positions, insert internals and so on are estimated from the proportions of the drawings; each item below is taken directly from the guess list in docs/dimensions.en.md (an English translation of the guess list in docs/dimensions.md).",
+      "intro": "The assembly instructions contain no dimensions. Panel thicknesses, hole positions, insert internals and so on are estimated from the proportions of the drawings; each item below is taken directly from the guess list in docs/dimensions.en.md (an English translation of the guess list in docs/dimensions.md). The English part names in this interface are descriptive translations, not IKEA's official names.",
       "source": "docs/dimensions.en.md",
       "heading": "## Guess list"
     },
@@ -32,9 +32,24 @@
         "url": "https://www.ikea.com/jp/en/p/kallax-shelving-unit-with-10-inserts-white-s89278339/"
       },
       "items": [
-        { "label": "KALLAX shelving unit", "article": "103.535.86", "docId": "AA-2334148-2", "url": "https://www.ikea.com/jp/en/assembly_instructions/kallax-shelving-unit-white__AA-2334148-2-100.pdf" },
-        { "label": "KALLAX insert with door", "article": "603.518.77", "docId": "AA-1009339-8", "url": "https://www.ikea.com/jp/en/assembly_instructions/kallax-insert-with-door-white__AA-1009339-8-100.pdf" },
-        { "label": "KALLAX insert with 2 drawers", "article": "203.518.79", "docId": "AA-1009361-5", "url": "https://www.ikea.com/jp/en/assembly_instructions/kallax-insert-with-2-drawers-white__AA-1009361-5-100.pdf" }
+        {
+          "label": "KALLAX shelving unit",
+          "article": "103.535.86",
+          "docId": "AA-2334148-2",
+          "url": "https://www.ikea.com/jp/en/assembly_instructions/kallax-shelving-unit-white__AA-2334148-2-100.pdf"
+        },
+        {
+          "label": "KALLAX insert with door",
+          "article": "603.518.77",
+          "docId": "AA-1009339-8",
+          "url": "https://www.ikea.com/jp/en/assembly_instructions/kallax-insert-with-door-white__AA-1009339-8-100.pdf"
+        },
+        {
+          "label": "KALLAX insert with 2 drawers",
+          "article": "203.518.79",
+          "docId": "AA-1009361-5",
+          "url": "https://www.ikea.com/jp/en/assembly_instructions/kallax-insert-with-2-drawers-white__AA-1009361-5-100.pdf"
+        }
       ]
     }
   },
@@ -53,10 +68,15 @@
         "title": "Z-shaped hex key (100001 ×1)",
         "points": [
           "The only tool in the shelving unit hardware list (p5); both ends are hexagonal.",
-          "It is used only in steps 1, 18 and 21: to drive the long countersunk hex-socket screws 104321/104322 into the 4 outer corners, 2 per corner, 8 in total.",
-          "Wall-attachment option B (p33–p35, not covered in this demo) also uses it to take out and then put back 2 of these screws."
+          "During assembly it is used in steps 1, 18 and 21: to drive the long countersunk hex-socket screws 104321/104322 into the 4 outer corners, 2 per corner, 8 in total.",
+          "Wall-attachment option B also uses it in steps 27 and 29 (p33, p35): first take out the 2 screws at the left end of the top panel, then put them back through the brackets."
         ]
       }
     ]
+  },
+  "safety": {
+    "title": "Safety",
+    "text": "The first warning in the instructions (p2): furniture that tips over can cause serious or fatal crushing injuries, so the unit must be fixed to the wall with the wall-attachment devices supplied. Screws and plugs for the wall are not included and have to be bought to suit your wall material; if you are not sure which to use, ask a professional.",
+    "short": "The instructions require fixing the unit to the wall to prevent tip-over. Wall screws and plugs are not included; buy them to suit your wall material."
   }
 }

@@ -1,4 +1,7 @@
 {
   "title": "KALLAX full set (unit + 5 door inserts + 5 double-drawer inserts)",
-  "layoutSource": "Product images refs/…pe748007_s5.png and refs/…pe618893_s5.png: row 3 has 5 door inserts (knob on the right), row 4 has 5 double-drawer inserts, and the other compartments are empty. This layout comes from the product images, not from the assembly instructions."
+  "layoutSource": "Product images refs/…pe748007_s5.png and refs/…pe618893_s5.png: row 3 has 5 door inserts (knob on the right, hinges on the left), row 4 has 5 double-drawer inserts, and the other compartments are empty. This layout comes from the product images, not from the assembly instructions.",
+  "notes": [
+    "Insert instructions p3: when the unit is fixed with wall fittings 115753, the corner cover caps in the top-left and top-right compartments must be removed if inserts go there. In this layout all inserts are in rows 3 and 4, so it does not apply."
+  ]
 }

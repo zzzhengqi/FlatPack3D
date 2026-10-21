@@ -1,0 +1,1646 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<base href="../">
+<meta name="flatpack-lang" content="en">
+<!-- 由 scripts/build-meta.js 从 index.html 生成，请勿手改 -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- meta:start（由 scripts/build-meta.js 按 data/kallax-product.json 生成，请勿手改） -->
+<title>FlatPack3D · KALLAX 3D assembly demo</title>
+<meta name="description" content="The assembly instructions for the IKEA KALLAX shelving unit, insert with door and insert with 2 drawers, turned into an interactive step-by-step 3D demo: step animations, hardware counters, side-by-side manual pages and a line-art view.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="FlatPack3D · KALLAX 3D assembly demo">
+<meta property="og:description" content="The assembly instructions for the IKEA KALLAX shelving unit, insert with door and insert with 2 drawers, turned into an interactive step-by-step 3D demo: step animations, hardware counters, side-by-side manual pages and a line-art view.">
+<meta property="og:image" content="og-image.en.png">
+<meta property="og:image:alt" content="3D render of a KALLAX 5×5 shelving unit fitted with 5 door inserts and 5 double-drawer inserts">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="alternate" hreflang="zh-CN" href="./">
+<link rel="alternate" hreflang="en" href="en/">
+<!-- meta:end -->
+<style>
+  :root {
+    --bg: #f6f5f2; --panel: #ffffff; --ink: #1d1d1b; --muted: #6f6d68; --line: #e2e0da;
+    --accent: #e8a33a; --accent-ink: #5a3a00; --accent-soft: #fdf1dc; --ok: #3f8f5a;
+    --stage-bg: #eeede9; --floor: #e6e4df;
+    --radius: 10px;
+    font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #171716; --panel: #212120; --ink: #ecebe7; --muted: #a09d97; --line: #34332f;
+      --accent: #f0b04c; --accent-ink: #1d1400; --accent-soft: #3a2c12; --ok: #6cc08a;
+      --stage-bg: #1e1e1c; --floor: #262624;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: var(--bg); color: var(--ink); }
+  button { font: inherit; color: inherit; }
+  a { color: inherit; }
+  .app { height: 100vh; min-height: 560px; display: grid; grid-template-rows: auto 1fr auto; }
+
+  header { display: flex; align-items: center; gap: 12px; padding: 8px 16px; border-bottom: 1px solid var(--line); background: var(--panel); flex-wrap: wrap; position: relative; }
+  header h1 { font-size: 16px; margin: 0; letter-spacing: .02em; }
+  header .sub { color: var(--muted); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; flex: none; }
+  .seg { max-width: calc(100vw - 32px); overflow-x: auto; scrollbar-width: none; }
+  header .sub { max-width: calc(100vw - 32px); }
+  #staticNote { min-width: 0; overflow-wrap: anywhere; }
+  .seg button { border: 0; background: transparent; padding: 4px 10px; cursor: pointer; font-size: 13px; white-space: nowrap; flex: none; }
+  .seg button + button { border-left: 1px solid var(--line); }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: var(--panel); }
+  .seg-label { font-size: 12px; color: var(--muted); }
+  #variantBox { display: none; align-items: center; gap: 6px; }
+  .ghost { border: 1px solid var(--line); background: transparent; border-radius: 8px; padding: 4px 10px; cursor: pointer; font-size: 13px; }
+  .ghost:hover { border-color: var(--muted); }
+  .ghost[aria-pressed="true"] { background: var(--ink); color: var(--panel); border-color: var(--ink); }
+  kbd { font: 12px ui-monospace, Consolas, monospace; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; background: var(--bg); white-space: nowrap; }
+
+  #shortcuts { position: absolute; right: 16px; top: calc(100% + 6px); z-index: 20; width: 300px; padding: 12px 14px; display: none; }
+  #shortcuts.open { display: block; }
+  #shortcuts h3 { margin: 0 0 8px; font-size: 13px; }
+  #shortcuts dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 6px 10px; font-size: 13px; align-items: baseline; }
+  #shortcuts dd { margin: 0; color: var(--muted); }
+
+  main { display: grid; grid-template-columns: minmax(260px, 30%) 1fr; grid-template-areas: "manual stage"; min-height: 0; }
+  #manual { grid-area: manual; }
+  #stage { grid-area: stage; }
+  main.manual-hidden { grid-template-columns: 0 1fr; }
+  main.manual-hidden #manual { display: none; }
+
+  #manual { border-right: 1px solid var(--line); background: var(--panel); display: flex; flex-direction: column; min-height: 0; }
+  #manual .bar { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 13px; color: var(--muted); flex-wrap: wrap; }
+  #manual .tabs { display: flex; gap: 4px; margin-left: auto; flex-wrap: wrap; justify-content: flex-end; align-items: center; }
+  #manual .tabs button { border: 1px solid var(--line); background: transparent; border-radius: 6px; padding: 2px 8px; cursor: pointer; font-size: 12px; }
+  #manual .tabs button[aria-pressed="true"] { background: var(--ink); color: var(--panel); border-color: var(--ink); }
+  #pageNav { display: flex; align-items: center; gap: 4px; font-variant-numeric: tabular-nums; }
+  #pageNav button { border: 1px solid var(--line); background: transparent; border-radius: 6px; width: 26px; height: 24px; cursor: pointer; }
+  #manual .hint { font-size: 12px; color: var(--muted); padding: 6px 12px 0; display: flex; justify-content: space-between; gap: 8px; }
+  #manual .hint.flash { color: var(--accent); }
+  #manual .page { flex: 1; overflow: auto; padding: 8px 12px 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  #manual .sheet { position: relative; max-width: 100%; }
+  #manual img { display: block; max-width: 100%; height: auto; background: #fff; border: 1px solid var(--line); border-radius: 4px; cursor: pointer; }
+  #manual .fig { position: absolute; left: 0; right: 0; border: 2px solid var(--accent); border-radius: 4px; pointer-events: none; }
+  #manual .missing, #manual .note { color: var(--muted); font-size: 13px; line-height: 1.6; padding: 8px; }
+  #manual .missing { padding: 24px 8px; }
+  code { background: var(--bg); padding: 1px 5px; border-radius: 4px; }
+
+  #stage { position: relative; min-width: 0; min-height: 0; background: var(--stage-bg); overflow: hidden; }
+  #stage.drawing { background: #fff; }
+  #stage canvas { display: block; width: 100%; height: 100%; }
+  .card { background: color-mix(in srgb, var(--panel) 94%, transparent); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 2px 12px rgba(0,0,0,.06); }
+  #stage > .card { position: absolute; }
+  #stepCard { left: 12px; top: 12px; width: min(340px, calc(100% - 24px)); padding: 12px 14px; }
+  #stepCard .kicker { font-size: 12px; color: var(--muted); display: flex; gap: 8px; flex-wrap: wrap; }
+  #stepCard h2 { margin: 4px 0 6px; font-size: 18px; }
+  #stepCard p { margin: 0 0 8px; font-size: 14px; line-height: 1.5; }
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; }
+  .chip { font-size: 12px; border-radius: 999px; padding: 2px 8px; background: var(--bg); border: 1px solid var(--line); }
+  .chip.hw { background: var(--accent-soft); border-color: transparent; color: var(--ink); }
+
+  #hwCard { right: 12px; top: 12px; width: 250px; padding: 10px 12px; font-size: 13px; max-height: calc(100% - 90px); overflow: auto; }
+  #hwCard h3 { margin: 0 0 8px; font-size: 13px; color: var(--muted); font-weight: 600; }
+  .row { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; margin-bottom: 8px; }
+  .row .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .row .num { font-variant-numeric: tabular-nums; }
+  .row .id { grid-column: 1 / -1; font-size: 11px; color: var(--muted); }
+  .meter { grid-column: 1 / -1; height: 5px; background: var(--bg); border-radius: 3px; overflow: hidden; }
+  .meter i { display: block; height: 100%; background: var(--accent); width: 0; transition: width .4s; }
+  .meter i.full { background: var(--ok); }
+  .row.flash .num { color: var(--accent); font-weight: 700; }
+  .tool { display: flex; justify-content: space-between; gap: 8px; padding: 6px 0; border-top: 1px dashed var(--line); }
+  .tool .tag { font-size: 11px; padding: 0 6px; border-radius: 999px; background: var(--accent); color: var(--accent-ink); visibility: hidden; white-space: nowrap; }
+  .tool .tag.on { visibility: visible; }
+  details { border-top: 1px dashed var(--line); padding-top: 6px; color: var(--muted); }
+  details summary { cursor: pointer; font-size: 12px; }
+  details ul { margin: 6px 0 0; padding-left: 16px; font-size: 12px; }
+
+  #viewCard { right: 12px; bottom: 12px; padding: 8px 12px; display: flex; align-items: center; gap: 8px; font-size: 13px; flex-wrap: wrap; justify-content: flex-end; max-width: calc(100% - 24px); }
+  #viewCard input[type=range] { width: 110px; accent-color: var(--accent); vertical-align: middle; }
+  #tip { position: absolute; pointer-events: none; padding: 3px 8px; font-size: 12px; border-radius: 6px; background: var(--ink); color: var(--panel); display: none; white-space: nowrap; z-index: 6; }
+  #pick { position: absolute; z-index: 7; display: none; padding: 10px 12px; min-width: 180px; max-width: 260px; font-size: 13px; }
+  #pick.open { display: block; }
+  #pick b { display: block; font-size: 15px; margin-bottom: 4px; padding-right: 22px; }
+  #pick .line { color: var(--muted); }
+  #pick .x { position: absolute; right: 6px; top: 4px; border: 0; background: transparent; cursor: pointer; font-size: 16px; color: var(--muted); }
+  #labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+  #labels span { position: absolute; transform: translate(-50%, -50%); font-size: 11px; padding: 1px 6px; border-radius: 4px; background: color-mix(in srgb, var(--panel) 88%, transparent); border: 1px solid var(--line); white-space: nowrap; }
+  #stage.drawing #labels span { background: #fff; color: #111; border-color: #111; }
+  #error { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; padding: 24px; text-align: center; line-height: 1.7; color: var(--muted); background: var(--stage-bg); z-index: 10; }
+
+  footer { border-top: 1px solid var(--line); background: var(--panel); display: flex; align-items: center; gap: 8px; padding: 8px 12px; min-width: 0; min-height: 49px; }
+  footer.static > :not(#staticNote) { display: none; }
+  #staticNote { display: none; color: var(--muted); font-size: 13px; }
+  footer.static #staticNote { display: block; }
+  footer .nav { border: 1px solid var(--line); background: transparent; border-radius: 8px; min-width: 36px; height: 32px; cursor: pointer; flex: none; font-size: 15px; padding: 0 8px; }
+  footer .nav:hover { border-color: var(--muted); }
+  footer .nav[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  #steps { display: flex; gap: 4px; overflow-x: auto; flex: 1; scrollbar-width: thin; padding: 2px; }
+  #steps button { flex: none; min-width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line); background: transparent; cursor: pointer; font-size: 13px; font-variant-numeric: tabular-nums; padding: 0 8px; }
+  #steps button.done { background: var(--bg); color: var(--muted); }
+  #steps button.current { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 700; }
+
+  #about { max-width: 960px; margin: 0 auto; padding: 32px 16px 48px; line-height: 1.7; font-size: 14px; }
+  #about h2 { font-size: 20px; margin: 0 0 16px; }
+  #about h3 { font-size: 16px; margin: 24px 0 8px; }
+  #about h4 { font-size: 14px; margin: 16px 0 4px; color: var(--muted); }
+  #about .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  #about .box { padding: 4px 16px 12px; }
+  #about ol, #about ul { padding-left: 22px; margin: 6px 0; }
+  #about li { margin: 3px 0; }
+  #about .note { background: var(--accent-soft); border-radius: 8px; padding: 8px 12px; margin: 12px 0; }
+  .safety { border-left: 4px solid #d9534f; background: color-mix(in srgb, #d9534f 10%, transparent); border-radius: 6px; padding: 6px 10px; margin: 8px 0 0; font-size: 13px; line-height: 1.5; }
+  #about .safety { font-size: 14px; padding: 10px 14px; margin: 0 0 16px; }
+  #autoFrameBtn[aria-pressed="false"] { border-style: dashed; color: var(--muted); }
+  #about .disclaimer { color: var(--muted); border-top: 1px solid var(--line); margin-top: 28px; padding-top: 12px; font-size: 13px; }
+  #about .muted { color: var(--muted); }
+
+  /* 分享图截图模式：只留 3D 画面和标题 */
+  body.shot .app { grid-template-rows: 1fr; height: 100vh; }
+  body.shot header, body.shot footer, body.shot #manual, body.shot #stage > .card, body.shot #about { display: none !important; }
+  body.shot main { grid-template-columns: 1fr; grid-template-rows: 1fr; grid-template-areas: "stage"; }
+  #shotTitle { display: none; }
+  body.shot #shotTitle { display: block; position: absolute; left: 36px; bottom: 30px; font-size: 36px; font-weight: 700; color: var(--ink); }
+  body.shot #shotTitle small { display: block; font-size: 20px; font-weight: 400; color: var(--muted); max-width: 520px; margin-top: 6px; line-height: 1.5; }
+
+  @media (max-width: 760px) {
+    main { grid-template-columns: 1fr; grid-template-rows: 34% 1fr; grid-template-areas: "manual" "stage"; }
+    main.manual-hidden { grid-template-rows: 0 1fr; }
+    #manual { border-right: 0; border-bottom: 1px solid var(--line); }
+    #hwCard { display: none; }
+    /* 窄屏上步骤卡片最多占画布三成高，超出滚动，给 3D 画面留出空间（取景检查会验证） */
+    #stepCard { width: calc(100% - 24px); max-height: 30%; overflow: auto; padding: 8px 12px; }
+    #stepCard h2 { font-size: 16px; margin: 2px 0 4px; }
+    #stepCard p { font-size: 13px; margin-bottom: 6px; }
+    header .sub { display: none; }
+    #about .cols { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1 data-t="appName"></h1>
+    <div class="seg" id="pieceSeg" role="group"></div>
+    <div id="variantBox"><span class="seg-label" id="variantLabel" data-t="variantLabel"></span><div class="seg" id="variantSeg" role="group"></div></div>
+    <span class="sub" id="subtitle"></span>
+    <div class="seg" id="langSeg" role="group" data-title="langTitle"></div>
+    <button class="ghost" id="shortcutsBtn" aria-expanded="false" data-t="shortcuts" data-title="shortcutsTitle"></button>
+    <button class="ghost" id="toggleManual" data-t="manualHide"></button>
+    <div class="card" id="shortcuts" role="dialog"><h3 data-t="shortcutsTitle"></h3><dl id="shortcutList"></dl></div>
+  </header>
+  <main id="main">
+    <aside id="manual">
+      <div class="bar">
+        <span id="manualLabel"></span>
+        <div class="tabs">
+          <div id="pageTabs" class="tabs"></div>
+          <div id="pageNav"><button id="pagePrev" data-title="pagePrev">‹</button><span id="pageOf"></span><button id="pageNext" data-title="pageNext">›</button></div>
+        </div>
+      </div>
+      <div class="hint" id="pageHint"><span id="pageHintText"></span><a id="pageOpen" target="_blank" rel="noopener" data-t="pageOpen"></a></div>
+      <div class="page" id="pageView"></div>
+    </aside>
+    <section id="stage">
+      <div id="labels"></div>
+      <div class="card" id="stepCard"></div>
+      <div class="card" id="hwCard"></div>
+      <div class="card" id="viewCard">
+        <label><span data-t="explode"></span> <input type="range" id="explode" min="0" max="1" step="0.01" value="0"></label>
+        <button class="ghost" id="autoFrameBtn" aria-pressed="true" data-title="autoFrameTitle"></button>
+        <button class="ghost" id="drawingBtn" aria-pressed="false" data-t="drawing" data-title="drawingTitle"></button>
+        <button class="ghost" id="labelsBtn" aria-pressed="false" data-t="labels" data-title="labelsTitle"></button>
+        <button class="ghost" id="viewAll" data-t="viewAll"></button>
+        <button class="ghost" id="viewBody"></button>
+      </div>
+      <div class="card" id="pick" role="status"><button class="x" id="pickClose">×</button><div id="pickBody"></div></div>
+      <div id="tip"></div>
+      <div id="shotTitle"></div>
+      <div id="error"></div>
+    </section>
+  </main>
+  <footer id="footer">
+    <button class="nav" id="prev" data-title="prevTitle">‹</button>
+    <button class="nav" id="replay" data-title="replayTitle">▶</button>
+    <button class="nav" id="next" data-title="nextTitle">›</button>
+    <div id="steps"></div>
+    <button class="nav" id="chain" aria-pressed="false" data-title="chainTitle">C ▶▶</button>
+    <span id="staticNote" data-t="staticNote"></span>
+  </footer>
+</div>
+<section id="about"></section>
+
+<script type="importmap">
+{ "imports": {
+  "three": "./vendor/three@0.160.0/build/three.module.js",
+  "three/addons/": "./vendor/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const $ = (id) => document.getElementById(id);
+const V = (a) => new THREE.Vector3(...a);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const params = new URLSearchParams(location.search);
+
+// ================= 文案与配置 =================
+const jsonCache = {};
+function getJson(url) {
+  if (!jsonCache[url]) {
+    jsonCache[url] = fetch(url).then((r) => { if (!r.ok) throw new Error(`${url}：${r.status} ${r.statusText}`); return r.json(); });
+  }
+  return jsonCache[url];
+}
+// 语言：?lang=en 读 data/site.en.json，默认读 data/site.json（?site= 可直接指定站点文件）
+const LANG = params.get('lang') || document.querySelector('meta[name="flatpack-lang"]')?.content || '';
+let SITE, UI, PRODUCT;
+try {
+  SITE = await getJson(params.get('site') || (LANG && LANG !== 'zh' ? `data/site.${LANG}.json` : 'data/site.json'));
+  [UI, PRODUCT] = await Promise.all([getJson(SITE.ui), getJson(SITE.product)]);
+} catch (err) {
+  // 还没读到文案文件，只能显示原始错误
+  document.body.textContent = `${err.message} — python -m http.server 8137`;
+  throw err;
+}
+const t = (key, vars = {}) => String(UI[key] ?? key).replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? '');
+document.documentElement.lang = SITE.lang || 'zh-CN';
+for (const el of document.querySelectorAll('[data-t]')) el.textContent = t(el.dataset.t);
+for (const el of document.querySelectorAll('[data-title]')) { el.title = t(el.dataset.title); el.setAttribute('aria-label', t(el.dataset.title)); }
+$('subtitle').textContent = t('loading');
+$('shortcutList').innerHTML = UI.shortcutList.map((s) => `<dt>${s.keys.split(/\s+/).map((k) => `<kbd>${esc(k)}</kbd>`).join(' ')}</dt><dd>${esc(s.text)}</dd>`).join('');
+function showError(msg) { const e = $('error'); e.style.display = 'flex'; e.textContent = msg; }
+
+// 装配数据 + 译文：站点文件里 pieces[].i18n 指向译文，按 id / 步骤号覆盖名称和说明，其余（数量、坐标）不动
+function applyI18n(d, o) {
+  for (const k of ['title', 'scope', 'layoutSource', 'variantTitle', 'note', 'notes']) if (o[k]) d[k] = o[k];
+  for (const x of d.extras || []) if (o.extras && o.extras[x.id]) Object.assign(x, o.extras[x.id]);
+  if (o.overview && d.overview) Object.assign(d.overview, o.overview);
+  for (const [k, v] of Object.entries(o.variants || {})) if (d.variants && d.variants[k]) Object.assign(d.variants[k], v);
+  for (const [k, v] of Object.entries(o.poses || {})) if (d.poses && d.poses[k]) Object.assign(d.poses[k], v);
+  for (const [k, v] of Object.entries(o.partTypes || {})) if (d.partTypes && d.partTypes[k]) Object.assign(d.partTypes[k], v);
+  for (const p of d.parts || []) if (o.parts && o.parts[p.id]) p.name = o.parts[p.id];
+  for (const h of d.hardware || []) if (o.hardware && o.hardware[h.id]) Object.assign(h, o.hardware[h.id]);
+  for (const s of d.steps || []) {
+    const tr = o.steps && (o.steps[`${s.variant}:${s.n}`] || o.steps[String(s.n)]);
+    if (tr) Object.assign(s, tr);
+    if (o.tools) s.tools = (s.tools || []).map((x) => o.tools[x] ?? x);
+  }
+  return d;
+}
+const dataCache = {};
+function loadData(url) {
+  if (!dataCache[url]) {
+    const piece = SITE.pieces.find((p) => p.url === url);
+    dataCache[url] = Promise.all([getJson(url), piece && piece.i18n ? getJson(piece.i18n) : null])
+      .then(([d, o]) => (o ? applyI18n(structuredClone(d), o) : d));
+  }
+  return dataCache[url];
+}
+
+// 语言切换：换 ?lang= 后重新载入，保留当前件、路线和步骤
+$('langSeg').innerHTML = (SITE.languages || []).map((l) => `<button data-code="${esc(l.code)}" aria-pressed="${l.code === (SITE.langCode || 'zh')}">${esc(l.label)}</button>`).join('');
+for (const b of $('langSeg').children) {
+  b.onclick = () => {
+    // 有独立语言页（如 en/）时跳到那一页，否则用 ?lang=；件、路线、步骤等参数保留
+    const lang = SITE.languages.find((l) => l.code === b.dataset.code);
+    const q = new URLSearchParams(location.search);
+    q.delete('lang');
+    if (lang.path !== undefined) location.href = new URL(`${lang.path}${q.toString() ? `?${q}` : ''}`, document.baseURI).href;
+    else { if (lang.code !== 'zh') q.set('lang', lang.code); location.search = q.toString(); }
+  };
+}
+
+// ================= 场景（各视图共用）=================
+const css = getComputedStyle(document.documentElement);
+const cssColor = (name) => new THREE.Color(css.getPropertyValue(name).trim());
+const stage = $('stage');
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: params.has('shot') });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+stage.prepend(renderer.domElement);
+
+const scene = new THREE.Scene();
+const STAGE_BG = cssColor('--stage-bg');
+scene.background = STAGE_BG.clone();
+const camera = new THREE.PerspectiveCamera(38, 1, 0.5, 6000);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.maxPolarAngle = Math.PI * 0.495;
+
+scene.add(new THREE.HemisphereLight(0xffffff, 0x9a958c, 1.6));
+const sun = new THREE.DirectionalLight(0xffffff, 1.6);
+sun.position.set(180, 420, 260);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -420, right: 420, top: 420, bottom: -420, near: 10, far: 1400 });
+scene.add(sun);
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(3000, 3000), new THREE.MeshStandardMaterial({ color: cssColor('--floor'), roughness: 1 }));
+floor.rotation.x = -Math.PI / 2;
+floor.receiveShadow = true;
+scene.add(floor);
+
+// ================= 材质与几何缓存 =================
+const MAT = {
+  white: new THREE.MeshStandardMaterial({ color: 0xf4f2ed, roughness: 0.85 }),
+  frame: new THREE.MeshStandardMaterial({ color: 0xe4e0d8, roughness: 0.9 }),
+  gray: new THREE.MeshStandardMaterial({ color: 0xb3b1ab, roughness: 0.9 }),
+  hilite: new THREE.MeshStandardMaterial({ color: 0xf6cf86, roughness: 0.75 }),
+  host: new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, transparent: true, opacity: 0.28, depthWrite: false }),
+  edge: new THREE.LineBasicMaterial({ color: 0x2a2a28 }),
+  hostEdge: new THREE.LineBasicMaterial({ color: 0x8a877f, transparent: true, opacity: 0.6 }),
+  mark: new THREE.MeshBasicMaterial({ color: 0x222222 }),
+  wood: new THREE.MeshStandardMaterial({ color: 0xc9a46a, roughness: 0.8 }),
+  metal: new THREE.MeshStandardMaterial({ color: 0x8d9298, roughness: 0.35, metalness: 0.8 }),
+  metal2: new THREE.MeshStandardMaterial({ color: 0x8d9298, roughness: 0.35, metalness: 0.8, side: THREE.DoubleSide }),
+  wall: new THREE.MeshStandardMaterial({ color: 0xe9e6df, roughness: 1 }),
+  outline: new THREE.LineBasicMaterial({ color: 0x00bcd4 }),
+  pad: new THREE.MeshStandardMaterial({ color: 0xd8d2c4, roughness: 1 }),
+};
+// 线稿视图：白面、黑线、无光照无阴影；高亮和灰面用浅灰，五金用中灰
+const flat = (color, extra = {}) => new THREE.MeshBasicMaterial({ color, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1, ...extra });
+const DRAW = { white: flat(0xffffff, { side: THREE.DoubleSide }), gray: flat(0xd6d6d6), hilite: flat(0xe9e9e9), hw: flat(0x9a9a9a, { side: THREE.DoubleSide }), host: flat(0xffffff, { transparent: true, opacity: 0, depthWrite: false }) };
+function drawEquivalent(m) {
+  if (Array.isArray(m)) return m.map(drawEquivalent);
+  if (m === MAT.gray) return DRAW.gray;
+  if (m === MAT.hilite) return DRAW.hilite;
+  if (m === MAT.host) return DRAW.host;
+  if (m === MAT.mark) return MAT.mark;
+  if (m === MAT.metal || m === MAT.metal2 || m === MAT.wood || m === MAT.pad) return DRAW.hw;
+  if (m === MAT.outline) return MAT.outline;
+  return DRAW.white;
+}
+let drawing = false;
+function setMat(mesh, m) { mesh.userData.baseMat = m; mesh.material = drawing ? drawEquivalent(m) : m; }
+
+const FACE_ORDER = ['+x', '-x', '+y', '-y', '+z', '-z'];
+const geoCache = new Map();
+function cached(key, make) { if (!geoCache.has(key)) geoCache.set(key, make()); return geoCache.get(key); }
+const boxGeo = (s) => cached(`box:${s}`, () => new THREE.BoxGeometry(...s));
+const edgeGeo = (s) => cached(`edge:${s}`, () => new THREE.EdgesGeometry(boxGeo(s)));
+const cylGeo = (r1, r2, h, seg) => cached(`cyl:${r1},${r2},${h},${seg}`, () => new THREE.CylinderGeometry(r1, r2, h, seg));
+const cylEdge = (r1, r2, h, seg) => cached(`cyle:${r1},${r2},${h},${seg}`, () => new THREE.EdgesGeometry(cylGeo(r1, r2, h, seg), 40));
+
+function addEdges(mesh, geo, mat = MAT.edge) { const e = new THREE.LineSegments(geo, mat); e.userData.isEdge = true; mesh.add(e); }
+function boxMesh(size, mats, edges = MAT.edge) {
+  const m = new THREE.Mesh(boxGeo(size), mats);
+  m.userData.baseMat = mats;
+  m.castShadow = m.receiveShadow = true;
+  if (edges) addEdges(m, edgeGeo(size), edges);
+  return m;
+}
+
+const UP = new THREE.Vector3(0, 1, 0);
+const AXIS = { x: new THREE.Vector3(1, 0, 0), y: new THREE.Vector3(0, 1, 0), z: new THREE.Vector3(0, 0, 1) };
+const eulerQuat = (r) => new THREE.Quaternion().setFromEuler(new THREE.Euler(...(r || [0, 0, 0]).map(THREE.MathUtils.degToRad)));
+
+function makeHardware(def) {
+  const s = def.shape || { diameter: 1, length: 1 };
+  const type = s.type || (def.kind === 'screw' ? 'screw' : 'cylinder');
+  if (type === 'box') return boxMesh(s.size, MAT.metal);
+  if (type === 'plates') { // 多块板（墙固定件、角码）：定位点为原点，各板按 offset 摆放
+    const g = new THREE.Group();
+    for (const pl of s.plates) { const m = boxMesh(pl.size, MAT.metal2); m.position.set(...pl.offset); g.add(m); }
+    return g;
+  }
+  const r = s.diameter / 2;
+  const cyl = (r1, r2, h, seg, mat) => {
+    const m = new THREE.Mesh(cylGeo(r1, r2, h, seg), mat);
+    m.userData.baseMat = mat;
+    m.castShadow = true;
+    addEdges(m, cylEdge(r1, r2, h, seg));
+    return m;
+  };
+  if (type === 'screw') {
+    const g = new THREE.Group();
+    const hh = Math.min(0.5, s.length / 4);
+    const head = cyl(s.headDiameter / 2, r, hh, 14, MAT.metal);
+    head.position.y = s.length / 2 - hh / 2; // 钉头在 +y 端
+    g.add(cyl(r, r * 0.6, s.length, 10, MAT.metal), head);
+    return g;
+  }
+  return cyl(r, r, s.length, def.kind === 'dowel' ? 10 : 24, { dowel: MAT.wood, pad: MAT.pad }[def.kind] || MAT.metal);
+}
+
+// 让最小尺寸朝上、最大尺寸沿 x 的"平放"姿态
+function flatPose(size) {
+  const idx = [0, 1, 2].sort((a, b) => size[a] - size[b]);
+  const cols = [];
+  cols[idx[2]] = new THREE.Vector3(1, 0, 0);
+  cols[idx[0]] = new THREE.Vector3(0, 1, 0);
+  cols[idx[1]] = new THREE.Vector3(0, 0, 1);
+  const m = new THREE.Matrix4().makeBasis(cols[0], cols[1], cols[2]);
+  if (m.determinant() < 0) { cols[idx[1]].negate(); m.makeBasis(cols[0], cols[1], cols[2]); }
+  return { quat: new THREE.Quaternion().setFromRotationMatrix(m), w: size[idx[2]], d: size[idx[1]], h: size[idx[0]] };
+}
+
+// ================= 动画 =================
+const tweens = [];
+let gen = 0;
+const easeInOut = (k) => (k < 0.5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2);
+const easeOut = (k) => 1 - (1 - k) ** 3;
+function tween(dur, fn, delay = 0) {
+  return new Promise((resolve) => tweens.push({ t0: performance.now() + delay, dur, fn, resolve }));
+}
+function runTweens(now) {
+  for (let i = tweens.length - 1; i >= 0; i--) {
+    const tw = tweens[i];
+    const k = (now - tw.t0) / tw.dur;
+    if (k < 0) continue;
+    tw.fn(Math.min(1, k));
+    if (k >= 1) { tweens.splice(i, 1); tw.resolve(); }
+  }
+}
+function stopTweens() { gen++; tweens.length = 0; }
+
+// ================= 装配视图（主体 / 嵌件）=================
+class AssemblyView {
+  constructor(data, variant, { interactive = true } = {}) {
+    this.data = data;
+    this.variant = variant;
+    this.interactive = interactive;
+    this.root = new THREE.Group();
+    this.asm = new THREE.Group();
+    this.root.add(this.asm);
+    scene.add(this.root);
+    this.seq = data.steps.filter((s) => !s.variant || s.variant === variant);
+    this.stepsList = [data.overview, ...this.seq];
+    this.explodeScale = data.explodeScale || 0.6;
+    this.placeApproach = V(data.placeApproach || [0, 0, 1]);
+    this.approachDist = data.approachDist || 45;
+    this.hwDef = Object.fromEntries(data.hardware.map((h) => [h.id, h]));
+    this.extraDef = Object.fromEntries((data.extras || []).map((h) => [h.id, h]));
+    this.current = 0;
+    this.explode = 0;
+    // 墙组：柜体最终竖立位置的坐标系；固定在墙上的东西（角码、墙用螺钉、墙上的铅笔线）放这里，柜体移开时它们不动
+    this.wallGroup = new THREE.Group();
+    this.wallGroup.position.copy(V(data.poses.pivotWorld)).sub(V(data.poses.pivotLocal));
+    this.root.add(this.wallGroup);
+    this.buildHost();
+    this.buildWalls();
+    this.buildParts();
+    this.buildHardware();
+    this.buildMarks();
+    this.layoutStaging();
+  }
+
+  // 第 room.fromStep 步起显示墙（位置按方案）
+  buildWalls() {
+    this.walls = [];
+    const r = this.data.room;
+    const w = r && this.variant && r.walls[this.variant];
+    if (!w) return;
+    const m = boxMesh(w.size, MAT.wall, MAT.hostEdge);
+    m.castShadow = false;
+    m.position.set(...w.center);
+    Object.assign(m.userData, { kind: 'wall', label: t('wallLabel') });
+    this.wallFrom = this.seq.findIndex((st) => st.n >= r.fromStep) + 1 || Infinity;
+    this.wallGroup.add(m);
+    this.walls.push(m);
+  }
+
+  buildHost() {
+    const h = this.data.host;
+    if (!h || !this.interactive) return;
+    const [w, ht, d] = h.cell, tk = h.wall;
+    for (const [c, s] of [
+      [[0, -ht / 2 - tk / 2, 0], [w + 2 * tk, tk, d]], [[0, ht / 2 + tk / 2, 0], [w + 2 * tk, tk, d]],
+      [[-w / 2 - tk / 2, 0, 0], [tk, ht, d]], [[w / 2 + tk / 2, 0, 0], [tk, ht, d]],
+    ]) {
+      const m = boxMesh(s, MAT.host, MAT.hostEdge);
+      m.castShadow = false;
+      m.position.set(...c);
+      m.userData.label = t('hostLabel');
+      m.userData.kind = 'host';
+      this.asm.add(m);
+    }
+  }
+
+  buildParts() {
+    const idx = (pred) => this.seq.findIndex(pred) + 1 || Infinity;
+    this.parts = {};
+    for (const p of this.data.parts) {
+      const v = (p.variants && p.variants[this.variant]) || {};
+      const group = new THREE.Group();
+      const baseMat = p.type === 'frame' ? MAT.frame : MAT.white;
+      const mats = (hi) => FACE_ORDER.map((f) => (p.faces && p.faces[f] === 'gray' ? MAT.gray : hi ? MAT.hilite : baseMat));
+      const meshes = [];
+      const pieces = [];
+      for (const pc of p.pieces || [{ size: p.size }]) {
+        const m = boxMesh(pc.size, mats(false));
+        if (pc.offset) pieces.push({ mesh: m, folded: { pos: V(pc.offset), quat: new THREE.Quaternion() }, unfolded: { pos: V(pc.unfolded.offset), quat: eulerQuat(pc.unfolded.rotation) } });
+        meshes.push(m);
+        group.add(m);
+      }
+      const placedAt = idx((s) => (s.parts || []).includes(p.id));
+      const placeStep = this.seq[placedAt - 1];
+      group.userData = {
+        kind: 'part', def: p, label: p.name, meshes, pieces, normalMats: mats(false), hiMats: mats(true),
+        base: V(v.position || p.position), anchor: V(p.position), final: V(v.position || p.position), finalQuat: eulerQuat(v.rotation || p.rotation),
+        bench: V((placeStep && placeStep.bench) || [0, 0, 0]),
+        placedAt, installAt: idx((s) => (s.install || []).includes(p.id)), foldAt: idx((s) => (s.fold || []).includes(p.id)),
+      };
+      this.parts[p.id] = group;
+    }
+  }
+
+  buildHardware() {
+    this.hw = [];
+    this.seq.forEach((s, i) => {
+      // 拧出：找之前装上的同一种五金、同一位置，记下在第几步拿掉
+      for (const h of (s.hardware || []).filter((x) => x.action === 'remove')) {
+        for (const pl of h.placements) {
+          const o = this.hw.find((x) => x.userData.hwId === h.id && !x.userData.removedAt && !x.userData.parentPart && x.userData.final.distanceTo(V(pl.position)) < 0.01);
+          if (o) o.userData.removedAt = i + 1;
+        }
+      }
+      const entries = [
+        ...(s.hardware || []).filter((x) => x.action !== 'remove').map((h) => ({ h, def: this.hwDef[h.id], kind: 'hw' })),
+        ...(s.extras || []).map((h) => ({ h, def: this.extraDef[h.id], kind: 'extra' })),
+      ];
+      for (const { h, def, kind } of entries) {
+        for (const pl of h.placements) {
+          const obj = makeHardware(def);
+          const parentPart = pl.attachTo ? this.parts[pl.attachTo] : null;
+          // 附着件：位置写在零件基准姿态下，换算成零件局部坐标
+          const local = V(pl.position);
+          if (parentPart) local.sub(parentPart.userData.anchor);
+          let out;
+          if (pl.dir) out = V(pl.dir).normalize();
+          else { const ai = 'xyz'.indexOf(pl.axis); out = AXIS[pl.axis].clone().multiplyScalar(Math.sign(local.getComponent(ai)) || 1); }
+          const isBox = def.shape && (def.shape.type === 'box' || def.shape.type === 'plates');
+          Object.assign(obj.userData, { // 保留 makeHardware 写入的 baseMat
+            kind, def, member: pl.member, stepIdx: i + 1, hwId: h.id, frame: pl.frame || null,
+            label: kind === 'extra' ? def.name : `${def.name} ${pl.member || def.id}`, final: local, base: new THREE.Vector3(),
+            quat: isBox ? new THREE.Quaternion() : new THREE.Quaternion().setFromUnitVectors(UP, out), out, parentPart,
+            scale: new THREE.Vector3(pl.mirrorX ? -1 : 1, 1, 1),
+          });
+          this.hw.push(obj);
+        }
+      }
+    });
+  }
+
+  buildMarks() {
+    this.marks = [];
+    this.seq.forEach((s, i) => {
+      for (const mk of s.marks || []) {
+        const m = new THREE.Mesh(boxGeo(mk.size), MAT.mark);
+        m.userData = { stepIdx: i + 1, label: t('markLabel'), kind: 'mark', baseMat: MAT.mark };
+        m.position.set(...mk.position);
+        (mk.frame === 'wall' ? this.wallGroup : this.asm).add(m);
+        this.marks.push(m);
+      }
+    });
+  }
+
+  layoutStaging() {
+    const st = this.data.staging || { origin: [-150, 60], width: 300 };
+    const gap = st.gap || 8;
+    let x = st.origin[0], z = st.origin[1], rowD = 0;
+    for (const p of this.data.parts) {
+      const g = this.parts[p.id];
+      let pose;
+      if (g.userData.pieces.length) {
+        const box = new THREE.Box3();
+        for (const pc of g.userData.pieces) {
+          const gp = pc.mesh.geometry.parameters;
+          const b = new THREE.Box3().setFromCenterAndSize(new THREE.Vector3(), new THREE.Vector3(gp.width, gp.height, gp.depth));
+          box.union(b.applyMatrix4(new THREE.Matrix4().compose(pc.unfolded.pos, pc.unfolded.quat, new THREE.Vector3(1, 1, 1))));
+        }
+        const size = box.getSize(new THREE.Vector3());
+        pose = { quat: new THREE.Quaternion(), w: size.x, d: size.z, h: size.y };
+      } else pose = flatPose(p.size);
+      if (x + pose.w > st.origin[0] + st.width && x > st.origin[0]) { x = st.origin[0]; z += rowD + gap; rowD = 0; }
+      g.userData.stage = { pos: new THREE.Vector3(x + pose.w / 2, pose.h / 2, z + pose.d / 2), quat: pose.quat };
+      x += pose.w + gap;
+      rowD = Math.max(rowD, pose.d);
+    }
+    // 五金托盘：左侧，按种类分块
+    const tray = {};
+    let ty = st.origin[1];
+    for (const o of this.hw) {
+      const id = o.userData.hwId;
+      if (!tray[id]) { tray[id] = { z: ty, n: 0 }; const total = this.hw.filter((h) => h.userData.hwId === id).length; ty += Math.ceil(total / 10) * 5 + 6; }
+      const k = tray[id].n++;
+      const def = o.userData.def;
+      const lying = def.shape && (def.shape.type === 'box' || def.shape.type === 'plates') ? new THREE.Quaternion() : new THREE.Quaternion().setFromUnitVectors(UP, AXIS.x);
+      o.userData.stage = { pos: new THREE.Vector3(st.origin[0] - 70 + (k % 10) * 5, 1, tray[id].z + Math.floor(k / 10) * 5), quat: lying };
+    }
+  }
+
+  // 第 i 步完成后的姿态：转角 tilt（绕底边翻转）+ 平移 shift（例如上墙时把柜体从墙边移开）
+  poseAt(i) {
+    let pose = this.data.defaultPose || 'flat';
+    for (let k = 1; k <= i; k++) if (this.stepsList[k].pose) pose = this.stepsList[k].pose;
+    const p = this.data.poses[pose];
+    return { tilt: p.tilt, shift: V(p.shift || [0, 0, 0]) };
+  }
+  applyPose(tilt, shift) {
+    this.tilt = tilt;
+    this.shift = shift.clone();
+    this.asm.rotation.set(THREE.MathUtils.degToRad(tilt), 0, 0);
+    this.asm.position.copy(V(this.data.poses.pivotWorld)).sub(V(this.data.poses.pivotLocal).applyEuler(this.asm.rotation)).add(shift);
+  }
+  parentFor(o) { return o.userData.parentPart || (o.userData.frame === 'wall' ? this.wallGroup : this.asm); }
+
+  partTarget(g, i) {
+    const u = g.userData;
+    return u.final.clone().add(u.installAt <= i ? new THREE.Vector3() : u.bench);
+  }
+  setPieces(g, folded) {
+    for (const pc of g.userData.pieces) {
+      const s = folded ? pc.folded : pc.unfolded;
+      pc.mesh.position.copy(s.pos);
+      pc.mesh.quaternion.copy(s.quat);
+    }
+  }
+  place(obj, parent, pos, quat) {
+    parent.add(obj);
+    obj.userData.base.copy(pos);
+    obj.position.copy(pos);
+    obj.quaternion.copy(quat);
+    if (obj.userData.scale) obj.scale.copy(obj.userData.scale);
+  }
+
+  snapTo(i) {
+    stopTweens();
+    const pose = this.poseAt(i);
+    this.applyPose(pose.tilt, pose.shift);
+    for (const w of this.walls) w.visible = i >= this.wallFrom;
+    for (const g of Object.values(this.parts)) {
+      const u = g.userData;
+      if (u.placedAt <= i) this.place(g, this.asm, this.partTarget(g, i), u.finalQuat);
+      else this.place(g, this.root, u.stage.pos, u.stage.quat);
+      if (u.pieces.length) this.setPieces(g, u.foldAt <= i);
+    }
+    for (const o of this.hw) {
+      const u = o.userData;
+      if (u.stepIdx <= i) this.place(o, this.parentFor(o), u.final, u.quat);
+      else this.place(o, this.root, u.stage.pos, u.stage.quat);
+      o.visible = !(u.removedAt <= i);
+    }
+    for (const m of this.marks) m.visible = m.userData.stepIdx <= i;
+  }
+
+  fly(obj, parent, target, q1, approach, dist, delay, dur) {
+    obj.position.copy(obj.userData.base);
+    obj.updateMatrixWorld();
+    parent.attach(obj);
+    if (obj.userData.scale) obj.scale.copy(obj.userData.scale);
+    const from = obj.position.clone();
+    const q0 = obj.quaternion.clone();
+    const pre = target.clone().addScaledVector(approach, dist);
+    const base = obj.userData.base.copy(from);
+    return tween(dur, (k) => {
+      if (k < 0.62) base.lerpVectors(from, pre, easeInOut(k / 0.62));
+      else base.lerpVectors(pre, target, easeOut((k - 0.62) / 0.38));
+      obj.quaternion.slerpQuaternions(q0, q1, easeInOut(Math.min(1, k / 0.62)));
+    }, delay);
+  }
+
+  async animate(i) {
+    const my = gen;
+    const s = this.seq[i - 1];
+    const placeDir = s.approach ? V(s.approach).normalize() : this.placeApproach;
+    await Promise.all((s.parts || []).map((id, k) => {
+      const g = this.parts[id];
+      return this.fly(g, this.asm, this.partTarget(g, i), g.userData.finalQuat, placeDir, this.approachDist, k * 140, 1100);
+    }));
+    if (my !== gen) return;
+    if ((s.fold || []).length) {
+      await Promise.all(s.fold.map((id) => tween(1300, (k) => {
+        const e = easeInOut(k);
+        for (const pc of this.parts[id].userData.pieces) {
+          pc.mesh.position.lerpVectors(pc.unfolded.pos, pc.folded.pos, e);
+          pc.mesh.quaternion.slerpQuaternions(pc.unfolded.quat, pc.folded.quat, e);
+        }
+      })));
+      if (my !== gen) return;
+    }
+    if ((s.install || []).length) {
+      const dir = V(s.approach || [0, 0, 1]).normalize();
+      await Promise.all(s.install.map((id, k) => {
+        const g = this.parts[id];
+        return this.fly(g, this.asm, g.userData.final, g.userData.finalQuat, dir, this.approachDist, k * 60, 1300);
+      }));
+      if (my !== gen) return;
+    }
+    for (const w of this.walls) if (i >= this.wallFrom) w.visible = true;
+    // 拧出：沿钉头方向退出后消失
+    const gone = this.hw.filter((o) => o.userData.removedAt === i);
+    if (gone.length) {
+      await Promise.all(gone.map((o) => { const from = o.userData.base.clone(); return tween(700, (k) => o.userData.base.copy(from).addScaledVector(o.userData.out, 14 * easeInOut(k))); }));
+      for (const o of gone) o.visible = false;
+      if (my !== gen) return;
+    }
+    const mine = this.hw.filter((o) => o.userData.stepIdx === i);
+    await Promise.all(mine.map((o, k) => this.fly(o, this.parentFor(o), o.userData.final, o.userData.quat,
+      o.userData.out, Math.min(10, this.approachDist / 2), k * (mine.length > 12 ? 28 : 80), 650)));
+    if (my !== gen) return;
+    for (const m of this.marks) if (m.userData.stepIdx === i) m.visible = true;
+    const target = this.poseAt(i);
+    if (target.tilt !== this.tilt || !target.shift.equals(this.shift)) {
+      const fromT = this.tilt, fromS = this.shift.clone();
+      await tween(1700, (k) => { const e = easeInOut(k); this.applyPose(fromT + (target.tilt - fromT) * e, fromS.clone().lerp(target.shift, e)); });
+    }
+  }
+
+  // 第 i 步完成后画面上应看到的东西：第 0 步是全部零件（含备料区），之后是格子示意、已放入的零件和五金
+  currentBox() {
+    this.root.updateMatrixWorld(true);
+    const box = new THREE.Box3();
+    const objs = this.current === 0 ? this.objects()
+      // 挂在还在备料区的零件上的五金（如先敲进长层板的木销）不算，它们属于备料区
+      : [...this.bodyObjects(), ...this.hw.filter((o) => o.userData.stepIdx <= this.current && !(o.userData.removedAt <= this.current) && (!o.userData.parentPart || o.userData.parentPart.parent === this.asm)),
+        ...this.asm.children.filter((o) => o.userData.kind === 'host')];
+    for (const o of objs) box.expandByObject(o);
+    return box;
+  }
+  // 先摆到第 i 步完成的样子量包围盒（用于动画开始前取景）
+  targetBox(i) {
+    this.current = i;
+    this.snapTo(i);
+    return this.currentBox();
+  }
+
+  highlight(i) {
+    const s = this.stepsList[i];
+    const hi = new Set([...(s.parts || []), ...(s.install || []), ...(s.fold || [])]);
+    for (const h of s.hardware || []) for (const pl of h.placements) if (pl.attachTo) hi.add(pl.attachTo);
+    for (const [id, g] of Object.entries(this.parts)) {
+      for (const m of g.userData.meshes) setMat(m, hi.has(id) ? g.userData.hiMats : g.userData.normalMats);
+    }
+  }
+
+  go(i, animate = true) {
+    i = Math.max(0, Math.min(this.seq.length, i));
+    this.current = i;
+    this.highlight(i);
+    if (i === 0 || !animate) this.snapTo(i);
+    else { this.snapTo(i - 1); this.animate(i); }
+  }
+
+  objects() { return [...Object.values(this.parts), ...this.hw]; }
+  bodyObjects() { return Object.values(this.parts).filter((g) => g.parent === this.asm); }
+  labelTargets() {
+    const cur = new Set(this.stepsList[this.current].parts || []);
+    return Object.values(this.parts).filter((g) => g.parent === this.asm || cur.has(g.userData.def.id));
+  }
+
+  update() {
+    for (const o of this.objects()) {
+      o.position.copy(o.userData.base);
+      if (o.parent === this.asm && this.explode > 0) o.position.addScaledVector(o.userData.final, this.explode * this.explodeScale);
+    }
+  }
+
+  dispose() { stopTweens(); scene.remove(this.root); }
+}
+
+// ================= 全套视图（实例化）=================
+class SetView {
+  async init(set, { bodyVariant = null } = {}) {
+    this.set = set;
+    const body = await loadData(set.body);
+    this.body = new AssemblyView(body, bodyVariant, { interactive: false });
+    this.body.snapTo(this.body.seq.length);
+    this.root = this.body.root;
+    this.instanced = [];
+    this.lines = [];
+    this.inserts = [];
+    this.explode = 0;
+    for (const ins of set.inserts) {
+      const data = await loadData(ins.data);
+      this.inserts.push({ ins, data });
+      // 用嵌件的装配视图算出成品状态，取出每个网格的几何体与相对矩阵，再按格子实例化
+      const tpl = new AssemblyView(data, ins.variant || null, { interactive: false });
+      tpl.snapTo(tpl.seq.length);
+      tpl.asm.position.set(0, 0, 0);
+      tpl.asm.rotation.set(0, 0, 0);
+      tpl.root.updateMatrixWorld(true);
+      const entries = [];
+      tpl.asm.traverse((o) => {
+        if (!o.isMesh || o.userData.kind === 'mark') return;
+        let owner = o;
+        while (owner && !(owner.userData.kind === 'part' || owner.userData.kind === 'hw')) owner = owner.parent;
+        entries.push({ o, matrix: o.matrixWorld.clone(), owner: owner && owner.userData });
+      });
+      tpl.dispose();
+      for (const { o, matrix, owner } of entries) {
+        const inst = new THREE.InstancedMesh(o.geometry, o.userData.baseMat, ins.placements.length);
+        inst.castShadow = inst.receiveShadow = true;
+        inst.userData = { matrix, placements: ins.placements, title: data.title, owner, label: owner ? owner.label : data.title, baseMat: o.userData.baseMat };
+        setMat(inst, o.userData.baseMat);
+        this.instanced.push(inst);
+        this.body.asm.add(inst);
+        const edge = o.children.find((c) => c.userData.isEdge);
+        if (edge) {
+          // 线框不能用 InstancedMesh：每格一个 LineSegments，共用同一份 EdgesGeometry
+          for (const pl of ins.placements) {
+            const line = new THREE.LineSegments(edge.geometry, edge.material);
+            line.matrixAutoUpdate = false;
+            line.userData = { matrix, origin: V(pl.origin), isEdge: true };
+            this.lines.push(line);
+            this.body.asm.add(line);
+          }
+        }
+      }
+    }
+    this.setExplode(0);
+    return this;
+  }
+  setExplode(e) {
+    this.explode = e;
+    const m = new THREE.Matrix4();
+    const out = new THREE.Vector3(0, 0, e * 45);
+    for (const inst of this.instanced) {
+      inst.userData.placements.forEach((pl, k) => {
+        m.makeTranslation(V(pl.origin).add(out)).multiply(inst.userData.matrix);
+        inst.setMatrixAt(k, m);
+      });
+      inst.instanceMatrix.needsUpdate = true;
+      inst.computeBoundingSphere();
+    }
+    for (const line of this.lines) {
+      line.matrix.makeTranslation(line.userData.origin.clone().add(out)).multiply(line.userData.matrix);
+      line.matrixWorldNeedsUpdate = true;
+    }
+  }
+  objects() { return [...this.body.objects(), ...this.instanced]; }
+  bodyObjects() { return this.body.bodyObjects(); }
+  labelTargets() { return this.body.bodyObjects(); }
+  update() { this.body.update(); }
+  dispose() { this.body.dispose(); }
+}
+
+// ================= Room 视图：全套靠墙放，墙上用青色轮廓标出柜体和固定件的最终位置 =================
+class RoomView extends SetView {
+  async initRoom(room, variant) {
+    this.room = room;
+    this.variant = variant;
+    await this.init(await loadData(room.set), { bodyVariant: variant });
+    MAT.outline.color.set(room.outlineColor || '#00bcd4');
+    const mat = new THREE.LineBasicMaterial({ color: MAT.outline.color, depthTest: false, transparent: true });
+    this.outlineMat = mat;
+    for (const o of room.outlines[variant]) {
+      const [a0, y0, a1, y1] = o.rect;
+      const pt = (a, y) => (o.plane === 'z' ? [a, y, o.at] : [o.at, y, a]);
+      const pts = [pt(a0, y0), pt(a1, y0), pt(a1, y0), pt(a1, y1), pt(a1, y1), pt(a0, y1), pt(a0, y1), pt(a0, y0)].flat();
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+      const line = new THREE.LineSegments(g, mat);
+      line.renderOrder = 10; // 透过柜体也能看见
+      line.userData = { kind: 'outline', label: t(o.kind === 'cabinet' ? 'outlineCabinet' : 'outlineFixing', { id: o.id || '' }) };
+      this.body.wallGroup.add(line);
+    }
+    return this;
+  }
+  // 人眼高度、斜前方看过去，按包围盒取景
+  frameRoom(instant = false) {
+    scene.updateMatrixWorld(true);
+    const box = new THREE.Box3();
+    for (const o of this.bodyObjects()) box.expandByObject(o);
+    box.expandByScalar(15); // 带上柜体周围一圈墙面和地面
+    const c = box.getCenter(new THREE.Vector3());
+    const dir = new THREE.Vector3(this.variant === 'b' ? 0.75 : 0.35, (this.room.eyeHeight - c.y) / 300, 1);
+    frameBox(box, { instant, dir });
+  }
+}
+
+// ================= 相机：按包围盒取景，避开浮在画面上的面板 =================
+const DEFAULT_DIR = new THREE.Vector3(0.35, 0.62, 0.7).normalize();
+const PANELS = ['stepCard', 'hwCard', 'viewCard', 'shotTitle'];
+// 某个面板在画布坐标里的矩形（隐藏时为 null）
+function panelRect(id) {
+  const el = $(id);
+  if (!el || el.offsetParent === null || getComputedStyle(el).display === 'none') return null;
+  const s = stage.getBoundingClientRect(), r = el.getBoundingClientRect();
+  if (!r.width || !r.height) return null;
+  return { l: r.left - s.left, t: r.top - s.top, r: r.right - s.left, b: r.bottom - s.top };
+}
+// 画布里不被面板挡住的最大矩形：用各面板的边界组合出候选矩形，去掉与任何面板相交的，取面积最大的
+function safeRect() {
+  const W = stage.clientWidth, H = stage.clientHeight, pad = Math.max(12, Math.min(W, H) * 0.03);
+  const obs = PANELS.map(panelRect).filter(Boolean);
+  const ls = [pad, ...obs.map((o) => o.r + pad)], rs = [W - pad, ...obs.map((o) => o.l - pad)];
+  const ts = [pad, ...obs.map((o) => o.b + pad)], bs = [H - pad, ...obs.map((o) => o.t - pad)];
+  let best = null, bestA = 0;
+  for (const l of ls) for (const r of rs) for (const t of ts) for (const b of bs) {
+    if (r - l < 60 || b - t < 60) continue;
+    if (obs.some((o) => o.l < r && o.r > l && o.t < b && o.b > t)) continue;
+    const a = (r - l) * (b - t);
+    if (a > bestA) { bestA = a; best = { l, t, r, b }; }
+  }
+  return best || { l: pad, t: pad, r: W - pad, b: H - pad };
+}
+// 让相机注视点投到安全矩形中心
+let viewRect = null;
+function applyViewOffset(rect) {
+  viewRect = rect;
+  const W = stage.clientWidth, H = stage.clientHeight;
+  if (!W || !H) return;
+  camera.setViewOffset(W, H, W / 2 - (rect.l + rect.r) / 2, H / 2 - (rect.t + rect.b) / 2, W, H);
+  camera.updateProjectionMatrix();
+}
+const boxCorners = (b) => [0, 1, 2, 3, 4, 5, 6, 7].map((k) => new THREE.Vector3(k & 1 ? b.max.x : b.min.x, k & 2 ? b.max.y : b.min.y, k & 4 ? b.max.z : b.min.z));
+// 包围盒 8 个角投到画布上的矩形
+function projectBox(box) {
+  const W = stage.clientWidth, H = stage.clientHeight;
+  const r = { l: Infinity, t: Infinity, r: -Infinity, b: -Infinity, behind: false };
+  for (const p of boxCorners(box)) {
+    const q = p.project(camera);
+    if (q.z > 1) r.behind = true;
+    const x = ((q.x + 1) / 2) * W, y = ((1 - q.y) / 2) * H;
+    r.l = Math.min(r.l, x); r.r = Math.max(r.r, x); r.t = Math.min(r.t, y); r.b = Math.max(r.b, y);
+  }
+  return r;
+}
+// 沿 dir 方向找最近的距离，使包围盒正好落在安全矩形里
+function fitBox(box, dir, rect) {
+  const c = box.getCenter(new THREE.Vector3());
+  const p0 = camera.position.clone(), q0 = camera.quaternion.clone();
+  const fits = (d) => {
+    camera.position.copy(c).addScaledVector(dir, d);
+    camera.lookAt(c);
+    camera.updateMatrixWorld();
+    const r = projectBox(box);
+    return !r.behind && r.l >= rect.l && r.r <= rect.r && r.t >= rect.t && r.b <= rect.b;
+  };
+  // 上限不能超过远裁剪面，否则远处判成"看不见"，二分会一路往远处走
+  let lo = 1, hi = Math.min(camera.far * 0.9, Math.max(100, box.getSize(new THREE.Vector3()).length() * 40));
+  for (let k = 0; k < 40; k++) { const d = (lo + hi) / 2; if (fits(d)) hi = d; else lo = d; }
+  camera.position.copy(p0); camera.quaternion.copy(q0); camera.updateMatrixWorld();
+  return { pos: c.clone().addScaledVector(dir, hi * 1.04), target: c };
+}
+let lastBox = null, lastSize = '';
+// 自动取景：用户拖动、缩放或在 Room 里走动后暂停；按"全景"或 R 恢复
+let autoFrame = true;
+function setAutoFrame(on) {
+  autoFrame = on;
+  const b = $('autoFrameBtn');
+  b.setAttribute('aria-pressed', on);
+  b.textContent = t(on ? 'autoFrameOn' : 'autoFrameOff');
+}
+controls.addEventListener('start', () => setAutoFrame(false));
+function frameBox(box, { instant = false, reset = false, dir: fixedDir = null } = {}) {
+  if (!box || box.isEmpty()) return;
+  lastBox = box.clone();
+  const rect = safeRect();
+  applyViewOffset(rect);
+  let dir = camera.position.clone().sub(controls.target);
+  dir = fixedDir ? fixedDir.clone().normalize() : reset || dir.lengthSq() < 1e-6 ? DEFAULT_DIR.clone() : dir.normalize();
+  const v = fitBox(box, dir, rect);
+  const p0 = camera.position.clone(), t0 = controls.target.clone();
+  if (instant) { camera.position.copy(v.pos); controls.target.copy(v.target); controls.update(); return; }
+  tween(900, (k) => {
+    const e = easeInOut(k);
+    camera.position.lerpVectors(p0, v.pos, e);
+    controls.target.lerpVectors(t0, v.target, e);
+  });
+}
+// 取景对象：all = 场上所有零件（含备料区）；body = 已装上的零件
+function frameTargetBox(name) {
+  scene.updateMatrixWorld(true);
+  const box = new THREE.Box3();
+  if (view instanceof AssemblyView && name === 'step') return view.currentBox();
+  for (const o of name === 'body' ? view.bodyObjects() : view instanceof SetView ? view.bodyObjects() : view.objects()) box.expandByObject(o);
+  return box;
+}
+function frame(name, instant = false, reset = true) {
+  if (!view) return;
+  frameBox(frameTargetBox(name), { instant, reset });
+}
+const defaultFrame = () => (view instanceof SetView ? 'body' : 'step');
+
+// ================= 线稿视图 =================
+function setDrawing(on) {
+  drawing = on;
+  $('drawingBtn').setAttribute('aria-pressed', on);
+  stage.classList.toggle('drawing', on);
+  scene.background = on ? new THREE.Color(0xffffff) : STAGE_BG.clone();
+  floor.visible = !on;
+  sun.castShadow = !on;
+  MAT.edge.color.set(on ? 0x000000 : 0x2a2a28);
+  MAT.hostEdge.color.set(on ? 0x9a9a9a : 0x8a877f);
+  if (view) view.root.traverse((o) => { if (o.isMesh && o.userData.baseMat) setMat(o, o.userData.baseMat); });
+}
+
+// ================= 零件标签 =================
+let showLabels = false;
+const labelEls = new Map();
+function setLabels(on) {
+  showLabels = on;
+  $('labelsBtn').setAttribute('aria-pressed', on);
+  if (!on) { $('labels').innerHTML = ''; labelEls.clear(); }
+}
+const tmpV = new THREE.Vector3();
+function updateLabels() {
+  if (!showLabels || !view) return;
+  const targets = new Set(view.labelTargets());
+  for (const [g, el] of labelEls) if (!targets.has(g)) { el.remove(); labelEls.delete(g); }
+  const w = stage.clientWidth, h = stage.clientHeight;
+  for (const g of targets) {
+    let el = labelEls.get(g);
+    if (!el) { el = document.createElement('span'); el.textContent = g.userData.label; $('labels').append(el); labelEls.set(g, el); }
+    g.getWorldPosition(tmpV).project(camera);
+    const visible = tmpV.z < 1 && Math.abs(tmpV.x) < 1.05 && Math.abs(tmpV.y) < 1.05;
+    el.style.display = visible ? '' : 'none';
+    if (visible) { el.style.left = `${((tmpV.x + 1) / 2) * w}px`; el.style.top = `${((1 - tmpV.y) / 2) * h}px`; }
+  }
+}
+
+// ================= 界面 =================
+let view = null;
+let state = { piece: SITE.defaultPiece, variant: null };
+
+$('pieceSeg').setAttribute('aria-label', t('pieceGroup'));
+$('variantSeg').setAttribute('aria-label', t('variantLabel'));
+$('pieceSeg').innerHTML = SITE.pieces.map((p) => `<button data-key="${esc(p.key)}">${esc(p.label)}</button>`).join('');
+for (const b of $('pieceSeg').children) b.onclick = () => load(b.dataset.key, null);
+
+// 地址栏：?piece=…&variant=…&step=说明书步骤号（0 = 清点），lang 等其他参数原样保留
+function syncUrl() {
+  const q = new URLSearchParams(location.search);
+  q.set('piece', state.piece);
+  if (state.variant) q.set('variant', state.variant); else q.delete('variant');
+  if (view instanceof AssemblyView) q.set('step', view.stepsList[view.current].n); else q.delete('step');
+  history.replaceState(null, '', `?${q}`);
+}
+// 说明书步骤号 → 当前路线里的序号
+function indexOfStep(n) {
+  if (!(view instanceof AssemblyView) || n === null || n === undefined || n === '' || Number.isNaN(Number(n))) return 0;
+  if (Number(n) === 0) return 0;
+  const i = view.seq.findIndex((s) => s.n === Number(n));
+  return i >= 0 ? i + 1 : 0;
+}
+
+async function load(piece, variant, { keepStep = false, step = null } = {}) {
+  const info = SITE.pieces.find((p) => p.key === piece) || SITE.pieces[0];
+  setChain(false);
+  closePick();
+  let data;
+  try { data = await loadData(info.url); } catch (err) { showError(t('loadError', { msg: err.message })); throw err; }
+  const keepN = keepStep && view instanceof AssemblyView ? view.stepsList[view.current].n : step;
+  if (view) view.dispose();
+  view = null;
+  setLabels(showLabels);
+  state = { piece: info.key, variant: null };
+  for (const b of $('pieceSeg').children) b.setAttribute('aria-pressed', b.dataset.key === info.key);
+  $('explode').value = 0;
+  if (data.schema && data.schema.startsWith('flatpack3d/room')) {
+    const v = data.variants[variant] ? variant : Object.keys(data.variants).find((k) => data.variants[k].default);
+    state.variant = v;
+    view = await new RoomView().initRoom(data, v);
+    renderRoomUi(data);
+  } else if (data.schema && data.schema.startsWith('flatpack3d/set')) {
+    view = await new SetView().init(data);
+    renderSetUi(data);
+  } else {
+    const variants = data.variants || null;
+    const v = variants ? (variant && variants[variant] ? variant : Object.keys(variants).find((k) => variants[k].default)) : null;
+    state.variant = v;
+    view = new AssemblyView(data, v);
+    renderAssemblyUi(data);
+  }
+  setDrawing(drawing);
+  resize();
+  setAutoFrame(true);
+  if (view instanceof AssemblyView) go(indexOfStep(keepN), false, { reset: true });
+  else if (view instanceof RoomView) { view.frameRoom(true); syncUrl(); }
+  else { frame(defaultFrame(), true); syncUrl(); }
+}
+
+function renderVariantSeg(data) {
+  const box = $('variantBox');
+  if (!data || !data.variants) { box.style.display = 'none'; return; }
+  box.style.display = 'flex';
+  $('variantLabel').textContent = data.variantTitle || t('variantLabel');
+  $('variantSeg').innerHTML = Object.entries(data.variants).map(([k, v]) =>
+    `<button data-k="${esc(k)}" title="${esc(v.note || '')}" aria-pressed="${k === state.variant}">${esc(v.label)}</button>`).join('');
+  for (const b of $('variantSeg').children) b.onclick = () => { if (b.dataset.k !== state.variant) load(state.piece, b.dataset.k, { keepStep: true }); };
+}
+
+function renderAssemblyUi(data) {
+  $('footer').classList.remove('static');
+  $('viewBody').textContent = t('viewBody');
+  $('pageNav').style.display = '';
+  renderVariantSeg(data);
+  $('subtitle').textContent = `${data.title} · ${data.scope}`;
+  document.title = `${t('appName')} · ${data.title}`;
+  $('manualLabel').textContent = t('manualLabel', { docId: data.source.docId });
+  const stepsEl = $('steps');
+  stepsEl.innerHTML = '';
+  view.stepsList.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.textContent = i === 0 ? t('stepOverview') : s.n;
+    b.title = i === 0 ? s.title : t('stepTitle', { n: s.n, title: s.title });
+    b.onclick = () => go(i);
+    b.dataset.i = i;
+    stepsEl.append(b);
+  });
+  const hw = data.hardware;
+  // 本路线用到的五金；只在其他方案里用的单独折叠
+  const usedHere = (h) => (h.variants ? h.variants.includes(state.variant) : h.scope !== 'wall');
+  const body = hw.filter((h) => h.kind !== 'tool' && usedHere(h));
+  const tools = hw.filter((h) => h.kind === 'tool');
+  const wall = hw.filter((h) => h.kind !== 'tool' && !usedHere(h));
+  const extras = (data.extras || []).filter((x) => view.seq.some((st) => (st.extras || []).some((e) => e.id === x.id)));
+  $('hwCard').innerHTML = `
+    <h3>${esc(t('hwParts'))}</h3>
+    <div class="row" data-id="__parts"><span class="name">${esc(t('hwPartsPlaced'))}</span><span class="num"></span><div class="meter"><i></i></div></div>
+    <h3>${esc(t('hwHardware'))}</h3>
+    ${body.map((h) => `<div class="row" data-id="${esc(h.id)}"><span class="name">${esc(h.name)}</span><span class="num"></span><span class="id">${esc(h.id)}${h.unit ? ` · ${esc(t('hwUnit', { unit: h.unit }))}` : ''}</span><div class="meter"><i></i></div></div>`).join('')}
+    ${tools.map((h) => `<div class="tool" data-tool="${esc(h.id)}"><span>${esc(h.name)} <span style="color:var(--muted)">${esc(h.id)}</span></span><span class="tag">${esc(t('toolInUse'))}</span></div>`).join('')}
+    ${extras.map((x) => `<div class="tool"><span>${esc(x.name)}</span><span class="id" style="color:var(--muted)">${esc(x.note || '')}</span></div>`).join('')}
+    ${wall.length ? `<details><summary>${esc(t(data.variants ? 'otherVariantHw' : 'wallSummary', { n: wall.length }))}</summary><ul>${wall.map((h) => `<li>${esc(h.name)} ${esc(h.id)} ×${h.quantity}</li>`).join('')}</ul></details>` : ''}`;
+}
+
+function renderRoomUi(room) {
+  $('footer').classList.add('static');
+  $('staticNote').textContent = t('roomFooter');
+  $('viewBody').textContent = t('viewBodySet');
+  renderVariantSeg(room);
+  $('subtitle').textContent = room.title;
+  document.title = `${t('appName')} · ${room.title}`;
+  const body = view.body.data;
+  const vs = body.steps.filter((st) => st.variant === state.variant);
+  const fix = {};
+  for (const st of vs) for (const h of st.hardware) if (h.action !== 'remove') fix[h.id] = (fix[h.id] || 0) + h.count;
+  $('stepCard').innerHTML = `
+    <div class="kicker"><span>${esc(t('roomKicker'))}</span><span>${esc(room.variants[state.variant].label)}</span></div>
+    <h2>${esc(room.title)}</h2>
+    <p>${esc(room.note)}</p>
+    <p>${esc(room.variants[state.variant].note)}</p>
+    <p class="safety">${esc(PRODUCT.safety.text)}</p>`;
+  $('hwCard').innerHTML = `<h3>${esc(t('roomFixings'))}</h3>${Object.entries(fix).map(([id, n]) => { const d = body.hardware.find((h) => h.id === id); return `<div class="row"><span class="name">${esc(d.name)}</span><span class="num">×${n}</span><span class="id">${esc(id)}</span></div>`; }).join('')}
+    ${(body.extras || []).map((x) => `<div class="tool"><span>${esc(x.name)}</span><span class="id" style="color:var(--muted)">${esc(x.note || '')}</span></div>`).join('')}`;
+  // 左侧：说明书的警告页和本方案的上墙页
+  $('manualLabel').textContent = t('manualLabel', { docId: body.source.docId });
+  $('pageNav').style.display = 'none';
+  $('pageHintText').textContent = t('roomPagesHint');
+  const pages = [2, ...new Set(vs.flatMap((st) => st.pages))];
+  const tabs = $('pageTabs');
+  tabs.innerHTML = pages.map((pg, i) => `<button aria-pressed="${i === 0}" data-p="${pg}">p${pg}</button>`).join('');
+  const show = (pg) => {
+    for (const b of tabs.children) b.setAttribute('aria-pressed', Number(b.dataset.p) === pg);
+    const url = `${body.manualPages.dir}/${body.manualPages.pattern.replace('{NN}', String(pg).padStart(2, '0'))}`;
+    $('pageOpen').href = url;
+    $('pageView').innerHTML = '';
+    const img = new Image();
+    img.alt = t('pageAlt', { p: pg });
+    img.onerror = () => { $('pageView').innerHTML = `<div class="missing">${esc(t('pageMissing', { url }))}</div>`; };
+    img.src = url;
+    $('pageView').append(img);
+  };
+  for (const b of tabs.children) b.onclick = () => show(Number(b.dataset.p));
+  show(pages[0]);
+}
+
+function renderSetUi(set) {
+  $('staticNote').textContent = t('staticNote');
+  $('footer').classList.add('static');
+  $('viewBody').textContent = t('viewBodySet');
+  renderVariantSeg(null);
+  $('subtitle').textContent = t('setSubtitle', { title: set.title });
+  document.title = `${t('appName')} · ${set.title}`;
+  const counts = view.inserts.map(({ ins, data }) => `<span class="chip">${esc(data.title)}${ins.variant && data.variants ? `（${esc(data.variants[ins.variant].label)}）` : ''} ×${ins.placements.length}</span>`).join('');
+  $('stepCard').innerHTML = `
+    <div class="kicker"><span>${esc(t('setKicker'))}</span><span>${esc(t('setKicker2'))}</span></div>
+    <h2>${esc(set.title)}</h2>
+    <p>${esc(set.layoutSource)}</p>
+    ${(set.notes || []).map((n) => `<p>${esc(n)}</p>`).join('')}
+    <div class="chips">${counts}</div>`;
+  const bodyData = view.body.data;
+  const partTotal = bodyData.parts.length + view.inserts.reduce((a, { ins, data }) => a + ins.placements.length * data.parts.length, 0);
+  const rows = [[bodyData.title, 1, t('setBodyRow', { n: bodyData.parts.length })], ...view.inserts.map(({ ins, data }) => [data.title, ins.placements.length, t('setInsertRow', { n: data.parts.length })])];
+  $('hwCard').innerHTML = `<h3>${esc(t('setCompose'))}</h3>${rows.map(([n, c, d]) => `<div class="row"><span class="name">${esc(n)}</span><span class="num">×${c}</span><span class="id">${esc(d)}</span></div>`).join('')}
+    <div class="tool"><span>${esc(t('setPartTotal'))}</span><span class="num">${esc(t('setPartTotalVal', { n: partTotal }))}</span></div>
+    <div class="tool"><span>${esc(t('setInstanced'))}</span><span class="num">${esc(t('setInstancedVal', { n: view.instanced.length }))}</span></div>`;
+  // 左侧显示商品图（refs/ 不入库，可能不存在）
+  $('manualLabel').textContent = t('refsLabel');
+  $('pageNav').style.display = 'none';
+  $('pageHintText').textContent = t('setLayoutNote');
+  const tabs = $('pageTabs');
+  tabs.innerHTML = set.references.map((_, i) => `<button aria-pressed="${i === 0}" data-i="${i}">${esc(t('refImage', { n: i + 1 }))}</button>`).join('');
+  const show = (i) => {
+    for (const b of tabs.children) b.setAttribute('aria-pressed', Number(b.dataset.i) === i);
+    const url = set.references[i];
+    $('pageOpen').href = url;
+    $('pageView').innerHTML = '';
+    const img = new Image();
+    img.alt = set.layoutSource;
+    img.onerror = () => { $('pageView').innerHTML = `<div class="missing">${esc(t('refsMissing', { url }))}</div>`; };
+    img.src = url;
+    $('pageView').append(img);
+  };
+  for (const b of tabs.children) b.onclick = () => show(Number(b.dataset.i));
+  show(0);
+}
+
+function renderStepCard(i) {
+  const data = view.data;
+  const s = view.stepsList[i];
+  const chips = [];
+  const counts = {};
+  for (const id of s.parts || []) { const tp = data.parts.find((p) => p.id === id).type; counts[tp] = (counts[tp] || 0) + 1; }
+  for (const [tp, c] of Object.entries(counts)) chips.push(`<span class="chip">${esc(data.partTypes[tp].name)} ×${c}</span>`);
+  if ((s.install || []).length) chips.push(`<span class="chip">${esc(t('install', { n: s.install.length }))}</span>`);
+  for (const h of s.hardware || []) {
+    const d = view.hwDef[h.id];
+    chips.push(`<span class="chip hw">${h.action === 'remove' ? `${esc(t('removeChip'))} ` : ''}${esc(d.name)} ${esc(h.id)} ×${h.count}${d.unit ? ` ${esc(d.unit)}` : ''}</span>`);
+  }
+  for (const x of s.extras || []) chips.push(`<span class="chip">${esc(view.extraDef[x.id].name)} ×${x.placements.length}</span>`);
+  for (const tl of s.tools || []) chips.push(`<span class="chip">${esc(view.hwDef[tl] ? `${view.hwDef[tl].name} ${tl}` : tl)}</span>`);
+  const meta = [i > 0 ? t('stepN', { n: s.n, i, total: view.seq.length }) : t('stepPrep'), t('manualPages', { pages: s.pages.map((p) => `p${p}`).join('、') })];
+  if (state.variant) meta.push(data.variants[state.variant].label);
+  if (s.repeat) meta.push(t('repeat', { n: s.repeat }));
+  $('stepCard').innerHTML = `
+    <div class="kicker">${meta.map((m) => `<span>${esc(m)}</span>`).join('')}</div>
+    <h2>${esc(s.title)}</h2>
+    <p>${esc(s.hint)}</p>
+    <div class="chips">${chips.join('') || `<span class="chip">${esc(t('noNew'))}</span>`}</div>
+    ${data.room && s.n >= data.room.fromStep && i > 0 ? `<p class="safety">${esc(PRODUCT.safety.short)}</p>` : ''}`;
+}
+
+function renderCounters(i) {
+  const data = view.data;
+  const used = {};
+  view.seq.slice(0, i).forEach((s) => { for (const h of s.hardware || []) used[h.id] = (used[h.id] || 0) + (h.action === 'remove' ? -h.count : h.count); });
+  const cur = view.stepsList[i];
+  const placed = Object.values(view.parts).filter((g) => g.userData.placedAt <= i).length;
+  const set = (id, val, total) => {
+    const row = $('hwCard').querySelector(`[data-id="${CSS.escape(id)}"]`);
+    if (!row) return;
+    row.querySelector('.num').textContent = `${val} / ${total}`;
+    const bar = row.querySelector('.meter i');
+    bar.style.width = `${(100 * val) / total}%`;
+    bar.classList.toggle('full', val === total);
+    row.classList.toggle('flash', (cur.hardware || []).some((h) => h.id === id) || (id === '__parts' && (cur.parts || []).length > 0));
+  };
+  set('__parts', placed, data.parts.length);
+  for (const h of data.hardware) if (h.kind !== 'tool') set(h.id, used[h.id] || 0, h.quantity);
+  for (const el of $('hwCard').querySelectorAll('[data-tool]')) el.querySelector('.tag').classList.toggle('on', (cur.tools || []).includes(el.dataset.tool));
+}
+
+// ---------- 说明书页：浏览、点图跳步 ----------
+let manualPage = 1;
+const pageUrl = (p) => `${view.data.manualPages.dir}/${view.data.manualPages.pattern.replace('{NN}', String(p).padStart(2, '0'))}`;
+// 某一页上属于当前路线的步骤（含第 0 步清点），以及它们在页面上的竖直范围
+function stepsOnPage(p) {
+  return view.stepsList.map((s, i) => ({ s, i })).filter(({ s }) => s.pages.includes(p))
+    .map(({ s, i }) => ({ i, y: (s.pages[0] === p && s.figure) || [0, 1] }));
+}
+function showPage(p) {
+  const count = view.data.manualPages.count;
+  manualPage = Math.max(1, Math.min(count, p));
+  const s = view.stepsList[view.current];
+  $('pageTabs').innerHTML = s.pages.map((pg) => `<button aria-pressed="${pg === manualPage}" data-p="${pg}">p${pg}</button>`).join('');
+  for (const b of $('pageTabs').querySelectorAll('button')) b.onclick = () => showPage(Number(b.dataset.p));
+  $('pageOf').textContent = t('pageOf', { p: manualPage, count });
+  const url = pageUrl(manualPage);
+  $('pageOpen').href = url;
+  const here = stepsOnPage(manualPage);
+  $('pageHintText').textContent = here.length ? t('pageHint') : t('pageNoStep');
+  $('pageHint').classList.remove('flash');
+  const pv = $('pageView');
+  pv.innerHTML = '';
+  const sheet = document.createElement('div');
+  sheet.className = 'sheet';
+  const img = new Image();
+  img.alt = t('pageAlt', { p: manualPage });
+  img.onerror = () => { pv.innerHTML = `<div class="missing">${esc(t('pageMissing', { url }))}</div>`; };
+  img.onclick = (e) => {
+    const r = img.getBoundingClientRect();
+    const y = (e.clientY - r.top) / r.height;
+    const hit = here.find((h) => y >= h.y[0] && y <= h.y[1]);
+    if (!hit) { $('pageHintText').textContent = t('pageNoStep'); $('pageHint').classList.add('flash'); return; }
+    go(hit.i);
+  };
+  img.src = url;
+  sheet.append(img);
+  // 当前步在这一页上的位置框
+  const mine = here.find((h) => h.i === view.current);
+  if (mine && view.current > 0) {
+    const f = document.createElement('div');
+    f.className = 'fig';
+    f.style.top = `${mine.y[0] * 100}%`;
+    f.style.height = `${(mine.y[1] - mine.y[0]) * 100}%`;
+    sheet.append(f);
+  }
+  pv.append(sheet);
+}
+$('pagePrev').onclick = () => showPage(manualPage - 1);
+$('pageNext').onclick = () => showPage(manualPage + 1);
+
+function go(i, animate = true, { reset = false } = {}) {
+  if (!(view instanceof AssemblyView)) return;
+  i = Math.max(0, Math.min(view.seq.length, i));
+  for (const b of $('steps').children) {
+    const bi = Number(b.dataset.i);
+    b.classList.toggle('current', bi === i);
+    b.classList.toggle('done', bi < i);
+    if (bi === i) b.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }
+  // 先把卡片内容换好（它们的大小决定可用区域），再量包围盒、取景、播动画
+  view.current = i;
+  renderStepCard(i);
+  renderCounters(i);
+  showPage(view.stepsList[i].pages[0]);
+  const box = view.targetBox(i);
+  view.go(i, animate);
+  if (reset) setAutoFrame(true);
+  if (autoFrame) frameBox(box, { instant: !animate, reset });
+  syncUrl();
+}
+const current = () => (view instanceof AssemblyView ? view.current : 0);
+
+// ---------- 点击零件 ----------
+const ray = new THREE.Raycaster();
+const ndc = new THREE.Vector2();
+function hitAt(e) {
+  const r = renderer.domElement.getBoundingClientRect();
+  ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+  ray.setFromCamera(ndc, camera);
+  const shown = (o) => { for (let x = o; x; x = x.parent) if (!x.visible) return false; return true; };
+  const hit = ray.intersectObjects(view.objects(), true).find((h) => h.object.isMesh && shown(h.object));
+  if (!hit) return null;
+  if (hit.object.isInstancedMesh) return { inst: hit.object, k: hit.instanceId, r };
+  let o = hit.object;
+  while (o && !o.userData.label) o = o.parent;
+  return o ? { obj: o, r } : null;
+}
+function closePick() { $('pick').classList.remove('open'); }
+function openPick(e, h) {
+  let html;
+  const line = (s) => `<div class="line">${esc(s)}</div>`;
+  if (h.inst) {
+    const u = h.inst.userData;
+    const pl = u.placements[h.k];
+    const o = u.owner;
+    html = `<b>${esc(o ? o.label : u.title)}</b>`;
+    if (o && o.kind === 'part') html += line(t('pickCode', { id: o.def.id }));
+    if (o && o.kind === 'hw') html += line(t('pickHwId', { id: o.member || o.def.id }));
+    html += line(t('pickInsert', { title: u.title, c: pl.cell[0], r: pl.cell[1] }));
+  } else {
+    const u = h.obj.userData;
+    if (u.kind === 'part') {
+      const owner = view instanceof SetView ? view.body.data : view.data;
+      html = `<b>${esc(u.def.name)}</b>${line(t('pickCode', { id: u.def.id }))}${line(t('pickType', { type: owner.partTypes[u.def.type].name }))}${line(t('pickPartNote'))}`;
+    } else if (u.kind === 'hw') {
+      html = `<b>${esc(u.def.name)}</b>${line(t('pickHwId', { id: u.member || u.def.id }))}`;
+    } else if (u.kind === 'extra') {
+      html = `<b>${esc(u.def.name)}</b>${line(u.def.note || '')}`;
+    } else html = `<b>${esc(u.label)}</b>`;
+  }
+  $('pickBody').innerHTML = html;
+  const pick = $('pick');
+  pick.classList.add('open');
+  const x = Math.min(e.clientX - h.r.left + 14, stage.clientWidth - pick.offsetWidth - 8);
+  const y = Math.min(e.clientY - h.r.top + 14, stage.clientHeight - pick.offsetHeight - 8);
+  pick.style.left = `${Math.max(8, x)}px`;
+  pick.style.top = `${Math.max(8, y)}px`;
+}
+let downAt = null;
+renderer.domElement.addEventListener('pointerdown', (e) => { downAt = [e.clientX, e.clientY]; });
+renderer.domElement.addEventListener('pointerup', (e) => {
+  if (!view || !downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 5) return;
+  const h = hitAt(e);
+  if (h) openPick(e, h); else closePick();
+});
+$('pickClose').onclick = closePick;
+renderer.domElement.addEventListener('pointermove', (e) => {
+  if (!view || e.buttons) return;
+  const h = hitAt(e);
+  const tip = $('tip');
+  if (!h) { tip.style.display = 'none'; return; }
+  tip.textContent = h.inst ? (h.inst.userData.label || h.inst.userData.title) : h.obj.userData.label;
+  tip.style.display = 'block';
+  tip.style.left = `${e.clientX - h.r.left + 12}px`;
+  tip.style.top = `${e.clientY - h.r.top + 12}px`;
+});
+renderer.domElement.addEventListener('pointerleave', () => { $('tip').style.display = 'none'; });
+
+// ---------- 控件与快捷键 ----------
+let chainTimer = null;
+function setChain(on) {
+  clearInterval(chainTimer);
+  chainTimer = null;
+  $('chain').setAttribute('aria-pressed', on && view instanceof AssemblyView);
+  if (!on || !(view instanceof AssemblyView)) return;
+  if (current() >= view.seq.length) go(0);
+  chainTimer = setInterval(() => (current() >= view.seq.length ? setChain(false) : go(current() + 1)), 3200);
+}
+function setExplode(v) {
+  $('explode').value = v;
+  if (view instanceof SetView) view.setExplode(v); else if (view) view.explode = v;
+}
+const resetView = () => {
+  setAutoFrame(true);
+  if (view instanceof RoomView) view.frameRoom();
+  else if (view instanceof AssemblyView) frameBox(view.currentBox(), { reset: true });
+  else frame(defaultFrame(), false, true);
+};
+$('prev').onclick = () => go(current() - 1);
+$('next').onclick = () => go(current() + 1);
+$('replay').onclick = () => go(current());
+$('chain').onclick = () => setChain(!chainTimer);
+$('viewAll').onclick = () => { setAutoFrame(true); if (view instanceof RoomView) view.frameRoom(); else frame('all', false, false); };
+$('autoFrameBtn').onclick = () => (autoFrame ? setAutoFrame(false) : resetView());
+$('viewBody').onclick = () => frame('body', false, false);
+$('explode').oninput = (e) => setExplode(Number(e.target.value));
+$('drawingBtn').onclick = () => setDrawing(!drawing);
+$('labelsBtn').onclick = () => setLabels(!showLabels);
+$('toggleManual').onclick = () => {
+  const hidden = $('main').classList.toggle('manual-hidden');
+  $('toggleManual').textContent = t(hidden ? 'manualShow' : 'manualHide');
+  resize();
+};
+$('shortcutsBtn').onclick = (e) => {
+  e.stopPropagation();
+  const open = $('shortcuts').classList.toggle('open');
+  $('shortcutsBtn').setAttribute('aria-expanded', open);
+};
+document.addEventListener('click', (e) => { if (!(e.target instanceof Element && e.target.closest('#shortcuts'))) { $('shortcuts').classList.remove('open'); $('shortcutsBtn').setAttribute('aria-expanded', false); } });
+
+let digits = '', digitTimer = null;
+function commitDigits() {
+  clearTimeout(digitTimer);
+  const n = Number(digits);
+  digits = '';
+  if (!(view instanceof AssemblyView)) return;
+  if (n === 0) return go(0);
+  const i = view.seq.findIndex((s) => s.n === n);
+  if (i >= 0) go(i + 1);
+}
+const held = new Set();
+const MOVE_KEYS = ['w', 'a', 's', 'd', 'q', 'e'];
+addEventListener('keyup', (e) => held.delete(e.key.toLowerCase()));
+addEventListener('blur', () => held.clear());
+addEventListener('keydown', (e) => {
+  if ((e.target instanceof Element && e.target.closest('input, textarea, select')) || e.ctrlKey || e.metaKey || e.altKey) return;
+  const k = e.key;
+  if (view instanceof RoomView && MOVE_KEYS.includes(k.toLowerCase())) { held.add(k.toLowerCase()); setAutoFrame(false); e.preventDefault(); return; }
+  if (/^[0-9]$/.test(k)) {
+    digits += k;
+    clearTimeout(digitTimer);
+    if (digits.length >= 2) commitDigits(); else digitTimer = setTimeout(commitDigits, 600);
+    return;
+  }
+  const actions = {
+    '[': () => go(current() - 1), ']': () => go(current() + 1),
+    ArrowLeft: () => go(current() - 1), ArrowRight: () => go(current() + 1),
+    ' ': () => go(current()),
+    c: () => setChain(!chainTimer), r: resetView,
+    x: () => setExplode(Number($('explode').value) > 0 ? 0 : 0.6),
+    n: () => setLabels(!showLabels), l: () => setDrawing(!drawing),
+    Escape: () => { closePick(); $('shortcuts').classList.remove('open'); },
+  };
+  const fn = actions[k] || actions[k.toLowerCase()];
+  if (!fn) return;
+  e.preventDefault();
+  fn();
+});
+
+// ---------- 页面底部：精确与近似、讲解、声明、链接 ----------
+function inlineMd(s) {
+  return esc(s).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/`([^`]+)`/g, '<code>$1</code>');
+}
+// 从 docs/dimensions.md 的猜测清单原样取出：### 小标题、编号条目、列表项和段落（跳过表格）
+function parseGuesses(md, heading) {
+  const start = md.indexOf(heading);
+  if (start < 0) return '';
+  const end = md.indexOf('\n## ', start + heading.length);
+  const lines = md.slice(start + heading.length, end < 0 ? undefined : end).split(/\r?\n/);
+  let html = '', list = null;
+  const close = () => { if (list) { html += `</${list}>`; list = null; } };
+  for (const raw of lines) {
+    const line = raw.trim();
+    let m;
+    if (!line || line.startsWith('|')) { close(); continue; }
+    if ((m = /^###\s+(.*)$/.exec(line))) { close(); html += `<h4>${inlineMd(m[1])}</h4>`; continue; }
+    if ((m = /^(\d+)\.\s+(.*)$/.exec(line))) {
+      if (list !== 'ol') { close(); html += `<ol start="${m[1]}">`; list = 'ol'; }
+      html += `<li>${inlineMd(m[2])}</li>`;
+      continue;
+    }
+    if ((m = /^-\s+(.*)$/.exec(line))) {
+      if (list !== 'ul') { close(); html += '<ul>'; list = 'ul'; }
+      html += `<li>${inlineMd(m[1])}</li>`;
+      continue;
+    }
+    close();
+    html += `<p class="muted">${inlineMd(line)}</p>`;
+  }
+  close();
+  return html;
+}
+async function renderAbout() {
+  const a = PRODUCT.about;
+  let guesses = '';
+  try { guesses = parseGuesses(await (await fetch(a.approximate.source)).text(), a.approximate.heading); } catch { guesses = ''; }
+  const ex = PRODUCT.explainers;
+  $('about').innerHTML = `
+    <p class="safety"><strong>${esc(PRODUCT.safety.title)}</strong> ${esc(PRODUCT.safety.text)}</p>
+    <h2>${esc(a.title)}</h2>
+    <div class="cols">
+      <div class="card box"><h3>${esc(a.exact.title)}</h3><ul>${a.exact.items.map((s) => `<li>${inlineMd(s)}</li>`).join('')}</ul></div>
+      <div class="card box"><h3>${esc(a.approximate.title)}</h3><p>${inlineMd(a.approximate.intro)}</p></div>
+    </div>
+    ${a.notes.map((n) => `<p class="note">${inlineMd(n)}</p>`).join('')}
+    <details open><summary>${esc(a.approximate.source)} · ${esc(a.approximate.heading.replace(/^#+\s*/, ''))}</summary>${guesses}</details>
+    <h3>${esc(ex.title)}</h3>
+    <div class="cols">${ex.items.map((it) => `<div class="card box"><h4>${esc(it.title)}</h4><ul>${it.points.map((p) => `<li>${inlineMd(p)}</li>`).join('')}</ul></div>`).join('')}</div>
+    <h3>${esc(a.links.title)}</h3>
+    <ul>${a.links.items.map((l) => `<li><a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)}</a> <span class="muted">${esc(l.article)} · ${esc(l.docId)}</span></li>`).join('')}</ul>
+    <p class="muted"><a href="${esc(a.links.source.url)}" target="_blank" rel="noopener">${esc(a.links.source.label)}</a></p>
+    <p class="disclaimer">${esc(a.disclaimer)}</p>`;
+}
+
+// ---------- 渲染循环 ----------
+function resize() {
+  const w = stage.clientWidth, h = stage.clientHeight;
+  if (!w || !h) return; // 布局切换的瞬间可能为 0，别把相机比例算成无效值
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  // 画布或面板尺寸变了：按上一次取景的包围盒重新取景（保持当前视角方向）
+  const rect = safeRect();
+  const same = viewRect && lastSize === `${w}x${h}` && ['l', 't', 'r', 'b'].every((k) => Math.abs(rect[k] - viewRect[k]) < 2);
+  lastSize = `${w}x${h}`;
+  if (same) { camera.updateProjectionMatrix(); return; }
+  if (lastBox) frameBox(lastBox, { instant: true }); else applyViewOffset(rect);
+}
+const ro = new ResizeObserver(() => resize());
+for (const el of [stage, $('stepCard'), $('hwCard'), $('viewCard')]) ro.observe(el);
+resize();
+let lastNow = performance.now();
+// Room：W/S 前后、A/D 左右平移（沿地面），Q/E 原地左右转
+function walk(dt) {
+  if (!(view instanceof RoomView) || !held.size) return;
+  const fwd = controls.target.clone().sub(camera.position);
+  fwd.y = 0;
+  if (fwd.lengthSq() < 1e-6) return;
+  fwd.normalize();
+  const right = new THREE.Vector3().crossVectors(fwd, UP);
+  const move = new THREE.Vector3();
+  if (held.has('w')) move.add(fwd);
+  if (held.has('s')) move.sub(fwd);
+  if (held.has('d')) move.add(right);
+  if (held.has('a')) move.sub(right);
+  if (move.lengthSq()) { move.normalize().multiplyScalar(150 * dt); camera.position.add(move); controls.target.add(move); }
+  const turn = (held.has('q') ? 1 : 0) - (held.has('e') ? 1 : 0);
+  if (turn) {
+    const look = controls.target.clone().sub(camera.position).applyAxisAngle(UP, turn * THREE.MathUtils.degToRad(60) * dt);
+    controls.target.copy(camera.position).add(look);
+  }
+}
+renderer.setAnimationLoop((now) => {
+  walk(Math.min(0.1, (now - lastNow) / 1000));
+  lastNow = now;
+  runTweens(now);
+  if (view) view.update();
+  controls.update();
+  renderer.render(scene, camera);
+  updateLabels();
+});
+
+renderAbout();
+if (params.has('shot')) {
+  document.body.classList.add('shot');
+  $('shotTitle').innerHTML = `${esc(PRODUCT.share.title)}<small>${esc(PRODUCT.share.description)}</small>`;
+}
+await load(params.get('piece') || SITE.defaultPiece, params.get('variant'), { step: params.get('step') });
+if (params.has('drawing')) setDrawing(true);
+
+// 取景检查（scripts/check-framing.js 调用）：当前画面的零件包围盒是否完整在画布内、没有被面板挡住、不太小
+function framingReport() {
+  scene.updateMatrixWorld(true);
+  camera.updateMatrixWorld();
+  const box = frameTargetBox(defaultFrame());
+  const r = projectBox(box);
+  const W = stage.clientWidth, H = stage.clientHeight, tol = 1;
+  const f = (x) => `(${Math.round(x.l)},${Math.round(x.t)})–(${Math.round(x.r)},${Math.round(x.b)})`;
+  const problems = [];
+  if (r.behind) problems.push('有零件在相机后面');
+  if (r.l < -tol || r.t < -tol || r.r > W + tol || r.b > H + tol) problems.push(`超出画布：零件 ${f(r)}，画布 ${W}×${H}`);
+  for (const id of PANELS) {
+    const o = panelRect(id);
+    if (o && o.l < r.r - tol && o.r > r.l + tol && o.t < r.b - tol && o.b > r.t + tol) problems.push(`被 ${id} 挡住：零件 ${f(r)}，面板 ${f(o)}`);
+  }
+  // 页面不能横向溢出（例如页头按钮在手机宽度下挤出屏幕）
+  // 手机上内容一宽，布局视口会跟着撑宽，所以和屏幕宽度比
+  const vw = Math.min(innerWidth, screen.width || innerWidth);
+  const over = [...document.querySelectorAll('header > *, footer > *')].filter((el) => el.offsetParent !== null && el.getBoundingClientRect().right > vw + 1);
+  if (document.documentElement.scrollWidth > vw + 1 || over.length) problems.push(`页面横向溢出：${over.map((el) => el.id || el.className || el.tagName).join('、') || 'document'}`);
+  const s = safeRect();
+  const fill = Math.max((r.r - r.l) / (s.r - s.l), (r.b - r.t) / (s.b - s.t));
+  if (fill < 0.6) problems.push(`取景太远：零件只占可用区域的 ${Math.round(fill * 100)}%`);
+  return { problems, rect: r, safe: s, canvas: [W, H] };
+}
+window.__flatpack = { go, load, frame, setDrawing, setLabels, setAutoFrame, framingReport, camera, controls, get view() { return view; }, get autoFrame() { return autoFrame; } }; // 调试与检查用
+</script>
+</body>
+</html>

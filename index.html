@@ -12,6 +12,8 @@
 <meta property="og:image" content="og-image.png">
 <meta property="og:image:alt" content="KALLAX 5×5 置物架装上 5 个门嵌件和 5 个双抽屉嵌件的 3D 渲染">
 <meta name="twitter:card" content="summary_large_image">
+<link rel="alternate" hreflang="zh-CN" href="./">
+<link rel="alternate" hreflang="en" href="en/">
 <!-- meta:end -->
 <style>
   :root {
@@ -39,7 +41,10 @@
   header h1 { font-size: 16px; margin: 0; letter-spacing: .02em; }
   header .sub { color: var(--muted); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
   .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; flex: none; }
-  .seg button { border: 0; background: transparent; padding: 4px 10px; cursor: pointer; font-size: 13px; }
+  .seg { max-width: calc(100vw - 32px); overflow-x: auto; scrollbar-width: none; }
+  header .sub { max-width: calc(100vw - 32px); }
+  #staticNote { min-width: 0; overflow-wrap: anywhere; }
+  .seg button { border: 0; background: transparent; padding: 4px 10px; cursor: pointer; font-size: 13px; white-space: nowrap; flex: none; }
   .seg button + button { border-left: 1px solid var(--line); }
   .seg button[aria-pressed="true"] { background: var(--ink); color: var(--panel); }
   .seg-label { font-size: 12px; color: var(--muted); }
@@ -142,6 +147,9 @@
   #about ol, #about ul { padding-left: 22px; margin: 6px 0; }
   #about li { margin: 3px 0; }
   #about .note { background: var(--accent-soft); border-radius: 8px; padding: 8px 12px; margin: 12px 0; }
+  .safety { border-left: 4px solid #d9534f; background: color-mix(in srgb, #d9534f 10%, transparent); border-radius: 6px; padding: 6px 10px; margin: 8px 0 0; font-size: 13px; line-height: 1.5; }
+  #about .safety { font-size: 14px; padding: 10px 14px; margin: 0 0 16px; }
+  #autoFrameBtn[aria-pressed="false"] { border-style: dashed; color: var(--muted); }
   #about .disclaimer { color: var(--muted); border-top: 1px solid var(--line); margin-top: 28px; padding-top: 12px; font-size: 13px; }
   #about .muted { color: var(--muted); }
 
@@ -172,7 +180,7 @@
   <header>
     <h1 data-t="appName"></h1>
     <div class="seg" id="pieceSeg" role="group"></div>
-    <div id="variantBox"><span class="seg-label" data-t="variantLabel"></span><div class="seg" id="variantSeg" role="group"></div></div>
+    <div id="variantBox"><span class="seg-label" id="variantLabel" data-t="variantLabel"></span><div class="seg" id="variantSeg" role="group"></div></div>
     <span class="sub" id="subtitle"></span>
     <div class="seg" id="langSeg" role="group" data-title="langTitle"></div>
     <button class="ghost" id="shortcutsBtn" aria-expanded="false" data-t="shortcuts" data-title="shortcutsTitle"></button>
@@ -197,6 +205,7 @@
       <div class="card" id="hwCard"></div>
       <div class="card" id="viewCard">
         <label><span data-t="explode"></span> <input type="range" id="explode" min="0" max="1" step="0.01" value="0"></label>
+        <button class="ghost" id="autoFrameBtn" aria-pressed="true" data-title="autoFrameTitle"></button>
         <button class="ghost" id="drawingBtn" aria-pressed="false" data-t="drawing" data-title="drawingTitle"></button>
         <button class="ghost" id="labelsBtn" aria-pressed="false" data-t="labels" data-title="labelsTitle"></button>
         <button class="ghost" id="viewAll" data-t="viewAll"></button>
@@ -243,7 +252,7 @@ function getJson(url) {
   return jsonCache[url];
 }
 // 语言：?lang=en 读 data/site.en.json，默认读 data/site.json（?site= 可直接指定站点文件）
-const LANG = params.get('lang') || '';
+const LANG = params.get('lang') || document.querySelector('meta[name="flatpack-lang"]')?.content || '';
 let SITE, UI, PRODUCT;
 try {
   SITE = await getJson(params.get('site') || (LANG && LANG !== 'zh' ? `data/site.${LANG}.json` : 'data/site.json'));
@@ -263,7 +272,8 @@ function showError(msg) { const e = $('error'); e.style.display = 'flex'; e.text
 
 // 装配数据 + 译文：站点文件里 pieces[].i18n 指向译文，按 id / 步骤号覆盖名称和说明，其余（数量、坐标）不动
 function applyI18n(d, o) {
-  for (const k of ['title', 'scope', 'layoutSource']) if (o[k]) d[k] = o[k];
+  for (const k of ['title', 'scope', 'layoutSource', 'variantTitle', 'note', 'notes']) if (o[k]) d[k] = o[k];
+  for (const x of d.extras || []) if (o.extras && o.extras[x.id]) Object.assign(x, o.extras[x.id]);
   if (o.overview && d.overview) Object.assign(d.overview, o.overview);
   for (const [k, v] of Object.entries(o.variants || {})) if (d.variants && d.variants[k]) Object.assign(d.variants[k], v);
   for (const [k, v] of Object.entries(o.poses || {})) if (d.poses && d.poses[k]) Object.assign(d.poses[k], v);
@@ -291,9 +301,12 @@ function loadData(url) {
 $('langSeg').innerHTML = (SITE.languages || []).map((l) => `<button data-code="${esc(l.code)}" aria-pressed="${l.code === (SITE.langCode || 'zh')}">${esc(l.label)}</button>`).join('');
 for (const b of $('langSeg').children) {
   b.onclick = () => {
+    // 有独立语言页（如 en/）时跳到那一页，否则用 ?lang=；件、路线、步骤等参数保留
+    const lang = SITE.languages.find((l) => l.code === b.dataset.code);
     const q = new URLSearchParams(location.search);
-    if (b.dataset.code === 'zh') q.delete('lang'); else q.set('lang', b.dataset.code);
-    location.search = q.toString();
+    q.delete('lang');
+    if (lang.path !== undefined) location.href = new URL(`${lang.path}${q.toString() ? `?${q}` : ''}`, document.baseURI).href;
+    else { if (lang.code !== 'zh') q.set('lang', lang.code); location.search = q.toString(); }
   };
 }
 
@@ -339,18 +352,22 @@ const MAT = {
   mark: new THREE.MeshBasicMaterial({ color: 0x222222 }),
   wood: new THREE.MeshStandardMaterial({ color: 0xc9a46a, roughness: 0.8 }),
   metal: new THREE.MeshStandardMaterial({ color: 0x8d9298, roughness: 0.35, metalness: 0.8 }),
+  metal2: new THREE.MeshStandardMaterial({ color: 0x8d9298, roughness: 0.35, metalness: 0.8, side: THREE.DoubleSide }),
+  wall: new THREE.MeshStandardMaterial({ color: 0xe9e6df, roughness: 1 }),
+  outline: new THREE.LineBasicMaterial({ color: 0x00bcd4 }),
   pad: new THREE.MeshStandardMaterial({ color: 0xd8d2c4, roughness: 1 }),
 };
 // 线稿视图：白面、黑线、无光照无阴影；高亮和灰面用浅灰，五金用中灰
 const flat = (color, extra = {}) => new THREE.MeshBasicMaterial({ color, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1, ...extra });
-const DRAW = { white: flat(0xffffff), gray: flat(0xd6d6d6), hilite: flat(0xe9e9e9), hw: flat(0x9a9a9a), host: flat(0xffffff, { transparent: true, opacity: 0, depthWrite: false }) };
+const DRAW = { white: flat(0xffffff, { side: THREE.DoubleSide }), gray: flat(0xd6d6d6), hilite: flat(0xe9e9e9), hw: flat(0x9a9a9a, { side: THREE.DoubleSide }), host: flat(0xffffff, { transparent: true, opacity: 0, depthWrite: false }) };
 function drawEquivalent(m) {
   if (Array.isArray(m)) return m.map(drawEquivalent);
   if (m === MAT.gray) return DRAW.gray;
   if (m === MAT.hilite) return DRAW.hilite;
   if (m === MAT.host) return DRAW.host;
   if (m === MAT.mark) return MAT.mark;
-  if (m === MAT.metal || m === MAT.wood || m === MAT.pad) return DRAW.hw;
+  if (m === MAT.metal || m === MAT.metal2 || m === MAT.wood || m === MAT.pad) return DRAW.hw;
+  if (m === MAT.outline) return MAT.outline;
   return DRAW.white;
 }
 let drawing = false;
@@ -381,6 +398,11 @@ function makeHardware(def) {
   const s = def.shape || { diameter: 1, length: 1 };
   const type = s.type || (def.kind === 'screw' ? 'screw' : 'cylinder');
   if (type === 'box') return boxMesh(s.size, MAT.metal);
+  if (type === 'plates') { // 多块板（墙固定件、角码）：定位点为原点，各板按 offset 摆放
+    const g = new THREE.Group();
+    for (const pl of s.plates) { const m = boxMesh(pl.size, MAT.metal2); m.position.set(...pl.offset); g.add(m); }
+    return g;
+  }
   const r = s.diameter / 2;
   const cyl = (r1, r2, h, seg, mat) => {
     const m = new THREE.Mesh(cylGeo(r1, r2, h, seg), mat);
@@ -447,13 +469,34 @@ class AssemblyView {
     this.placeApproach = V(data.placeApproach || [0, 0, 1]);
     this.approachDist = data.approachDist || 45;
     this.hwDef = Object.fromEntries(data.hardware.map((h) => [h.id, h]));
+    this.extraDef = Object.fromEntries((data.extras || []).map((h) => [h.id, h]));
     this.current = 0;
     this.explode = 0;
+    // 墙组：柜体最终竖立位置的坐标系；固定在墙上的东西（角码、墙用螺钉、墙上的铅笔线）放这里，柜体移开时它们不动
+    this.wallGroup = new THREE.Group();
+    this.wallGroup.position.copy(V(data.poses.pivotWorld)).sub(V(data.poses.pivotLocal));
+    this.root.add(this.wallGroup);
     this.buildHost();
+    this.buildWalls();
     this.buildParts();
     this.buildHardware();
     this.buildMarks();
     this.layoutStaging();
+  }
+
+  // 第 room.fromStep 步起显示墙（位置按方案）
+  buildWalls() {
+    this.walls = [];
+    const r = this.data.room;
+    const w = r && this.variant && r.walls[this.variant];
+    if (!w) return;
+    const m = boxMesh(w.size, MAT.wall, MAT.hostEdge);
+    m.castShadow = false;
+    m.position.set(...w.center);
+    Object.assign(m.userData, { kind: 'wall', label: t('wallLabel') });
+    this.wallFrom = this.seq.findIndex((st) => st.n >= r.fromStep) + 1 || Infinity;
+    this.wallGroup.add(m);
+    this.walls.push(m);
   }
 
   buildHost() {
@@ -504,8 +547,18 @@ class AssemblyView {
   buildHardware() {
     this.hw = [];
     this.seq.forEach((s, i) => {
-      for (const h of s.hardware || []) {
-        const def = this.hwDef[h.id];
+      // 拧出：找之前装上的同一种五金、同一位置，记下在第几步拿掉
+      for (const h of (s.hardware || []).filter((x) => x.action === 'remove')) {
+        for (const pl of h.placements) {
+          const o = this.hw.find((x) => x.userData.hwId === h.id && !x.userData.removedAt && !x.userData.parentPart && x.userData.final.distanceTo(V(pl.position)) < 0.01);
+          if (o) o.userData.removedAt = i + 1;
+        }
+      }
+      const entries = [
+        ...(s.hardware || []).filter((x) => x.action !== 'remove').map((h) => ({ h, def: this.hwDef[h.id], kind: 'hw' })),
+        ...(s.extras || []).map((h) => ({ h, def: this.extraDef[h.id], kind: 'extra' })),
+      ];
+      for (const { h, def, kind } of entries) {
         for (const pl of h.placements) {
           const obj = makeHardware(def);
           const parentPart = pl.attachTo ? this.parts[pl.attachTo] : null;
@@ -515,10 +568,12 @@ class AssemblyView {
           let out;
           if (pl.dir) out = V(pl.dir).normalize();
           else { const ai = 'xyz'.indexOf(pl.axis); out = AXIS[pl.axis].clone().multiplyScalar(Math.sign(local.getComponent(ai)) || 1); }
-          const isBox = def.shape && def.shape.type === 'box';
+          const isBox = def.shape && (def.shape.type === 'box' || def.shape.type === 'plates');
           Object.assign(obj.userData, { // 保留 makeHardware 写入的 baseMat
-            kind: 'hw', def, member: pl.member, stepIdx: i + 1, hwId: h.id, label: `${def.name} ${pl.member || def.id}`, final: local, base: new THREE.Vector3(),
+            kind, def, member: pl.member, stepIdx: i + 1, hwId: h.id, frame: pl.frame || null,
+            label: kind === 'extra' ? def.name : `${def.name} ${pl.member || def.id}`, final: local, base: new THREE.Vector3(),
             quat: isBox ? new THREE.Quaternion() : new THREE.Quaternion().setFromUnitVectors(UP, out), out, parentPart,
+            scale: new THREE.Vector3(pl.mirrorX ? -1 : 1, 1, 1),
           });
           this.hw.push(obj);
         }
@@ -533,7 +588,7 @@ class AssemblyView {
         const m = new THREE.Mesh(boxGeo(mk.size), MAT.mark);
         m.userData = { stepIdx: i + 1, label: t('markLabel'), kind: 'mark', baseMat: MAT.mark };
         m.position.set(...mk.position);
-        this.asm.add(m);
+        (mk.frame === 'wall' ? this.wallGroup : this.asm).add(m);
         this.marks.push(m);
       }
     });
@@ -568,22 +623,26 @@ class AssemblyView {
       const id = o.userData.hwId;
       if (!tray[id]) { tray[id] = { z: ty, n: 0 }; const total = this.hw.filter((h) => h.userData.hwId === id).length; ty += Math.ceil(total / 10) * 5 + 6; }
       const k = tray[id].n++;
-      const def = this.hwDef[id];
-      const lying = def.shape && def.shape.type === 'box' ? new THREE.Quaternion() : new THREE.Quaternion().setFromUnitVectors(UP, AXIS.x);
+      const def = o.userData.def;
+      const lying = def.shape && (def.shape.type === 'box' || def.shape.type === 'plates') ? new THREE.Quaternion() : new THREE.Quaternion().setFromUnitVectors(UP, AXIS.x);
       o.userData.stage = { pos: new THREE.Vector3(st.origin[0] - 70 + (k % 10) * 5, 1, tray[id].z + Math.floor(k / 10) * 5), quat: lying };
     }
   }
 
-  tiltAt(i) {
+  // 第 i 步完成后的姿态：转角 tilt（绕底边翻转）+ 平移 shift（例如上墙时把柜体从墙边移开）
+  poseAt(i) {
     let pose = this.data.defaultPose || 'flat';
     for (let k = 1; k <= i; k++) if (this.stepsList[k].pose) pose = this.stepsList[k].pose;
-    return this.data.poses[pose].tilt;
+    const p = this.data.poses[pose];
+    return { tilt: p.tilt, shift: V(p.shift || [0, 0, 0]) };
   }
-  applyTilt(deg) {
-    this.tilt = deg;
-    this.asm.rotation.set(THREE.MathUtils.degToRad(deg), 0, 0);
-    this.asm.position.copy(V(this.data.poses.pivotWorld)).sub(V(this.data.poses.pivotLocal).applyEuler(this.asm.rotation));
+  applyPose(tilt, shift) {
+    this.tilt = tilt;
+    this.shift = shift.clone();
+    this.asm.rotation.set(THREE.MathUtils.degToRad(tilt), 0, 0);
+    this.asm.position.copy(V(this.data.poses.pivotWorld)).sub(V(this.data.poses.pivotLocal).applyEuler(this.asm.rotation)).add(shift);
   }
+  parentFor(o) { return o.userData.parentPart || (o.userData.frame === 'wall' ? this.wallGroup : this.asm); }
 
   partTarget(g, i) {
     const u = g.userData;
@@ -601,11 +660,14 @@ class AssemblyView {
     obj.userData.base.copy(pos);
     obj.position.copy(pos);
     obj.quaternion.copy(quat);
+    if (obj.userData.scale) obj.scale.copy(obj.userData.scale);
   }
 
   snapTo(i) {
     stopTweens();
-    this.applyTilt(this.tiltAt(i));
+    const pose = this.poseAt(i);
+    this.applyPose(pose.tilt, pose.shift);
+    for (const w of this.walls) w.visible = i >= this.wallFrom;
     for (const g of Object.values(this.parts)) {
       const u = g.userData;
       if (u.placedAt <= i) this.place(g, this.asm, this.partTarget(g, i), u.finalQuat);
@@ -614,8 +676,9 @@ class AssemblyView {
     }
     for (const o of this.hw) {
       const u = o.userData;
-      if (u.stepIdx <= i) this.place(o, u.parentPart || this.asm, u.final, u.quat);
+      if (u.stepIdx <= i) this.place(o, this.parentFor(o), u.final, u.quat);
       else this.place(o, this.root, u.stage.pos, u.stage.quat);
+      o.visible = !(u.removedAt <= i);
     }
     for (const m of this.marks) m.visible = m.userData.stepIdx <= i;
   }
@@ -624,6 +687,7 @@ class AssemblyView {
     obj.position.copy(obj.userData.base);
     obj.updateMatrixWorld();
     parent.attach(obj);
+    if (obj.userData.scale) obj.scale.copy(obj.userData.scale);
     const from = obj.position.clone();
     const q0 = obj.quaternion.clone();
     const pre = target.clone().addScaledVector(approach, dist);
@@ -662,15 +726,23 @@ class AssemblyView {
       }));
       if (my !== gen) return;
     }
+    for (const w of this.walls) if (i >= this.wallFrom) w.visible = true;
+    // 拧出：沿钉头方向退出后消失
+    const gone = this.hw.filter((o) => o.userData.removedAt === i);
+    if (gone.length) {
+      await Promise.all(gone.map((o) => { const from = o.userData.base.clone(); return tween(700, (k) => o.userData.base.copy(from).addScaledVector(o.userData.out, 14 * easeInOut(k))); }));
+      for (const o of gone) o.visible = false;
+      if (my !== gen) return;
+    }
     const mine = this.hw.filter((o) => o.userData.stepIdx === i);
-    await Promise.all(mine.map((o, k) => this.fly(o, o.userData.parentPart || this.asm, o.userData.final, o.userData.quat,
+    await Promise.all(mine.map((o, k) => this.fly(o, this.parentFor(o), o.userData.final, o.userData.quat,
       o.userData.out, Math.min(10, this.approachDist / 2), k * (mine.length > 12 ? 28 : 80), 650)));
     if (my !== gen) return;
     for (const m of this.marks) if (m.userData.stepIdx === i) m.visible = true;
-    const target = this.tiltAt(i);
-    if (target !== this.tilt) {
-      const from = this.tilt;
-      await tween(1700, (k) => this.applyTilt(from + (target - from) * easeInOut(k)));
+    const target = this.poseAt(i);
+    if (target.tilt !== this.tilt || !target.shift.equals(this.shift)) {
+      const fromT = this.tilt, fromS = this.shift.clone();
+      await tween(1700, (k) => { const e = easeInOut(k); this.applyPose(fromT + (target.tilt - fromT) * e, fromS.clone().lerp(target.shift, e)); });
     }
   }
 
@@ -680,7 +752,7 @@ class AssemblyView {
     const box = new THREE.Box3();
     const objs = this.current === 0 ? this.objects()
       // 挂在还在备料区的零件上的五金（如先敲进长层板的木销）不算，它们属于备料区
-      : [...this.bodyObjects(), ...this.hw.filter((o) => o.userData.stepIdx <= this.current && (!o.userData.parentPart || o.userData.parentPart.parent === this.asm)),
+      : [...this.bodyObjects(), ...this.hw.filter((o) => o.userData.stepIdx <= this.current && !(o.userData.removedAt <= this.current) && (!o.userData.parentPart || o.userData.parentPart.parent === this.asm)),
         ...this.asm.children.filter((o) => o.userData.kind === 'host')];
     for (const o of objs) box.expandByObject(o);
     return box;
@@ -728,11 +800,11 @@ class AssemblyView {
 
 // ================= 全套视图（实例化）=================
 class SetView {
-  async init(set) {
+  async init(set, { bodyVariant = null } = {}) {
     this.set = set;
     const body = await loadData(set.body);
-    this.body = new AssemblyView(body, null, { interactive: false });
-    this.body.snapTo(body.steps.length);
+    this.body = new AssemblyView(body, bodyVariant, { interactive: false });
+    this.body.snapTo(this.body.seq.length);
     this.root = this.body.root;
     this.instanced = [];
     this.lines = [];
@@ -802,6 +874,40 @@ class SetView {
   dispose() { this.body.dispose(); }
 }
 
+// ================= Room 视图：全套靠墙放，墙上用青色轮廓标出柜体和固定件的最终位置 =================
+class RoomView extends SetView {
+  async initRoom(room, variant) {
+    this.room = room;
+    this.variant = variant;
+    await this.init(await loadData(room.set), { bodyVariant: variant });
+    MAT.outline.color.set(room.outlineColor || '#00bcd4');
+    const mat = new THREE.LineBasicMaterial({ color: MAT.outline.color, depthTest: false, transparent: true });
+    this.outlineMat = mat;
+    for (const o of room.outlines[variant]) {
+      const [a0, y0, a1, y1] = o.rect;
+      const pt = (a, y) => (o.plane === 'z' ? [a, y, o.at] : [o.at, y, a]);
+      const pts = [pt(a0, y0), pt(a1, y0), pt(a1, y0), pt(a1, y1), pt(a1, y1), pt(a0, y1), pt(a0, y1), pt(a0, y0)].flat();
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+      const line = new THREE.LineSegments(g, mat);
+      line.renderOrder = 10; // 透过柜体也能看见
+      line.userData = { kind: 'outline', label: t(o.kind === 'cabinet' ? 'outlineCabinet' : 'outlineFixing', { id: o.id || '' }) };
+      this.body.wallGroup.add(line);
+    }
+    return this;
+  }
+  // 人眼高度、斜前方看过去，按包围盒取景
+  frameRoom(instant = false) {
+    scene.updateMatrixWorld(true);
+    const box = new THREE.Box3();
+    for (const o of this.bodyObjects()) box.expandByObject(o);
+    box.expandByScalar(15); // 带上柜体周围一圈墙面和地面
+    const c = box.getCenter(new THREE.Vector3());
+    const dir = new THREE.Vector3(this.variant === 'b' ? 0.75 : 0.35, (this.room.eyeHeight - c.y) / 300, 1);
+    frameBox(box, { instant, dir });
+  }
+}
+
 // ================= 相机：按包围盒取景，避开浮在画面上的面板 =================
 const DEFAULT_DIR = new THREE.Vector3(0.35, 0.62, 0.7).normalize();
 const PANELS = ['stepCard', 'hwCard', 'viewCard', 'shotTitle'];
@@ -868,13 +974,22 @@ function fitBox(box, dir, rect) {
   return { pos: c.clone().addScaledVector(dir, hi * 1.04), target: c };
 }
 let lastBox = null, lastSize = '';
-function frameBox(box, { instant = false, reset = false } = {}) {
+// 自动取景：用户拖动、缩放或在 Room 里走动后暂停；按"全景"或 R 恢复
+let autoFrame = true;
+function setAutoFrame(on) {
+  autoFrame = on;
+  const b = $('autoFrameBtn');
+  b.setAttribute('aria-pressed', on);
+  b.textContent = t(on ? 'autoFrameOn' : 'autoFrameOff');
+}
+controls.addEventListener('start', () => setAutoFrame(false));
+function frameBox(box, { instant = false, reset = false, dir: fixedDir = null } = {}) {
   if (!box || box.isEmpty()) return;
   lastBox = box.clone();
   const rect = safeRect();
   applyViewOffset(rect);
   let dir = camera.position.clone().sub(controls.target);
-  dir = reset || dir.lengthSq() < 1e-6 ? DEFAULT_DIR.clone() : dir.normalize();
+  dir = fixedDir ? fixedDir.clone().normalize() : reset || dir.lengthSq() < 1e-6 ? DEFAULT_DIR.clone() : dir.normalize();
   const v = fitBox(box, dir, rect);
   const p0 = camera.position.clone(), t0 = controls.target.clone();
   if (instant) { camera.position.copy(v.pos); controls.target.copy(v.target); controls.update(); return; }
@@ -973,7 +1088,12 @@ async function load(piece, variant, { keepStep = false, step = null } = {}) {
   state = { piece: info.key, variant: null };
   for (const b of $('pieceSeg').children) b.setAttribute('aria-pressed', b.dataset.key === info.key);
   $('explode').value = 0;
-  if (data.schema && data.schema.startsWith('flatpack3d/set')) {
+  if (data.schema && data.schema.startsWith('flatpack3d/room')) {
+    const v = data.variants[variant] ? variant : Object.keys(data.variants).find((k) => data.variants[k].default);
+    state.variant = v;
+    view = await new RoomView().initRoom(data, v);
+    renderRoomUi(data);
+  } else if (data.schema && data.schema.startsWith('flatpack3d/set')) {
     view = await new SetView().init(data);
     renderSetUi(data);
   } else {
@@ -985,7 +1105,9 @@ async function load(piece, variant, { keepStep = false, step = null } = {}) {
   }
   setDrawing(drawing);
   resize();
+  setAutoFrame(true);
   if (view instanceof AssemblyView) go(indexOfStep(keepN), false, { reset: true });
+  else if (view instanceof RoomView) { view.frameRoom(true); syncUrl(); }
   else { frame(defaultFrame(), true); syncUrl(); }
 }
 
@@ -993,6 +1115,7 @@ function renderVariantSeg(data) {
   const box = $('variantBox');
   if (!data || !data.variants) { box.style.display = 'none'; return; }
   box.style.display = 'flex';
+  $('variantLabel').textContent = data.variantTitle || t('variantLabel');
   $('variantSeg').innerHTML = Object.entries(data.variants).map(([k, v]) =>
     `<button data-k="${esc(k)}" title="${esc(v.note || '')}" aria-pressed="${k === state.variant}">${esc(v.label)}</button>`).join('');
   for (const b of $('variantSeg').children) b.onclick = () => { if (b.dataset.k !== state.variant) load(state.piece, b.dataset.k, { keepStep: true }); };
@@ -1017,19 +1140,65 @@ function renderAssemblyUi(data) {
     stepsEl.append(b);
   });
   const hw = data.hardware;
-  const body = hw.filter((h) => h.scope !== 'wall' && h.kind !== 'tool');
+  // 本路线用到的五金；只在其他方案里用的单独折叠
+  const usedHere = (h) => (h.variants ? h.variants.includes(state.variant) : h.scope !== 'wall');
+  const body = hw.filter((h) => h.kind !== 'tool' && usedHere(h));
   const tools = hw.filter((h) => h.kind === 'tool');
-  const wall = hw.filter((h) => h.scope === 'wall');
+  const wall = hw.filter((h) => h.kind !== 'tool' && !usedHere(h));
+  const extras = (data.extras || []).filter((x) => view.seq.some((st) => (st.extras || []).some((e) => e.id === x.id)));
   $('hwCard').innerHTML = `
     <h3>${esc(t('hwParts'))}</h3>
     <div class="row" data-id="__parts"><span class="name">${esc(t('hwPartsPlaced'))}</span><span class="num"></span><div class="meter"><i></i></div></div>
     <h3>${esc(t('hwHardware'))}</h3>
     ${body.map((h) => `<div class="row" data-id="${esc(h.id)}"><span class="name">${esc(h.name)}</span><span class="num"></span><span class="id">${esc(h.id)}${h.unit ? ` · ${esc(t('hwUnit', { unit: h.unit }))}` : ''}</span><div class="meter"><i></i></div></div>`).join('')}
     ${tools.map((h) => `<div class="tool" data-tool="${esc(h.id)}"><span>${esc(h.name)} <span style="color:var(--muted)">${esc(h.id)}</span></span><span class="tag">${esc(t('toolInUse'))}</span></div>`).join('')}
-    ${wall.length ? `<details><summary>${esc(t('wallSummary', { n: wall.length }))}</summary><ul>${wall.map((h) => `<li>${esc(h.name)} ${esc(h.id)} ×${h.quantity}</li>`).join('')}</ul></details>` : ''}`;
+    ${extras.map((x) => `<div class="tool"><span>${esc(x.name)}</span><span class="id" style="color:var(--muted)">${esc(x.note || '')}</span></div>`).join('')}
+    ${wall.length ? `<details><summary>${esc(t(data.variants ? 'otherVariantHw' : 'wallSummary', { n: wall.length }))}</summary><ul>${wall.map((h) => `<li>${esc(h.name)} ${esc(h.id)} ×${h.quantity}</li>`).join('')}</ul></details>` : ''}`;
+}
+
+function renderRoomUi(room) {
+  $('footer').classList.add('static');
+  $('staticNote').textContent = t('roomFooter');
+  $('viewBody').textContent = t('viewBodySet');
+  renderVariantSeg(room);
+  $('subtitle').textContent = room.title;
+  document.title = `${t('appName')} · ${room.title}`;
+  const body = view.body.data;
+  const vs = body.steps.filter((st) => st.variant === state.variant);
+  const fix = {};
+  for (const st of vs) for (const h of st.hardware) if (h.action !== 'remove') fix[h.id] = (fix[h.id] || 0) + h.count;
+  $('stepCard').innerHTML = `
+    <div class="kicker"><span>${esc(t('roomKicker'))}</span><span>${esc(room.variants[state.variant].label)}</span></div>
+    <h2>${esc(room.title)}</h2>
+    <p>${esc(room.note)}</p>
+    <p>${esc(room.variants[state.variant].note)}</p>
+    <p class="safety">${esc(PRODUCT.safety.text)}</p>`;
+  $('hwCard').innerHTML = `<h3>${esc(t('roomFixings'))}</h3>${Object.entries(fix).map(([id, n]) => { const d = body.hardware.find((h) => h.id === id); return `<div class="row"><span class="name">${esc(d.name)}</span><span class="num">×${n}</span><span class="id">${esc(id)}</span></div>`; }).join('')}
+    ${(body.extras || []).map((x) => `<div class="tool"><span>${esc(x.name)}</span><span class="id" style="color:var(--muted)">${esc(x.note || '')}</span></div>`).join('')}`;
+  // 左侧：说明书的警告页和本方案的上墙页
+  $('manualLabel').textContent = t('manualLabel', { docId: body.source.docId });
+  $('pageNav').style.display = 'none';
+  $('pageHintText').textContent = t('roomPagesHint');
+  const pages = [2, ...new Set(vs.flatMap((st) => st.pages))];
+  const tabs = $('pageTabs');
+  tabs.innerHTML = pages.map((pg, i) => `<button aria-pressed="${i === 0}" data-p="${pg}">p${pg}</button>`).join('');
+  const show = (pg) => {
+    for (const b of tabs.children) b.setAttribute('aria-pressed', Number(b.dataset.p) === pg);
+    const url = `${body.manualPages.dir}/${body.manualPages.pattern.replace('{NN}', String(pg).padStart(2, '0'))}`;
+    $('pageOpen').href = url;
+    $('pageView').innerHTML = '';
+    const img = new Image();
+    img.alt = t('pageAlt', { p: pg });
+    img.onerror = () => { $('pageView').innerHTML = `<div class="missing">${esc(t('pageMissing', { url }))}</div>`; };
+    img.src = url;
+    $('pageView').append(img);
+  };
+  for (const b of tabs.children) b.onclick = () => show(Number(b.dataset.p));
+  show(pages[0]);
 }
 
 function renderSetUi(set) {
+  $('staticNote').textContent = t('staticNote');
   $('footer').classList.add('static');
   $('viewBody').textContent = t('viewBodySet');
   renderVariantSeg(null);
@@ -1040,6 +1209,7 @@ function renderSetUi(set) {
     <div class="kicker"><span>${esc(t('setKicker'))}</span><span>${esc(t('setKicker2'))}</span></div>
     <h2>${esc(set.title)}</h2>
     <p>${esc(set.layoutSource)}</p>
+    ${(set.notes || []).map((n) => `<p>${esc(n)}</p>`).join('')}
     <div class="chips">${counts}</div>`;
   const bodyData = view.body.data;
   const partTotal = bodyData.parts.length + view.inserts.reduce((a, { ins, data }) => a + ins.placements.length * data.parts.length, 0);
@@ -1076,7 +1246,11 @@ function renderStepCard(i) {
   for (const id of s.parts || []) { const tp = data.parts.find((p) => p.id === id).type; counts[tp] = (counts[tp] || 0) + 1; }
   for (const [tp, c] of Object.entries(counts)) chips.push(`<span class="chip">${esc(data.partTypes[tp].name)} ×${c}</span>`);
   if ((s.install || []).length) chips.push(`<span class="chip">${esc(t('install', { n: s.install.length }))}</span>`);
-  for (const h of s.hardware || []) { const d = view.hwDef[h.id]; chips.push(`<span class="chip hw">${esc(d.name)} ${esc(h.id)} ×${h.count}${d.unit ? ` ${esc(d.unit)}` : ''}</span>`); }
+  for (const h of s.hardware || []) {
+    const d = view.hwDef[h.id];
+    chips.push(`<span class="chip hw">${h.action === 'remove' ? `${esc(t('removeChip'))} ` : ''}${esc(d.name)} ${esc(h.id)} ×${h.count}${d.unit ? ` ${esc(d.unit)}` : ''}</span>`);
+  }
+  for (const x of s.extras || []) chips.push(`<span class="chip">${esc(view.extraDef[x.id].name)} ×${x.placements.length}</span>`);
   for (const tl of s.tools || []) chips.push(`<span class="chip">${esc(view.hwDef[tl] ? `${view.hwDef[tl].name} ${tl}` : tl)}</span>`);
   const meta = [i > 0 ? t('stepN', { n: s.n, i, total: view.seq.length }) : t('stepPrep'), t('manualPages', { pages: s.pages.map((p) => `p${p}`).join('、') })];
   if (state.variant) meta.push(data.variants[state.variant].label);
@@ -1085,13 +1259,14 @@ function renderStepCard(i) {
     <div class="kicker">${meta.map((m) => `<span>${esc(m)}</span>`).join('')}</div>
     <h2>${esc(s.title)}</h2>
     <p>${esc(s.hint)}</p>
-    <div class="chips">${chips.join('') || `<span class="chip">${esc(t('noNew'))}</span>`}</div>`;
+    <div class="chips">${chips.join('') || `<span class="chip">${esc(t('noNew'))}</span>`}</div>
+    ${data.room && s.n >= data.room.fromStep && i > 0 ? `<p class="safety">${esc(PRODUCT.safety.short)}</p>` : ''}`;
 }
 
 function renderCounters(i) {
   const data = view.data;
   const used = {};
-  view.seq.slice(0, i).forEach((s) => { for (const h of s.hardware || []) used[h.id] = (used[h.id] || 0) + h.count; });
+  view.seq.slice(0, i).forEach((s) => { for (const h of s.hardware || []) used[h.id] = (used[h.id] || 0) + (h.action === 'remove' ? -h.count : h.count); });
   const cur = view.stepsList[i];
   const placed = Object.values(view.parts).filter((g) => g.userData.placedAt <= i).length;
   const set = (id, val, total) => {
@@ -1104,7 +1279,7 @@ function renderCounters(i) {
     row.classList.toggle('flash', (cur.hardware || []).some((h) => h.id === id) || (id === '__parts' && (cur.parts || []).length > 0));
   };
   set('__parts', placed, data.parts.length);
-  for (const h of data.hardware) if (h.scope !== 'wall' && h.kind !== 'tool') set(h.id, used[h.id] || 0, h.quantity);
+  for (const h of data.hardware) if (h.kind !== 'tool') set(h.id, used[h.id] || 0, h.quantity);
   for (const el of $('hwCard').querySelectorAll('[data-tool]')) el.querySelector('.tag').classList.toggle('on', (cur.tools || []).includes(el.dataset.tool));
 }
 
@@ -1174,7 +1349,8 @@ function go(i, animate = true, { reset = false } = {}) {
   showPage(view.stepsList[i].pages[0]);
   const box = view.targetBox(i);
   view.go(i, animate);
-  frameBox(box, { instant: !animate, reset });
+  if (reset) setAutoFrame(true);
+  if (autoFrame) frameBox(box, { instant: !animate, reset });
   syncUrl();
 }
 const current = () => (view instanceof AssemblyView ? view.current : 0);
@@ -1186,7 +1362,8 @@ function hitAt(e) {
   const r = renderer.domElement.getBoundingClientRect();
   ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
   ray.setFromCamera(ndc, camera);
-  const hit = ray.intersectObjects(view.objects(), true).find((h) => h.object.isMesh);
+  const shown = (o) => { for (let x = o; x; x = x.parent) if (!x.visible) return false; return true; };
+  const hit = ray.intersectObjects(view.objects(), true).find((h) => h.object.isMesh && shown(h.object));
   if (!hit) return null;
   if (hit.object.isInstancedMesh) return { inst: hit.object, k: hit.instanceId, r };
   let o = hit.object;
@@ -1212,6 +1389,8 @@ function openPick(e, h) {
       html = `<b>${esc(u.def.name)}</b>${line(t('pickCode', { id: u.def.id }))}${line(t('pickType', { type: owner.partTypes[u.def.type].name }))}${line(t('pickPartNote'))}`;
     } else if (u.kind === 'hw') {
       html = `<b>${esc(u.def.name)}</b>${line(t('pickHwId', { id: u.member || u.def.id }))}`;
+    } else if (u.kind === 'extra') {
+      html = `<b>${esc(u.def.name)}</b>${line(u.def.note || '')}`;
     } else html = `<b>${esc(u.label)}</b>`;
   }
   $('pickBody').innerHTML = html;
@@ -1256,12 +1435,18 @@ function setExplode(v) {
   $('explode').value = v;
   if (view instanceof SetView) view.setExplode(v); else if (view) view.explode = v;
 }
-const resetView = () => (view instanceof AssemblyView ? frameBox(view.currentBox(), { reset: true }) : frame(defaultFrame(), false, true));
+const resetView = () => {
+  setAutoFrame(true);
+  if (view instanceof RoomView) view.frameRoom();
+  else if (view instanceof AssemblyView) frameBox(view.currentBox(), { reset: true });
+  else frame(defaultFrame(), false, true);
+};
 $('prev').onclick = () => go(current() - 1);
 $('next').onclick = () => go(current() + 1);
 $('replay').onclick = () => go(current());
 $('chain').onclick = () => setChain(!chainTimer);
-$('viewAll').onclick = () => frame('all', false, false);
+$('viewAll').onclick = () => { setAutoFrame(true); if (view instanceof RoomView) view.frameRoom(); else frame('all', false, false); };
+$('autoFrameBtn').onclick = () => (autoFrame ? setAutoFrame(false) : resetView());
 $('viewBody').onclick = () => frame('body', false, false);
 $('explode').oninput = (e) => setExplode(Number(e.target.value));
 $('drawingBtn').onclick = () => setDrawing(!drawing);
@@ -1288,9 +1473,14 @@ function commitDigits() {
   const i = view.seq.findIndex((s) => s.n === n);
   if (i >= 0) go(i + 1);
 }
+const held = new Set();
+const MOVE_KEYS = ['w', 'a', 's', 'd', 'q', 'e'];
+addEventListener('keyup', (e) => held.delete(e.key.toLowerCase()));
+addEventListener('blur', () => held.clear());
 addEventListener('keydown', (e) => {
   if ((e.target instanceof Element && e.target.closest('input, textarea, select')) || e.ctrlKey || e.metaKey || e.altKey) return;
   const k = e.key;
+  if (view instanceof RoomView && MOVE_KEYS.includes(k.toLowerCase())) { held.add(k.toLowerCase()); setAutoFrame(false); e.preventDefault(); return; }
   if (/^[0-9]$/.test(k)) {
     digits += k;
     clearTimeout(digitTimer);
@@ -1303,7 +1493,7 @@ addEventListener('keydown', (e) => {
     ' ': () => go(current()),
     c: () => setChain(!chainTimer), r: resetView,
     x: () => setExplode(Number($('explode').value) > 0 ? 0 : 0.6),
-    n: () => setLabels(!showLabels), d: () => setDrawing(!drawing),
+    n: () => setLabels(!showLabels), l: () => setDrawing(!drawing),
     Escape: () => { closePick(); $('shortcuts').classList.remove('open'); },
   };
   const fn = actions[k] || actions[k.toLowerCase()];
@@ -1351,6 +1541,7 @@ async function renderAbout() {
   try { guesses = parseGuesses(await (await fetch(a.approximate.source)).text(), a.approximate.heading); } catch { guesses = ''; }
   const ex = PRODUCT.explainers;
   $('about').innerHTML = `
+    <p class="safety"><strong>${esc(PRODUCT.safety.title)}</strong> ${esc(PRODUCT.safety.text)}</p>
     <h2>${esc(a.title)}</h2>
     <div class="cols">
       <div class="card box"><h3>${esc(a.exact.title)}</h3><ul>${a.exact.items.map((s) => `<li>${inlineMd(s)}</li>`).join('')}</ul></div>
@@ -1382,7 +1573,30 @@ function resize() {
 const ro = new ResizeObserver(() => resize());
 for (const el of [stage, $('stepCard'), $('hwCard'), $('viewCard')]) ro.observe(el);
 resize();
+let lastNow = performance.now();
+// Room：W/S 前后、A/D 左右平移（沿地面），Q/E 原地左右转
+function walk(dt) {
+  if (!(view instanceof RoomView) || !held.size) return;
+  const fwd = controls.target.clone().sub(camera.position);
+  fwd.y = 0;
+  if (fwd.lengthSq() < 1e-6) return;
+  fwd.normalize();
+  const right = new THREE.Vector3().crossVectors(fwd, UP);
+  const move = new THREE.Vector3();
+  if (held.has('w')) move.add(fwd);
+  if (held.has('s')) move.sub(fwd);
+  if (held.has('d')) move.add(right);
+  if (held.has('a')) move.sub(right);
+  if (move.lengthSq()) { move.normalize().multiplyScalar(150 * dt); camera.position.add(move); controls.target.add(move); }
+  const turn = (held.has('q') ? 1 : 0) - (held.has('e') ? 1 : 0);
+  if (turn) {
+    const look = controls.target.clone().sub(camera.position).applyAxisAngle(UP, turn * THREE.MathUtils.degToRad(60) * dt);
+    controls.target.copy(camera.position).add(look);
+  }
+}
 renderer.setAnimationLoop((now) => {
+  walk(Math.min(0.1, (now - lastNow) / 1000));
+  lastNow = now;
   runTweens(now);
   if (view) view.update();
   controls.update();
@@ -1413,12 +1627,17 @@ function framingReport() {
     const o = panelRect(id);
     if (o && o.l < r.r - tol && o.r > r.l + tol && o.t < r.b - tol && o.b > r.t + tol) problems.push(`被 ${id} 挡住：零件 ${f(r)}，面板 ${f(o)}`);
   }
+  // 页面不能横向溢出（例如页头按钮在手机宽度下挤出屏幕）
+  // 手机上内容一宽，布局视口会跟着撑宽，所以和屏幕宽度比
+  const vw = Math.min(innerWidth, screen.width || innerWidth);
+  const over = [...document.querySelectorAll('header > *, footer > *')].filter((el) => el.offsetParent !== null && el.getBoundingClientRect().right > vw + 1);
+  if (document.documentElement.scrollWidth > vw + 1 || over.length) problems.push(`页面横向溢出：${over.map((el) => el.id || el.className || el.tagName).join('、') || 'document'}`);
   const s = safeRect();
   const fill = Math.max((r.r - r.l) / (s.r - s.l), (r.b - r.t) / (s.b - s.t));
   if (fill < 0.6) problems.push(`取景太远：零件只占可用区域的 ${Math.round(fill * 100)}%`);
   return { problems, rect: r, safe: s, canvas: [W, H] };
 }
-window.__flatpack = { go, load, frame, setDrawing, setLabels, framingReport, camera, controls, get view() { return view; } }; // 调试与检查用
+window.__flatpack = { go, load, frame, setDrawing, setLabels, setAutoFrame, framingReport, camera, controls, get view() { return view; }, get autoFrame() { return autoFrame; } }; // 调试与检查用
 </script>
 </body>
 </html>

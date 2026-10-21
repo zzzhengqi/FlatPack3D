@@ -2,7 +2,7 @@
   "appName": "FlatPack3D",
   "loading": "加载中…",
   "pieceGroup": "件",
-  "variantLabel": "开门方向",
+  "variantLabel": "路线",
   "manualHide": "隐藏说明书",
   "manualShow": "显示说明书",
   "manualLabel": "说明书 {docId}",
@@ -68,6 +68,18 @@
   "pickClose": "关闭",
   "hostLabel": "格子（示意）",
   "markLabel": "铅笔线",
+  "autoFrameOn": "自动取景：开",
+  "autoFrameOff": "自动取景：已暂停",
+  "autoFrameTitle": "拖动、缩放或在 Room 里走动后暂停；按 R 或\"全景\"恢复",
+  "wallLabel": "墙",
+  "removeChip": "拧出",
+  "otherVariantHw": "其他方案的五金 {n} 种（本路线不用）",
+  "outlineCabinet": "柜体的最终位置（青色轮廓）",
+  "outlineFixing": "固定件 {id} 的最终位置（青色轮廓）",
+  "roomKicker": "Room 视图",
+  "roomFixings": "本方案的固定件",
+  "roomFooter": "Room 视图：WASD 移动、Q/E 转向，鼠标照常旋转和缩放；青色轮廓会透过柜体显示。",
+  "roomPagesHint": "p2 是说明书的安全警告页，其余是本方案的上墙步骤页",
   "shortcutList": [
     {
       "keys": "[  ]",
@@ -87,7 +99,7 @@
     },
     {
       "keys": "R",
-      "text": "重置视角"
+      "text": "重置视角并恢复自动取景"
     },
     {
       "keys": "X",
@@ -98,8 +110,16 @@
       "text": "切换零件标签"
     },
     {
-      "keys": "D",
+      "keys": "L",
       "text": "切换线稿视图"
+    },
+    {
+      "keys": "W A S D",
+      "text": "Room 视图里前后左右移动"
+    },
+    {
+      "keys": "Q E",
+      "text": "Room 视图里向左 / 向右转"
     },
     {
       "keys": "点击零件",

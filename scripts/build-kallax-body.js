@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// 生成 data/kallax-body.json：KALLAX 5×5 置物架主体，说明书第 1–24 步（不含上墙固定、不含嵌件）。
+// 生成 data/kallax-body.json：KALLAX 5×5 置物架主体，说明书第 1–29 步（第 25 步起分两种上墙方案；不含嵌件）。
 // 零件、五金、页码都取自 docs/analysis/kallax-manuals.md；尺寸取自 docs/dimensions.md（板厚等为近似值）。
 // 用法：node scripts/build-kallax-body.js
 'use strict';
@@ -44,14 +44,18 @@ const rowIds = (r) => [1, 2, 3, 4].map((j) => `divider-r${r}-${j}`);
 // ---- 五金目录（报告第 1 节五金清单，含本次不用的上墙五金）----
 const hardware = [
   { id: '100001', name: 'Z 形内六角扳手', quantity: 1, kind: 'tool', scope: 'body' },
-  { id: '103693', name: '带葫芦孔的金属片', quantity: 2, kind: 'other', scope: 'wall' },
+  { id: '103693', name: '带葫芦孔的金属片', quantity: 2, kind: 'plate', scope: 'wall', variants: ['a'], shape: { type: 'box', size: [2.2, 3.0, 0.15] } },
   { id: '104321/104322', name: '长沉头内六角螺钉', quantity: 8, kind: 'screw', scope: 'body', shape: { diameter: 0.7, length: SCREW_LEN, headDiameter: 1.4 } },
   { id: '101339', name: '木销', quantity: 80, kind: 'dowel', scope: 'body', shape: { diameter: 0.8, length: 4.0 } },
-  { id: '100372', name: '短十字自攻螺钉', quantity: 4, kind: 'other', scope: 'wall' },
+  { id: '100372', name: '短十字自攻螺钉', quantity: 4, kind: 'screw', scope: 'wall', variants: ['a'], shape: { type: 'screw', diameter: 0.4, length: 1.6, headDiameter: 0.8 } },
   { id: '153550', name: '圆形自粘毡垫', quantity: 12, kind: 'pad', scope: 'body', shape: { diameter: 4.2, length: 0.3 } },
-  { id: '10091413', name: 'L 形金属角码', quantity: 2, kind: 'other', scope: 'wall' },
-  { id: '115753', name: '合页式墙固定件', quantity: 2, kind: 'other', scope: 'wall' },
-  { id: '115754/118673/118225/119509', name: 'L 形转角盖帽', quantity: 2, kind: 'other', scope: 'wall' },
+  // 角码：竖边夹在左侧板与墙之间，横边压在顶板上（定位点 = 顶板左端上沿）
+  { id: '10091413', name: 'L 形金属角码', quantity: 2, kind: 'bracket', scope: 'wall', variants: ['b'],
+    shape: { type: 'plates', plates: [{ size: [0.25, 5, 3], offset: [-0.125, -2.5, 0] }, { size: [6, 0.25, 3], offset: [2.75, 0.125, 0] }] } },
+  // 墙固定件：一片贴在外侧板内面、一片贴在背面平面（定位点 = 侧板内面与背面的交线）
+  { id: '115753', name: '合页式墙固定件', quantity: 2, kind: 'bracket', scope: 'wall', variants: ['a'],
+    shape: { type: 'plates', plates: [{ size: [0.2, 4.5, 3], offset: [0.1, 0, 1.5] }, { size: [3, 4.5, 0.2], offset: [1.5, 0, 0.1] }] } },
+  { id: '115754/118673/118225/119509', name: 'L 形转角盖帽', quantity: 2, kind: 'cap', scope: 'wall', variants: ['a'], shape: { type: 'box', size: [3.4, 5.2, 3.4] } },
 ];
 
 // ---- 五金摆放 ----
@@ -120,16 +124,63 @@ const steps = [
   { n: 22, pages: [25], title: '毡垫', parts: [], hint: '在底板灰色面贴 12 个毡垫。', hardware: [hw(PAD, pads())] },
   { n: 23, pages: [26], title: '抬起', pose: 'lift', parts: [], hint: '两人抬起柜体，注意手扶的位置。', hardware: [] },
   { n: 24, pages: [26], title: '竖起', pose: 'upright', parts: [],
-    hint: '两人把柜体翻转竖起。下一步是上墙固定（本次不做）。', hardware: [] },
+    hint: '两人把柜体翻转竖起。接下来按摆放情况选上墙方案（p27）。', hardware: [] },
 ];
-for (const s of steps) { s.tools = s.tools || []; }
+
+// ---- 上墙固定（报告第 1 节方案 A / B 表格，第 7 节复查）----
+const TOP_IN = H / 2 - TO;            // 顶板下表面 87
+const SIDE_IN = W / 2 - TO;           // 侧板内表面 87
+const BACK = -D / 2;                  // 背面 -19.5
+const FIT_Y = TOP_IN - 3;             // 墙固定件高度（猜测）
+const wallScrew = (position, dir) => ({ position: vec(...position), dir, frame: 'wall' });
+// 方案 A：左上、右上两格各一个墙固定件
+const fittings = [-1, 1].map((sx) => ({ position: vec(sx * SIDE_IN, FIT_Y, BACK), dir: [0, 0, 1], ...(sx > 0 ? { mirrorX: true } : {}) }));
+const fittingScrews = [-1, 1].flatMap((sx) => [-1.3, 1.3].map((dy) => ({ position: vec(sx * (SIDE_IN + 0.6), FIT_Y + dy, BACK + 2.3), dir: [-sx, 0, 0] })));
+const keyPlates = [-1, 1].map((sx) => ({ position: vec(sx * (SIDE_IN - 1.5), FIT_Y, BACK + 0.2 + 0.075), dir: [0, 0, 1] }));
+const caps = [-1, 1].map((sx) => ({ position: vec(sx * (SIDE_IN - 1.7), FIT_Y, BACK + 1.7), dir: [0, 0, 1] }));
+// 方案 B：两个角码在顶板左端，深度方向与第 1 步那两颗长螺钉对齐
+const B_Z = SCREW_Z;
+const brackets = B_Z.map((z) => ({ position: vec(-W / 2, H / 2, z), dir: [0, 1, 0], frame: 'wall' }));
+const topLeftScrews = B_Z.map((z) => ({ position: vec(-(W / 2 - TO / 2), H / 2 - SCREW_LEN / 2, z), axis: 'y' }));
+const refitScrews = B_Z.map((z) => ({ position: vec(-(W / 2 - TO / 2), H / 2 - SCREW_LEN / 2 + 0.25, z), axis: 'y' }));
+const WALL_A = { center: vec(0, -H / 2 - 0.4 + 130, BACK - 0.3 - 1), size: [400, 260, 2] };
+const WALL_B = { center: vec(-W / 2 - 0.25 - 0.01 - 1, -H / 2 - 0.4 + 130, 0), size: [2, 260, 300] };
+const WALL_B_X = -W / 2 - 0.26;
+
+steps.push(
+  { n: 25, variant: 'a', pages: [27], title: '装墙固定件', parts: [],
+    hint: '柜体立在地上、背面贴墙时用这个方案。在左上、右上两格的顶板下沿各装 1 个墙固定件，每个 2 颗螺钉。',
+    hardware: [hw('115753', fittings), hw('100372', fittingScrews)] },
+  { n: 26, variant: 'a', pages: [28], title: '固定到墙上', tools: ['水平尺'], parts: [],
+    hint: '用水平尺校正。墙用螺钉要用圆头，穿过葫芦孔片和固定件的大孔打进墙里。墙用螺钉和螺塞不随包装提供，要按墙体材质另购。',
+    hardware: [hw('103693', keyPlates)],
+    extras: [{ id: 'wall-screw', placements: [-1, 1].map((sx) => wallScrew([sx * (SIDE_IN - 1.5), FIT_Y, BACK + 0.35 - 2.5], [0, 0, 1])) }] },
+  { n: 27, variant: 'a', pages: [29], title: '调整并拧紧', parts: [], hint: '葫芦孔片可以左右、上下调整位置，调好后拧紧。', hardware: [] },
+  { n: 28, variant: 'a', pages: [30], title: '盖帽', parts: [], hint: '盖上 2 个转角盖帽。', hardware: [hw('115754/118673/118225/119509', caps)] },
+
+  { n: 25, variant: 'b', pages: [31], title: '放角码、划线', parts: [],
+    hint: '把 2 个角码放在顶板左端，孔对准顶板上的螺钉孔，用铅笔在墙上划出角码的位置。',
+    tools: ['铅笔'], hardware: [hw('10091413', brackets)],
+    marks: B_Z.map((z) => ({ position: vec(WALL_B_X - 0.03, H / 2, z), size: [0.06, 0.15, 4], frame: 'wall' })) },
+  { n: 26, variant: 'b', pages: [32], title: '角码固定到墙上', pose: 'awayB', parts: [],
+    hint: '角码用圆头墙用螺钉固定到墙上的划线处。墙用螺钉和螺塞不随包装提供，要按墙体材质另购。',
+    hardware: [], extras: [{ id: 'wall-screw', placements: B_Z.map((z) => wallScrew([-W / 2 - 2.5, H / 2 - 3, z], [1, 0, 0])) }] },
+  { n: 27, variant: 'b', pages: [33], title: '拧出 2 颗长螺钉', tools: ['100001'], parts: [],
+    hint: '用 Z 形扳手从顶板左端拧出 2 颗长螺钉（第 1 步装的那两颗）。',
+    hardware: [{ id: SCREW, count: 2, action: 'remove', placements: topLeftScrews }] },
+  { n: 28, variant: 'b', pages: [34], title: '推到角码下', pose: 'upright', parts: [], hint: '把柜体推向墙，让角码卡在顶板上。', hardware: [] },
+  { n: 29, variant: 'b', pages: [35], title: '拧回螺钉', tools: ['100001'], parts: [], hint: '把 2 颗长螺钉穿过角码拧回顶板。', hardware: [hw(SCREW, refitScrews)] },
+);
+// （steps 在下方补上上墙步骤后统一处理）
+
+for (const s of steps) { s.tools = s.tools || []; s.hardware = s.hardware || []; }
 assignFigures(steps);
 
 const data = {
   schema: 'flatpack3d/assembly@1',
   id: 'kallax-body',
   title: 'KALLAX 置物架主体（5×5）',
-  scope: '说明书第 1–24 步：框体组装与竖起。不含上墙固定（p27–p35）和任何嵌件。',
+  scope: '说明书第 1–29 步：框体组装、竖起和上墙固定（两种方案）。不含嵌件。',
   source: {
     manual: 'kallax-shelving-unit-white__AA-2334148-2-100.pdf',
     docId: 'AA-2334148-2',
@@ -155,11 +206,21 @@ const data = {
     flat: { tilt: -90, label: '平放（背面朝下）' },
     lift: { tilt: -72, label: '抬起' },
     upright: { tilt: 0, label: '竖立' },
+    awayB: { tilt: 0, shift: [25, 0, 0], label: '竖立，离开墙面' },
   },
+  variantTitle: '上墙方案',
+  variants: {
+    a: { label: '墙固定件', note: '方案 A：墙固定件 115753，柜体立在地上、背面贴墙（p27–p30）', report: '方案 A', default: true },
+    b: { label: 'L 形角码', note: '方案 B：L 形角码 10091413，按图判断为左侧板贴墙（p31–p35）', report: '方案 B' },
+  },
+  // 第 25 步起显示墙；墙的位置按方案不同（装配坐标，柜体竖立后）
+  room: { fromStep: 25, walls: { a: WALL_A, b: WALL_B } },
+  // 不随包装提供、说明书要求另购的东西（不计入五金清单）
+  extras: [{ id: 'wall-screw', name: '墙用螺钉（不含）', note: '不随包装提供，按墙体材质另购（说明书 p2）', notIncluded: true, shape: { type: 'screw', diameter: 0.5, length: 5, headDiameter: 1.0 } }],
   partTypes,
   parts,
   hardware,
-  overview: { n: 0, pages: [5, 6, 7], title: '清点零件', hint: '对照 p5–p7 清点板件和五金。本次只用到框体五金，上墙五金先放一边。' },
+  overview: { n: 0, pages: [5, 6, 7], title: '清点零件', hint: '对照 p5–p7 清点板件和五金。上墙五金按所选方案只用其中一套。' },
   steps,
 };
 

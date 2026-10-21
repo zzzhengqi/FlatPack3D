@@ -27,9 +27,10 @@ function startStaticServer(root, port = 0) {
     res.writeHead(200, { 'Content-Type': TYPES[path.extname(file).toLowerCase()] || 'application/octet-stream', 'Cache-Control': 'no-store' });
     fs.createReadStream(file).pipe(res);
   });
-  return new Promise((resolve) => server.listen(port, '127.0.0.1', () => {
-    resolve({ url: `http://127.0.0.1:${server.address().port}/`, close: () => new Promise((r) => server.close(r)) });
-  }));
+  return new Promise((resolve, reject) => {
+    server.once('error', reject); // 例如端口被占用
+    server.listen(port, '127.0.0.1', () => resolve({ url: `http://127.0.0.1:${server.address().port}/`, close: () => new Promise((r) => server.close(r)) }));
+  });
 }
 
 function findBrowser() {
@@ -88,7 +89,7 @@ async function launch({ width = 1280, height = 800, port = 9333 } = {}) {
         return r.result?.result?.value;
       },
       async setViewport(w, h, mobile = false) {
-        await send('Emulation.setDeviceMetricsOverride', { width: w, height: h, deviceScaleFactor: 1, mobile });
+        await send('Emulation.setDeviceMetricsOverride', { width: w, height: h, deviceScaleFactor: 1, mobile, screenWidth: w, screenHeight: h });
       },
       async goto(url, readyExpr = '!!window.__flatpack && !!window.__flatpack.view', timeoutMs = 30000) {
         await send('Page.navigate', { url });
