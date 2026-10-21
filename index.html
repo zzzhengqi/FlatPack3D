@@ -158,7 +158,10 @@
     main.manual-hidden { grid-template-rows: 0 1fr; }
     #manual { border-right: 0; border-bottom: 1px solid var(--line); }
     #hwCard { display: none; }
-    #stepCard { width: calc(100% - 24px); }
+    /* 窄屏上步骤卡片最多占画布三成高，超出滚动，给 3D 画面留出空间（取景检查会验证） */
+    #stepCard { width: calc(100% - 24px); max-height: 30%; overflow: auto; padding: 8px 12px; }
+    #stepCard h2 { font-size: 16px; margin: 2px 0 4px; }
+    #stepCard p { font-size: 13px; margin-bottom: 6px; }
     header .sub { display: none; }
     #about .cols { grid-template-columns: 1fr; }
   }
@@ -171,6 +174,7 @@
     <div class="seg" id="pieceSeg" role="group"></div>
     <div id="variantBox"><span class="seg-label" data-t="variantLabel"></span><div class="seg" id="variantSeg" role="group"></div></div>
     <span class="sub" id="subtitle"></span>
+    <div class="seg" id="langSeg" role="group" data-title="langTitle"></div>
     <button class="ghost" id="shortcutsBtn" aria-expanded="false" data-t="shortcuts" data-title="shortcutsTitle"></button>
     <button class="ghost" id="toggleManual" data-t="manualHide"></button>
     <div class="card" id="shortcuts" role="dialog"><h3 data-t="shortcutsTitle"></h3><dl id="shortcutList"></dl></div>
@@ -217,8 +221,8 @@
 
 <script type="importmap">
 { "imports": {
-  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  "three": "./vendor/three@0.160.0/build/three.module.js",
+  "three/addons/": "./vendor/three@0.160.0/examples/jsm/"
 } }
 </script>
 <script type="module">
@@ -238,9 +242,11 @@ function getJson(url) {
   }
   return jsonCache[url];
 }
+// 语言：?lang=en 读 data/site.en.json，默认读 data/site.json（?site= 可直接指定站点文件）
+const LANG = params.get('lang') || '';
 let SITE, UI, PRODUCT;
 try {
-  SITE = await getJson(new URLSearchParams(location.search).get('site') || 'data/site.json');
+  SITE = await getJson(params.get('site') || (LANG && LANG !== 'zh' ? `data/site.${LANG}.json` : 'data/site.json'));
   [UI, PRODUCT] = await Promise.all([getJson(SITE.ui), getJson(SITE.product)]);
 } catch (err) {
   // 还没读到文案文件，只能显示原始错误
@@ -254,6 +260,42 @@ for (const el of document.querySelectorAll('[data-title]')) { el.title = t(el.da
 $('subtitle').textContent = t('loading');
 $('shortcutList').innerHTML = UI.shortcutList.map((s) => `<dt>${s.keys.split(/\s+/).map((k) => `<kbd>${esc(k)}</kbd>`).join(' ')}</dt><dd>${esc(s.text)}</dd>`).join('');
 function showError(msg) { const e = $('error'); e.style.display = 'flex'; e.textContent = msg; }
+
+// 装配数据 + 译文：站点文件里 pieces[].i18n 指向译文，按 id / 步骤号覆盖名称和说明，其余（数量、坐标）不动
+function applyI18n(d, o) {
+  for (const k of ['title', 'scope', 'layoutSource']) if (o[k]) d[k] = o[k];
+  if (o.overview && d.overview) Object.assign(d.overview, o.overview);
+  for (const [k, v] of Object.entries(o.variants || {})) if (d.variants && d.variants[k]) Object.assign(d.variants[k], v);
+  for (const [k, v] of Object.entries(o.poses || {})) if (d.poses && d.poses[k]) Object.assign(d.poses[k], v);
+  for (const [k, v] of Object.entries(o.partTypes || {})) if (d.partTypes && d.partTypes[k]) Object.assign(d.partTypes[k], v);
+  for (const p of d.parts || []) if (o.parts && o.parts[p.id]) p.name = o.parts[p.id];
+  for (const h of d.hardware || []) if (o.hardware && o.hardware[h.id]) Object.assign(h, o.hardware[h.id]);
+  for (const s of d.steps || []) {
+    const tr = o.steps && (o.steps[`${s.variant}:${s.n}`] || o.steps[String(s.n)]);
+    if (tr) Object.assign(s, tr);
+    if (o.tools) s.tools = (s.tools || []).map((x) => o.tools[x] ?? x);
+  }
+  return d;
+}
+const dataCache = {};
+function loadData(url) {
+  if (!dataCache[url]) {
+    const piece = SITE.pieces.find((p) => p.url === url);
+    dataCache[url] = Promise.all([getJson(url), piece && piece.i18n ? getJson(piece.i18n) : null])
+      .then(([d, o]) => (o ? applyI18n(structuredClone(d), o) : d));
+  }
+  return dataCache[url];
+}
+
+// 语言切换：换 ?lang= 后重新载入，保留当前件、路线和步骤
+$('langSeg').innerHTML = (SITE.languages || []).map((l) => `<button data-code="${esc(l.code)}" aria-pressed="${l.code === (SITE.langCode || 'zh')}">${esc(l.label)}</button>`).join('');
+for (const b of $('langSeg').children) {
+  b.onclick = () => {
+    const q = new URLSearchParams(location.search);
+    if (b.dataset.code === 'zh') q.delete('lang'); else q.set('lang', b.dataset.code);
+    location.search = q.toString();
+  };
+}
 
 // ================= 场景（各视图共用）=================
 const css = getComputedStyle(document.documentElement);
@@ -629,9 +671,25 @@ class AssemblyView {
     if (target !== this.tilt) {
       const from = this.tilt;
       await tween(1700, (k) => this.applyTilt(from + (target - from) * easeInOut(k)));
-      if (my !== gen) return;
-      frame('body');
     }
+  }
+
+  // 第 i 步完成后画面上应看到的东西：第 0 步是全部零件（含备料区），之后是格子示意、已放入的零件和五金
+  currentBox() {
+    this.root.updateMatrixWorld(true);
+    const box = new THREE.Box3();
+    const objs = this.current === 0 ? this.objects()
+      // 挂在还在备料区的零件上的五金（如先敲进长层板的木销）不算，它们属于备料区
+      : [...this.bodyObjects(), ...this.hw.filter((o) => o.userData.stepIdx <= this.current && (!o.userData.parentPart || o.userData.parentPart.parent === this.asm)),
+        ...this.asm.children.filter((o) => o.userData.kind === 'host')];
+    for (const o of objs) box.expandByObject(o);
+    return box;
+  }
+  // 先摆到第 i 步完成的样子量包围盒（用于动画开始前取景）
+  targetBox(i) {
+    this.current = i;
+    this.snapTo(i);
+    return this.currentBox();
   }
 
   highlight(i) {
@@ -672,7 +730,7 @@ class AssemblyView {
 class SetView {
   async init(set) {
     this.set = set;
-    const body = await getJson(set.body);
+    const body = await loadData(set.body);
     this.body = new AssemblyView(body, null, { interactive: false });
     this.body.snapTo(body.steps.length);
     this.root = this.body.root;
@@ -681,7 +739,7 @@ class SetView {
     this.inserts = [];
     this.explode = 0;
     for (const ins of set.inserts) {
-      const data = await getJson(ins.data);
+      const data = await loadData(ins.data);
       this.inserts.push({ ins, data });
       // 用嵌件的装配视图算出成品状态，取出每个网格的几何体与相对矩阵，再按格子实例化
       const tpl = new AssemblyView(data, ins.variant || null, { interactive: false });
@@ -744,33 +802,101 @@ class SetView {
   dispose() { this.body.dispose(); }
 }
 
-// ================= 相机 =================
-function fitView(objs, tightness) {
-  const box = new THREE.Box3();
-  for (const o of objs) box.expandByObject(o);
-  if (box.isEmpty()) return null;
-  const c = box.getCenter(new THREE.Vector3());
-  const r = box.getSize(new THREE.Vector3()).length() / 2;
-  const fov = THREE.MathUtils.degToRad(camera.fov / 2);
-  const d = (r / Math.sin(Math.min(fov, Math.atan(Math.tan(fov) * camera.aspect)))) * tightness;
-  const dir = new THREE.Vector3(0.35, 0.62, 0.7).normalize();
-  return { pos: c.clone().addScaledVector(dir, d).toArray(), target: c.toArray() };
+// ================= 相机：按包围盒取景，避开浮在画面上的面板 =================
+const DEFAULT_DIR = new THREE.Vector3(0.35, 0.62, 0.7).normalize();
+const PANELS = ['stepCard', 'hwCard', 'viewCard', 'shotTitle'];
+// 某个面板在画布坐标里的矩形（隐藏时为 null）
+function panelRect(id) {
+  const el = $(id);
+  if (!el || el.offsetParent === null || getComputedStyle(el).display === 'none') return null;
+  const s = stage.getBoundingClientRect(), r = el.getBoundingClientRect();
+  if (!r.width || !r.height) return null;
+  return { l: r.left - s.left, t: r.top - s.top, r: r.right - s.left, b: r.bottom - s.top };
 }
-function frame(name, instant = false) {
-  if (!view) return;
-  scene.updateMatrixWorld(true);
-  const v = (name === 'body' && fitView(view.bodyObjects(), 1.25)) || fitView(view.objects(), 0.8);
-  if (!v) return;
+// 画布里不被面板挡住的最大矩形：用各面板的边界组合出候选矩形，去掉与任何面板相交的，取面积最大的
+function safeRect() {
+  const W = stage.clientWidth, H = stage.clientHeight, pad = Math.max(12, Math.min(W, H) * 0.03);
+  const obs = PANELS.map(panelRect).filter(Boolean);
+  const ls = [pad, ...obs.map((o) => o.r + pad)], rs = [W - pad, ...obs.map((o) => o.l - pad)];
+  const ts = [pad, ...obs.map((o) => o.b + pad)], bs = [H - pad, ...obs.map((o) => o.t - pad)];
+  let best = null, bestA = 0;
+  for (const l of ls) for (const r of rs) for (const t of ts) for (const b of bs) {
+    if (r - l < 60 || b - t < 60) continue;
+    if (obs.some((o) => o.l < r && o.r > l && o.t < b && o.b > t)) continue;
+    const a = (r - l) * (b - t);
+    if (a > bestA) { bestA = a; best = { l, t, r, b }; }
+  }
+  return best || { l: pad, t: pad, r: W - pad, b: H - pad };
+}
+// 让相机注视点投到安全矩形中心
+let viewRect = null;
+function applyViewOffset(rect) {
+  viewRect = rect;
+  const W = stage.clientWidth, H = stage.clientHeight;
+  if (!W || !H) return;
+  camera.setViewOffset(W, H, W / 2 - (rect.l + rect.r) / 2, H / 2 - (rect.t + rect.b) / 2, W, H);
+  camera.updateProjectionMatrix();
+}
+const boxCorners = (b) => [0, 1, 2, 3, 4, 5, 6, 7].map((k) => new THREE.Vector3(k & 1 ? b.max.x : b.min.x, k & 2 ? b.max.y : b.min.y, k & 4 ? b.max.z : b.min.z));
+// 包围盒 8 个角投到画布上的矩形
+function projectBox(box) {
+  const W = stage.clientWidth, H = stage.clientHeight;
+  const r = { l: Infinity, t: Infinity, r: -Infinity, b: -Infinity, behind: false };
+  for (const p of boxCorners(box)) {
+    const q = p.project(camera);
+    if (q.z > 1) r.behind = true;
+    const x = ((q.x + 1) / 2) * W, y = ((1 - q.y) / 2) * H;
+    r.l = Math.min(r.l, x); r.r = Math.max(r.r, x); r.t = Math.min(r.t, y); r.b = Math.max(r.b, y);
+  }
+  return r;
+}
+// 沿 dir 方向找最近的距离，使包围盒正好落在安全矩形里
+function fitBox(box, dir, rect) {
+  const c = box.getCenter(new THREE.Vector3());
+  const p0 = camera.position.clone(), q0 = camera.quaternion.clone();
+  const fits = (d) => {
+    camera.position.copy(c).addScaledVector(dir, d);
+    camera.lookAt(c);
+    camera.updateMatrixWorld();
+    const r = projectBox(box);
+    return !r.behind && r.l >= rect.l && r.r <= rect.r && r.t >= rect.t && r.b <= rect.b;
+  };
+  // 上限不能超过远裁剪面，否则远处判成"看不见"，二分会一路往远处走
+  let lo = 1, hi = Math.min(camera.far * 0.9, Math.max(100, box.getSize(new THREE.Vector3()).length() * 40));
+  for (let k = 0; k < 40; k++) { const d = (lo + hi) / 2; if (fits(d)) hi = d; else lo = d; }
+  camera.position.copy(p0); camera.quaternion.copy(q0); camera.updateMatrixWorld();
+  return { pos: c.clone().addScaledVector(dir, hi * 1.04), target: c };
+}
+let lastBox = null, lastSize = '';
+function frameBox(box, { instant = false, reset = false } = {}) {
+  if (!box || box.isEmpty()) return;
+  lastBox = box.clone();
+  const rect = safeRect();
+  applyViewOffset(rect);
+  let dir = camera.position.clone().sub(controls.target);
+  dir = reset || dir.lengthSq() < 1e-6 ? DEFAULT_DIR.clone() : dir.normalize();
+  const v = fitBox(box, dir, rect);
   const p0 = camera.position.clone(), t0 = controls.target.clone();
-  const p1 = V(v.pos), t1 = V(v.target);
-  if (instant) { camera.position.copy(p1); controls.target.copy(t1); return; }
+  if (instant) { camera.position.copy(v.pos); controls.target.copy(v.target); controls.update(); return; }
   tween(900, (k) => {
     const e = easeInOut(k);
-    camera.position.lerpVectors(p0, p1, e);
-    controls.target.lerpVectors(t0, t1, e);
+    camera.position.lerpVectors(p0, v.pos, e);
+    controls.target.lerpVectors(t0, v.target, e);
   });
 }
-const defaultFrame = () => (view instanceof SetView ? 'body' : 'all');
+// 取景对象：all = 场上所有零件（含备料区）；body = 已装上的零件
+function frameTargetBox(name) {
+  scene.updateMatrixWorld(true);
+  const box = new THREE.Box3();
+  if (view instanceof AssemblyView && name === 'step') return view.currentBox();
+  for (const o of name === 'body' ? view.bodyObjects() : view instanceof SetView ? view.bodyObjects() : view.objects()) box.expandByObject(o);
+  return box;
+}
+function frame(name, instant = false, reset = true) {
+  if (!view) return;
+  frameBox(frameTargetBox(name), { instant, reset });
+}
+const defaultFrame = () => (view instanceof SetView ? 'body' : 'step');
 
 // ================= 线稿视图 =================
 function setDrawing(on) {
@@ -818,20 +944,29 @@ $('variantSeg').setAttribute('aria-label', t('variantLabel'));
 $('pieceSeg').innerHTML = SITE.pieces.map((p) => `<button data-key="${esc(p.key)}">${esc(p.label)}</button>`).join('');
 for (const b of $('pieceSeg').children) b.onclick = () => load(b.dataset.key, null);
 
+// 地址栏：?piece=…&variant=…&step=说明书步骤号（0 = 清点），lang 等其他参数原样保留
 function syncUrl() {
   const q = new URLSearchParams(location.search);
   q.set('piece', state.piece);
   if (state.variant) q.set('variant', state.variant); else q.delete('variant');
+  if (view instanceof AssemblyView) q.set('step', view.stepsList[view.current].n); else q.delete('step');
   history.replaceState(null, '', `?${q}`);
 }
+// 说明书步骤号 → 当前路线里的序号
+function indexOfStep(n) {
+  if (!(view instanceof AssemblyView) || n === null || n === undefined || n === '' || Number.isNaN(Number(n))) return 0;
+  if (Number(n) === 0) return 0;
+  const i = view.seq.findIndex((s) => s.n === Number(n));
+  return i >= 0 ? i + 1 : 0;
+}
 
-async function load(piece, variant, keepStep = false) {
+async function load(piece, variant, { keepStep = false, step = null } = {}) {
   const info = SITE.pieces.find((p) => p.key === piece) || SITE.pieces[0];
   setChain(false);
   closePick();
   let data;
-  try { data = await getJson(info.url); } catch (err) { showError(t('loadError', { msg: err.message })); throw err; }
-  const keep = keepStep && view instanceof AssemblyView ? view.current : 0;
+  try { data = await loadData(info.url); } catch (err) { showError(t('loadError', { msg: err.message })); throw err; }
+  const keepN = keepStep && view instanceof AssemblyView ? view.stepsList[view.current].n : step;
   if (view) view.dispose();
   view = null;
   setLabels(showLabels);
@@ -847,12 +982,11 @@ async function load(piece, variant, keepStep = false) {
     state.variant = v;
     view = new AssemblyView(data, v);
     renderAssemblyUi(data);
-    go(keep, false);
   }
   setDrawing(drawing);
-  syncUrl();
-  scene.updateMatrixWorld(true);
-  frame(defaultFrame(), true);
+  resize();
+  if (view instanceof AssemblyView) go(indexOfStep(keepN), false, { reset: true });
+  else { frame(defaultFrame(), true); syncUrl(); }
 }
 
 function renderVariantSeg(data) {
@@ -861,7 +995,7 @@ function renderVariantSeg(data) {
   box.style.display = 'flex';
   $('variantSeg').innerHTML = Object.entries(data.variants).map(([k, v]) =>
     `<button data-k="${esc(k)}" title="${esc(v.note || '')}" aria-pressed="${k === state.variant}">${esc(v.label)}</button>`).join('');
-  for (const b of $('variantSeg').children) b.onclick = () => { if (b.dataset.k !== state.variant) load(state.piece, b.dataset.k, true); };
+  for (const b of $('variantSeg').children) b.onclick = () => { if (b.dataset.k !== state.variant) load(state.piece, b.dataset.k, { keepStep: true }); };
 }
 
 function renderAssemblyUi(data) {
@@ -1024,7 +1158,7 @@ function showPage(p) {
 $('pagePrev').onclick = () => showPage(manualPage - 1);
 $('pageNext').onclick = () => showPage(manualPage + 1);
 
-function go(i, animate = true) {
+function go(i, animate = true, { reset = false } = {}) {
   if (!(view instanceof AssemblyView)) return;
   i = Math.max(0, Math.min(view.seq.length, i));
   for (const b of $('steps').children) {
@@ -1033,10 +1167,15 @@ function go(i, animate = true) {
     b.classList.toggle('done', bi < i);
     if (bi === i) b.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   }
-  view.go(i, animate);
+  // 先把卡片内容换好（它们的大小决定可用区域），再量包围盒、取景、播动画
+  view.current = i;
   renderStepCard(i);
   renderCounters(i);
   showPage(view.stepsList[i].pages[0]);
+  const box = view.targetBox(i);
+  view.go(i, animate);
+  frameBox(box, { instant: !animate, reset });
+  syncUrl();
 }
 const current = () => (view instanceof AssemblyView ? view.current : 0);
 
@@ -1063,14 +1202,14 @@ function openPick(e, h) {
     const pl = u.placements[h.k];
     const o = u.owner;
     html = `<b>${esc(o ? o.label : u.title)}</b>`;
-    if (o && o.kind === 'part') html += line(t('pickId', { id: o.def.id }));
+    if (o && o.kind === 'part') html += line(t('pickCode', { id: o.def.id }));
     if (o && o.kind === 'hw') html += line(t('pickHwId', { id: o.member || o.def.id }));
     html += line(t('pickInsert', { title: u.title, c: pl.cell[0], r: pl.cell[1] }));
   } else {
     const u = h.obj.userData;
     if (u.kind === 'part') {
       const owner = view instanceof SetView ? view.body.data : view.data;
-      html = `<b>${esc(u.def.name)}</b>${line(t('pickId', { id: u.def.id }))}${line(t('pickType', { type: owner.partTypes[u.def.type].name }))}${line(t('pickPartNote'))}`;
+      html = `<b>${esc(u.def.name)}</b>${line(t('pickCode', { id: u.def.id }))}${line(t('pickType', { type: owner.partTypes[u.def.type].name }))}${line(t('pickPartNote'))}`;
     } else if (u.kind === 'hw') {
       html = `<b>${esc(u.def.name)}</b>${line(t('pickHwId', { id: u.member || u.def.id }))}`;
     } else html = `<b>${esc(u.label)}</b>`;
@@ -1117,13 +1256,13 @@ function setExplode(v) {
   $('explode').value = v;
   if (view instanceof SetView) view.setExplode(v); else if (view) view.explode = v;
 }
-const resetView = () => frame(defaultFrame());
+const resetView = () => (view instanceof AssemblyView ? frameBox(view.currentBox(), { reset: true }) : frame(defaultFrame(), false, true));
 $('prev').onclick = () => go(current() - 1);
 $('next').onclick = () => go(current() + 1);
 $('replay').onclick = () => go(current());
 $('chain').onclick = () => setChain(!chainTimer);
-$('viewAll').onclick = () => frame('all');
-$('viewBody').onclick = () => frame('body');
+$('viewAll').onclick = () => frame('all', false, false);
+$('viewBody').onclick = () => frame('body', false, false);
 $('explode').oninput = (e) => setExplode(Number(e.target.value));
 $('drawingBtn').onclick = () => setDrawing(!drawing);
 $('labelsBtn').onclick = () => setLabels(!showLabels);
@@ -1233,9 +1372,15 @@ function resize() {
   if (!w || !h) return; // 布局切换的瞬间可能为 0，别把相机比例算成无效值
   renderer.setSize(w, h, false);
   camera.aspect = w / h;
-  camera.updateProjectionMatrix();
+  // 画布或面板尺寸变了：按上一次取景的包围盒重新取景（保持当前视角方向）
+  const rect = safeRect();
+  const same = viewRect && lastSize === `${w}x${h}` && ['l', 't', 'r', 'b'].every((k) => Math.abs(rect[k] - viewRect[k]) < 2);
+  lastSize = `${w}x${h}`;
+  if (same) { camera.updateProjectionMatrix(); return; }
+  if (lastBox) frameBox(lastBox, { instant: true }); else applyViewOffset(rect);
 }
-new ResizeObserver(resize).observe(stage);
+const ro = new ResizeObserver(() => resize());
+for (const el of [stage, $('stepCard'), $('hwCard'), $('viewCard')]) ro.observe(el);
 resize();
 renderer.setAnimationLoop((now) => {
   runTweens(now);
@@ -1250,16 +1395,30 @@ if (params.has('shot')) {
   document.body.classList.add('shot');
   $('shotTitle').innerHTML = `${esc(PRODUCT.share.title)}<small>${esc(PRODUCT.share.description)}</small>`;
 }
-await load(params.get('piece') || SITE.defaultPiece, params.get('variant'));
+await load(params.get('piece') || SITE.defaultPiece, params.get('variant'), { step: params.get('step') });
 if (params.has('drawing')) setDrawing(true);
-if (params.has('shot')) { // 截图模式布局变了，按最终画面尺寸重新取景；画面整体左移、下移，给左下角标题让位
-  resize();
-  frame(defaultFrame(), true);
-  const shift = new THREE.Vector3(-115, -25, 0);
-  camera.position.add(shift);
-  controls.target.add(shift);
+
+// 取景检查（scripts/check-framing.js 调用）：当前画面的零件包围盒是否完整在画布内、没有被面板挡住、不太小
+function framingReport() {
+  scene.updateMatrixWorld(true);
+  camera.updateMatrixWorld();
+  const box = frameTargetBox(defaultFrame());
+  const r = projectBox(box);
+  const W = stage.clientWidth, H = stage.clientHeight, tol = 1;
+  const f = (x) => `(${Math.round(x.l)},${Math.round(x.t)})–(${Math.round(x.r)},${Math.round(x.b)})`;
+  const problems = [];
+  if (r.behind) problems.push('有零件在相机后面');
+  if (r.l < -tol || r.t < -tol || r.r > W + tol || r.b > H + tol) problems.push(`超出画布：零件 ${f(r)}，画布 ${W}×${H}`);
+  for (const id of PANELS) {
+    const o = panelRect(id);
+    if (o && o.l < r.r - tol && o.r > r.l + tol && o.t < r.b - tol && o.b > r.t + tol) problems.push(`被 ${id} 挡住：零件 ${f(r)}，面板 ${f(o)}`);
+  }
+  const s = safeRect();
+  const fill = Math.max((r.r - r.l) / (s.r - s.l), (r.b - r.t) / (s.b - s.t));
+  if (fill < 0.6) problems.push(`取景太远：零件只占可用区域的 ${Math.round(fill * 100)}%`);
+  return { problems, rect: r, safe: s, canvas: [W, H] };
 }
-window.__flatpack = { go, load, frame, setDrawing, setLabels, camera, controls, get view() { return view; } }; // 调试用
+window.__flatpack = { go, load, frame, setDrawing, setLabels, framingReport, camera, controls, get view() { return view; } }; // 调试与检查用
 </script>
 </body>
 </html>

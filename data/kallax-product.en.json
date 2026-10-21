@@ -1,0 +1,62 @@
+{
+  "share": {
+    "title": "FlatPack3D · KALLAX 3D assembly demo",
+    "description": "The assembly instructions for the IKEA KALLAX shelving unit, insert with door and insert with 2 drawers, turned into an interactive step-by-step 3D demo: step animations, hardware counters, side-by-side manual pages and a line-art view.",
+    "image": "og-image.png",
+    "imageAlt": "3D render of a KALLAX 5×5 shelving unit fitted with 5 door inserts and 5 double-drawer inserts",
+    "siteUrl": ""
+  },
+  "about": {
+    "title": "What is exact and what is approximate",
+    "exact": {
+      "title": "Exact",
+      "items": [
+        "Parts, quantities, step order and hardware numbers: from the three IKEA assembly instructions (links below), checked item by item against the analysis report by scripts/validate.js.",
+        "Overall size 182 × 182 × 39 cm (width × height × depth): from the IKEA product page."
+      ]
+    },
+    "approximate": {
+      "title": "Approximate",
+      "intro": "The assembly instructions contain no dimensions. Panel thicknesses, hole positions, insert internals and so on are estimated from the proportions of the drawings; each item below is taken directly from the guess list in docs/dimensions.en.md (an English translation of the guess list in docs/dimensions.md).",
+      "source": "docs/dimensions.en.md",
+      "heading": "## Guess list"
+    },
+    "notes": [
+      "The demo runs faster than real life. Where the instructions require two people to lift or turn the unit over (shelving unit steps 23 and 24, p26; p4 also asks for two people), it must be done by two people."
+    ],
+    "disclaimer": "This work is not affiliated with or endorsed by IKEA. KALLAX and IKEA are trademarks of Inter IKEA Systems B.V.",
+    "links": {
+      "title": "Official assembly instructions (PDF)",
+      "source": {
+        "label": "KALLAX shelving unit with 10 inserts, white (IKEA Japan product page)",
+        "url": "https://www.ikea.com/jp/en/p/kallax-shelving-unit-with-10-inserts-white-s89278339/"
+      },
+      "items": [
+        { "label": "KALLAX shelving unit", "article": "103.535.86", "docId": "AA-2334148-2", "url": "https://www.ikea.com/jp/en/assembly_instructions/kallax-shelving-unit-white__AA-2334148-2-100.pdf" },
+        { "label": "KALLAX insert with door", "article": "603.518.77", "docId": "AA-1009339-8", "url": "https://www.ikea.com/jp/en/assembly_instructions/kallax-insert-with-door-white__AA-1009339-8-100.pdf" },
+        { "label": "KALLAX insert with 2 drawers", "article": "203.518.79", "docId": "AA-1009361-5", "url": "https://www.ikea.com/jp/en/assembly_instructions/kallax-insert-with-2-drawers-white__AA-1009361-5-100.pdf" }
+      ]
+    }
+  },
+  "explainers": {
+    "title": "Wooden dowels and the Z-shaped hex key",
+    "items": [
+      {
+        "title": "Wooden dowels (shelving unit 101339 ×80, drawer insert 101345 ×4)",
+        "points": [
+          "The instructions always do this in two moves: first hammer the dowels into the holes along the edge of one panel, then line the other panel's holes up with them and push it on. In the shelving unit, dowels are hammered in at steps 2, 4, 6, 9, 12, 15 and 19, and panels are pushed on at steps 3, 5, 7, 8, 10, 11, 13, 14, 16, 17 and 20.",
+          "In the shelving unit, the dividers are joined to the top panel, the long shelves and the bottom panel, and the long shelves are joined to the two side panels, all with dowels; only the 4 outer corners are additionally fixed with long screws.",
+          "In the double-drawer insert, step 3 hammers in 2 dowels before the sides are inserted; at the same joint, step 2 fits connecting bolts 118331 and step 4 turns the cam locks 119030 tight with a flat-blade screwdriver."
+        ]
+      },
+      {
+        "title": "Z-shaped hex key (100001 ×1)",
+        "points": [
+          "The only tool in the shelving unit hardware list (p5); both ends are hexagonal.",
+          "It is used only in steps 1, 18 and 21: to drive the long countersunk hex-socket screws 104321/104322 into the 4 outer corners, 2 per corner, 8 in total.",
+          "Wall-attachment option B (p33–p35, not covered in this demo) also uses it to take out and then put back 2 of these screws."
+        ]
+      }
+    ]
+  }
+}

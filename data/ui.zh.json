@@ -17,6 +17,7 @@
   "labelsTitle": "显示零件名称（N）",
   "shortcuts": "快捷键",
   "shortcutsTitle": "键盘快捷键",
+  "langTitle": "界面语言",
   "prevTitle": "上一步（[ 或 ←）",
   "nextTitle": "下一步（] 或 →）",
   "replayTitle": "播放当前步（空格）",
@@ -59,24 +60,54 @@
   "pageNext": "下一页",
   "pageOf": "p{p} / {count}",
   "loadError": "读不到数据（{msg}）。请在项目根目录启动本地服务后再打开，例如：python -m http.server 8137",
-  "pickId": "编号 {id}",
+  "pickCode": "内部代号 {id}",
   "pickType": "{type}",
-  "pickPartNote": "说明书没有给板件编号，编号是数据里的 id",
+  "pickPartNote": "说明书没有给木板件号；内部代号是本项目数据里的 id，不是宜家件号",
   "pickHwId": "五金编号 {id}",
   "pickInsert": "{title}（第 {r} 排第 {c} 列）",
   "pickClose": "关闭",
   "hostLabel": "格子（示意）",
   "markLabel": "铅笔线",
   "shortcutList": [
-    { "keys": "[  ]", "text": "上一步 / 下一步（也可用 ← →）" },
-    { "keys": "0–9", "text": "跳到第几步，0 是清点；两位数连按" },
-    { "keys": "空格", "text": "播放当前步" },
-    { "keys": "C", "text": "整套连播 / 停止" },
-    { "keys": "R", "text": "重置视角" },
-    { "keys": "X", "text": "切换爆炸视图" },
-    { "keys": "N", "text": "切换零件标签" },
-    { "keys": "D", "text": "切换线稿视图" },
-    { "keys": "点击零件", "text": "显示名称和编号" },
-    { "keys": "点说明书图", "text": "跳到对应步骤" }
+    {
+      "keys": "[  ]",
+      "text": "上一步 / 下一步（也可用 ← →）"
+    },
+    {
+      "keys": "0–9",
+      "text": "跳到第几步，0 是清点；两位数连按"
+    },
+    {
+      "keys": "空格",
+      "text": "播放当前步"
+    },
+    {
+      "keys": "C",
+      "text": "整套连播 / 停止"
+    },
+    {
+      "keys": "R",
+      "text": "重置视角"
+    },
+    {
+      "keys": "X",
+      "text": "切换爆炸视图"
+    },
+    {
+      "keys": "N",
+      "text": "切换零件标签"
+    },
+    {
+      "keys": "D",
+      "text": "切换线稿视图"
+    },
+    {
+      "keys": "点击零件",
+      "text": "显示名称和编号"
+    },
+    {
+      "keys": "点说明书图",
+      "text": "跳到对应步骤"
+    }
   ]
 }

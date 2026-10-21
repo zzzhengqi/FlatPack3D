@@ -1,0 +1,17 @@
+{
+  "lang": "en",
+  "langCode": "en",
+  "languages": [
+    { "code": "zh", "label": "中文" },
+    { "code": "en", "label": "English" }
+  ],
+  "ui": "data/ui.en.json",
+  "product": "data/kallax-product.en.json",
+  "defaultPiece": "body",
+  "pieces": [
+    { "key": "body", "label": "Shelving unit", "url": "data/kallax-body.json", "i18n": "data/i18n/kallax-body.en.json" },
+    { "key": "door", "label": "Insert with door", "url": "data/kallax-door.json", "i18n": "data/i18n/kallax-door.en.json" },
+    { "key": "drawer", "label": "Insert with 2 drawers", "url": "data/kallax-drawer.json", "i18n": "data/i18n/kallax-drawer.en.json" },
+    { "key": "set", "label": "Full set", "url": "data/kallax-set.json", "i18n": "data/i18n/kallax-set.en.json" }
+  ]
+}

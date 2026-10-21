@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // 用分析报告校验装配数据：零件数、五金总数、逐步页码与五金用量、几何；"全套"另查嵌件数量与重叠。
 // 用法：
-//   node scripts/validate.js                    校验 data/ 下的主体、门、抽屉、全套，以及站点文案 data/site.json
+//   node scripts/validate.js                    校验 data/ 下的主体、门、抽屉、全套、中英文站点文案，再跑取景截图检查
+//   node scripts/validate.js --no-framing       同上，但跳过取景截图检查（不需要浏览器）
 //   node scripts/validate.js <数据.json> [报告.md] 只校验一份（装配数据或全套数据）
 // 装配数据靠 source.reportSection（如 "## 2."）找到报告里对应的一节。有任何不一致就以退出码 1 结束。
 'use strict';
@@ -10,7 +11,8 @@ const path = require('path');
 
 const root = path.resolve(__dirname, '..');
 const DEFAULT_REPORT = path.join(root, 'docs/analysis/kallax-manuals.md');
-const DEFAULT_FILES = ['data/kallax-body.json', 'data/kallax-door.json', 'data/kallax-drawer.json', 'data/kallax-set.json', 'data/site.json'];
+const DEFAULT_FILES = ['data/kallax-body.json', 'data/kallax-door.json', 'data/kallax-drawer.json', 'data/kallax-set.json', 'data/site.json', 'data/site.en.json'];
+const BASE_SITE = 'data/site.json'; // 其他语言的站点文案都要与它逐项对齐
 // 全套里应有的嵌件数量：来自任务要求，排布依据是 refs/ 商品图（第 3 排 5 个门、第 4 排 5 个双抽屉）
 const EXPECTED_SET = { door: 5, drawer: 5 };
 
@@ -403,8 +405,11 @@ function validateSite(site, baseDir) {
   const sh = product.share || {};
   check(sh.title && sh.description && sh.image, '分享标题、描述、图片都已填写', '产品文案 share 缺少 title / description / image');
   check(sh.image && exists(sh.image), `分享图 ${sh.image} 存在`, `分享图不存在：${sh.image}（运行 node scripts/make-og-image.js 生成）`);
-  const metaOk = html.includes(`<title>${sh.title}</title>`) && html.includes(`<meta name="description" content="${sh.description}">`) && html.includes(`content="${sh.image}"`);
-  check(metaOk, 'index.html 的 <title>、description、og:image 与文案一致', 'index.html 的分享信息与产品文案不一致（运行 node scripts/build-meta.js）');
+  // index.html 的 <head> 是静态的，只写基准语言（爬虫不执行脚本）；其他语言的标题由页面运行时设置
+  if (path.resolve(baseDir, site.__file || '') === path.resolve(baseDir, BASE_SITE)) {
+    const metaOk = html.includes(`<title>${sh.title}</title>`) && html.includes(`<meta name="description" content="${sh.description}">`) && html.includes(`content="${sh.image}"`);
+    check(metaOk, 'index.html 的 <title>、description、og:image 与文案一致', 'index.html 的分享信息与产品文案不一致（运行 node scripts/build-meta.js）');
+  }
 
   // 近似清单来源、声明
   const ap = product.about && product.about.approximate;
@@ -414,11 +419,67 @@ function validateSite(site, baseDir) {
   check(items > 0, `近似清单可从 ${ap && ap.source} 取到 ${items} 条`, `近似清单取不到：${ap ? `${ap.source} 里没有 "${ap.heading}" 或没有编号条目` : '缺少 about.approximate'}`);
   const disc = (product.about && product.about.disclaimer) || '';
   check(disc.includes('IKEA') && disc.includes('Inter IKEA Systems B.V.'), '有商标声明', '缺少 IKEA 商标声明');
+  // 语言切换列表
+  const langs = site.languages || [];
+  check(langs.some((l) => l.code === site.langCode), `语言列表含本语言 ${site.langCode}`, `languages 里没有本语言 ${site.langCode}`);
+
+  // 其他语言：与基准语言逐项对齐，不多不少
+  const baseSite = readJson(at(BASE_SITE));
+  if (at(BASE_SITE) !== at(site.__file || '')) {
+    const baseUi = readJson(at(baseSite.ui));
+    const extra = Object.keys(ui).filter((k) => !(k in baseUi)), lack = Object.keys(baseUi).filter((k) => !(k in ui));
+    check(!extra.length && !lack.length, `界面文案键与 ${baseSite.ui} 一致`, `界面文案键与 ${baseSite.ui} 不一致：缺少 [${lack}]，多出 [${extra}]`);
+    check(ui.shortcutList.length === baseUi.shortcutList.length, '快捷键说明条数一致', `快捷键说明条数 ${ui.shortcutList.length} ≠ ${baseUi.shortcutList.length}`);
+    const ph = (v) => [...String(v).matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort().join(',');
+    const badPh = Object.keys(baseUi).filter((k) => typeof baseUi[k] === 'string' && k in ui && ph(baseUi[k]) !== ph(ui[k]));
+    check(!badPh.length, '界面文案占位符一致', `界面文案占位符与中文不一致：${badPh.join('，')}`);
+
+    const bp = readJson(at(baseSite.product));
+    const shape = (pr) => JSON.stringify({
+      exact: pr.about.exact.items.length, notes: pr.about.notes.length,
+      ex: pr.explainers.items.map((it) => it.points.length),
+      links: pr.about.links.items.map((l) => [l.url, l.docId, l.article]), source: pr.about.links.source.url,
+    });
+    check(shape(product) === shape(bp), `产品文案结构与 ${baseSite.product} 一致`, `产品文案结构与 ${baseSite.product} 不一致（条目数、讲解要点数或链接不同）`);
+    const nums = (file, heading) => { const t = sectionOf(fs.readFileSync(at(file), 'utf8'), heading); return (t.match(/^(\d+)\.\s/gm) || []).map((x) => parseInt(x, 10)).join(','); };
+    const a = nums(bp.about.approximate.source, bp.about.approximate.heading), b = nums(ap.source, ap.heading);
+    check(a === b, `近似清单编号与 ${bp.about.approximate.source} 一致（${b.split(',').length} 条）`, `近似清单编号与中文不一致：中文 [${a}]，本语言 [${b}]`);
+    check(site.pieces.map((x) => x.key + x.url).join() === baseSite.pieces.map((x) => x.key + x.url).join(), '件列表与基准一致', '件列表（key、数据文件）与基准语言不一致');
+  }
+
+  // 装配数据译文：每个要显示的名称和说明都要有，不能有数据里没有的键
+  for (const piece of site.pieces.filter((x) => x.i18n)) {
+    if (!exists(piece.i18n)) { errors.push(`译文文件不存在：${piece.i18n}`); continue; }
+    const d = readJson(at(piece.url)), o = readJson(at(piece.i18n));
+    const miss = [], unknown = [];
+    const need = (cond, what) => { if (!cond) miss.push(what); };
+    need(o.title, 'title');
+    if (d.schema && d.schema.startsWith('flatpack3d/set')) need(o.layoutSource, 'layoutSource');
+    else {
+      need(o.scope, 'scope');
+      need(o.overview && o.overview.title && o.overview.hint, 'overview');
+      for (const st of d.steps) { const k = st.variant ? `${st.variant}:${st.n}` : String(st.n); need(o.steps && o.steps[k] && o.steps[k].title && o.steps[k].hint, `steps.${k}`); }
+      for (const pt of d.parts) need(o.parts && o.parts[pt.id], `parts.${pt.id}`);
+      for (const k of Object.keys(d.partTypes)) need(o.partTypes && o.partTypes[k] && o.partTypes[k].name, `partTypes.${k}`);
+      for (const h of d.hardware) { need(o.hardware && o.hardware[h.id] && o.hardware[h.id].name, `hardware.${h.id}`); if (h.unit) need(o.hardware && o.hardware[h.id] && o.hardware[h.id].unit, `hardware.${h.id}.unit`); }
+      for (const k of Object.keys(d.variants || {})) need(o.variants && o.variants[k] && o.variants[k].label, `variants.${k}`);
+      for (const [k, v] of Object.entries(d.poses || {})) if (v && v.label) need(o.poses && o.poses[k] && o.poses[k].label, `poses.${k}`);
+      const words = new Set(d.steps.flatMap((st) => st.tools || []).filter((x) => !/^\d+$/.test(x)));
+      for (const wd of words) need(o.tools && o.tools[wd], `tools.${wd}`);
+      const stepKeys = new Set(d.steps.map((st) => (st.variant ? `${st.variant}:${st.n}` : String(st.n))));
+      for (const k of Object.keys(o.steps || {})) if (!stepKeys.has(k)) unknown.push(`steps.${k}`);
+      for (const k of Object.keys(o.parts || {})) if (!d.parts.some((pt) => pt.id === k)) unknown.push(`parts.${k}`);
+      for (const k of Object.keys(o.hardware || {})) if (!d.hardware.some((h) => h.id === k)) unknown.push(`hardware.${k}`);
+    }
+    check(!miss.length && !unknown.length, `${piece.i18n} 译文完整`,
+      `${piece.i18n}：${miss.length ? `缺少 ${miss.slice(0, 12).join('、')}${miss.length > 12 ? ` 等 ${miss.length} 项` : ''}` : ''}${unknown.length ? `；数据里没有的键 ${unknown.join('、')}` : ''}`);
+  }
   return { errors, passes, summary: `界面文案 ${Object.keys(ui).length} 项；官方 PDF 链接 ${links.length} 个；近似清单 ${items} 条` };
 }
 
 // ---------------- 入口 ----------------
-const args = process.argv.slice(2);
+const flags = process.argv.slice(2).filter((a) => a.startsWith('--'));
+const args = process.argv.slice(2).filter((a) => !a.startsWith('--'));
 const files = args.length ? [path.resolve(args[0])] : DEFAULT_FILES.map((f) => path.join(root, f));
 const reportPath = path.resolve(args[1] || DEFAULT_REPORT);
 const md = fs.readFileSync(reportPath, 'utf8');
@@ -426,6 +487,7 @@ let failed = 0;
 console.log(`报告：${rel(reportPath)}\n`);
 for (const file of files) {
   const data = readJson(file);
+  if (data.pieces) data.__file = path.relative(root, file).split(path.sep).join('/');
   const res = data.pieces ? validateSite(data, root)
     : data.schema && data.schema.startsWith('flatpack3d/set') ? validateSet(data, root) : validateAssembly(data, md, file);
   const head = `${rel(file)}${data.source && data.source.reportSection ? `（报告 ${data.source.reportSection.replace('## ', '第 ').replace('.', ' 节')}）` : ''}`;
@@ -438,5 +500,20 @@ for (const file of files) {
   }
   console.log('');
 }
-if (failed) { console.error(`${failed} 份数据未通过`); process.exit(1); }
-console.log('全部一致');
+(async () => {
+  if (!args.length && !flags.includes('--no-framing')) {
+    const { run } = require('./check-framing');
+    for (const job of [{ lang: '' }, { lang: 'en', sizes: ['desktop', 'mobile'] }]) {
+      const res = await run({ ...job, quiet: true });
+      const tag = `取景截图检查（${job.lang || 'zh'}）`;
+      if (res.failures.length) {
+        failed++;
+        console.log(`✘ ${tag}：${res.checked} 张截图，${res.failures.length} 张不合格（${rel(res.outDir)}）`);
+        for (const f of res.failures) console.log(`    - [${f.size}] ${f.name}：${f.problems.join('；')}`);
+      } else console.log(`✔ ${tag}：${res.checked} 张截图全部合格（${rel(res.outDir)}）`);
+    }
+    console.log('');
+  }
+  if (failed) { console.error(`${failed} 项未通过`); process.exit(1); }
+  console.log('全部一致');
+})().catch((e) => { console.error(e.message); process.exit(1); });

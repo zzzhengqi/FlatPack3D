@@ -1,12 +1,39 @@
 {
   "lang": "zh-CN",
+  "langCode": "zh",
+  "languages": [
+    {
+      "code": "zh",
+      "label": "中文"
+    },
+    {
+      "code": "en",
+      "label": "English"
+    }
+  ],
   "ui": "data/ui.zh.json",
   "product": "data/kallax-product.json",
   "defaultPiece": "body",
   "pieces": [
-    { "key": "body", "label": "置物架主体", "url": "data/kallax-body.json" },
-    { "key": "door", "label": "门嵌件", "url": "data/kallax-door.json" },
-    { "key": "drawer", "label": "抽屉嵌件", "url": "data/kallax-drawer.json" },
-    { "key": "set", "label": "全套", "url": "data/kallax-set.json" }
+    {
+      "key": "body",
+      "label": "置物架主体",
+      "url": "data/kallax-body.json"
+    },
+    {
+      "key": "door",
+      "label": "门嵌件",
+      "url": "data/kallax-door.json"
+    },
+    {
+      "key": "drawer",
+      "label": "抽屉嵌件",
+      "url": "data/kallax-drawer.json"
+    },
+    {
+      "key": "set",
+      "label": "全套",
+      "url": "data/kallax-set.json"
+    }
   ]
 }

@@ -1,0 +1,146 @@
+{
+  "title": "KALLAX insert with 2 drawers",
+  "scope": "Manual steps 1–15. 2 drawers; fitted in one compartment; excludes wall attachment.",
+  "overview": {
+    "title": "Check the parts",
+    "hint": "Check the hardware against p3. The hardware is supplied for 2 drawers: steps 2–9 are done once for each drawer."
+  },
+  "poses": {
+    "upright": {
+      "label": "In the compartment"
+    }
+  },
+  "partTypes": {
+    "frame": {
+      "name": "Folding frame"
+    },
+    "front": {
+      "name": "Drawer front"
+    },
+    "side": {
+      "name": "Drawer side"
+    },
+    "bottom": {
+      "name": "Drawer bottom"
+    },
+    "back": {
+      "name": "Drawer back"
+    }
+  },
+  "parts": {
+    "frame": "Folding frame",
+    "drawer1-front": "Drawer 1 front",
+    "drawer1-side-left": "Drawer 1 left side",
+    "drawer1-side-right": "Drawer 1 right side",
+    "drawer1-bottom": "Drawer 1 bottom",
+    "drawer1-back": "Drawer 1 back",
+    "drawer2-front": "Drawer 2 front",
+    "drawer2-side-left": "Drawer 2 left side",
+    "drawer2-side-right": "Drawer 2 right side",
+    "drawer2-bottom": "Drawer 2 bottom",
+    "drawer2-back": "Drawer 2 back"
+  },
+  "hardware": {
+    "100365": {
+      "name": "Short Phillips screw (for runner)"
+    },
+    "100412": {
+      "name": "Machine screw (for knob)"
+    },
+    "101345": {
+      "name": "Wooden dowel"
+    },
+    "106266": {
+      "name": "Cylindrical knob"
+    },
+    "107091": {
+      "name": "Bumper pad sheet",
+      "unit": "sheet"
+    },
+    "110519": {
+      "name": "Barbed round-head nail"
+    },
+    "118331": {
+      "name": "Cam-lock connecting bolt"
+    },
+    "119030": {
+      "name": "Cam lock"
+    },
+    "123482": {
+      "name": "Z-shaped metal marking gauge"
+    },
+    "124386": {
+      "name": "Phillips self-tapping screw"
+    },
+    "123801+123802": {
+      "name": "Drawer runners (left + right)",
+      "unit": "set"
+    }
+  },
+  "tools": {
+    "锤子": "Hammer",
+    "铅笔": "Pencil"
+  },
+  "steps": {
+    "1": {
+      "title": "Fold the frame",
+      "hint": "Unfold the folding frame (the runners are already fitted to the side panels) and fold it into a U shape."
+    },
+    "2": {
+      "title": "Connecting bolts in the front",
+      "hint": "Lay the drawer front flat, inside face up, and screw in 2 connecting bolts. Do this for each of the two drawers."
+    },
+    "3": {
+      "title": "Insert the sides",
+      "hint": "Hammer in 2 dowels, then insert the two side panels upright into the front."
+    },
+    "4": {
+      "title": "Cam locks",
+      "hint": "Fit the cam locks into the holes in the sides and turn them tight with a flat-blade screwdriver."
+    },
+    "5": {
+      "title": "Bottom",
+      "hint": "Slide the bottom panel in along the grooves."
+    },
+    "6": {
+      "title": "Back",
+      "hint": "Press the back panel down into the notches at the top of the side panels."
+    },
+    "7": {
+      "title": "Nail the back",
+      "hint": "Fix the side panels to the back panel by hammering in nails."
+    },
+    "8": {
+      "title": "Drawer runners",
+      "hint": "Fit the left (123801) and right (123802) runners, 2 screws each."
+    },
+    "9": {
+      "title": "Knob and bumper pads",
+      "hint": "Screw the knob screw in from the inside of the front; stick bumper pads on the upper corners of the back of the front (1 sheet = 2 pads)."
+    },
+    "10": {
+      "title": "Mark line (Left)",
+      "hint": "Place the marking gauge on the front edge of the compartment floor on the left side and draw a pencil line."
+    },
+    "11": {
+      "title": "Mark line (Right)",
+      "hint": "Draw a line on the right side in the same way."
+    },
+    "12": {
+      "title": "Push in the frame",
+      "hint": "Push the U-shaped frame into the compartment."
+    },
+    "13": {
+      "title": "Left side screws",
+      "hint": "On the left side, press the frame in, align it with the pencil line and drive in 2 screws."
+    },
+    "14": {
+      "title": "Right side screws",
+      "hint": "Do the same on the right side."
+    },
+    "15": {
+      "title": "Push in the drawers",
+      "hint": "Put the two drawers on the runners and push them in."
+    }
+  }
+}

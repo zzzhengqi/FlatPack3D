@@ -1,0 +1,147 @@
+{
+  "title": "KALLAX insert with door",
+  "scope": "Manual steps 1–11 (two routes). Fitted in one compartment; excludes wall attachment.",
+  "overview": {
+    "title": "Check the parts",
+    "hint": "Check the hardware against p3. The door insert itself has only two parts: the folding frame and the door panel."
+  },
+  "variants": {
+    "left": {
+      "label": "Opens left",
+      "note": "Hinges on the left, door opens to the left (manual p6–p10)"
+    },
+    "right": {
+      "label": "Opens right",
+      "note": "Hinges on the right, door opens to the right (manual p11–p15)"
+    }
+  },
+  "poses": {
+    "upright": {
+      "label": "In the compartment"
+    }
+  },
+  "partTypes": {
+    "frame": {
+      "name": "Folding frame"
+    },
+    "door": {
+      "name": "Door panel"
+    }
+  },
+  "parts": {
+    "frame": "Folding frame",
+    "door": "Door panel"
+  },
+  "hardware": {
+    "100344": {
+      "name": "Short Phillips screw (for hinge)"
+    },
+    "100412": {
+      "name": "Machine screw (for knob)"
+    },
+    "106266": {
+      "name": "Cylindrical knob"
+    },
+    "107091": {
+      "name": "Bumper pad sheet",
+      "unit": "sheet"
+    },
+    "109221": {
+      "name": "Hinge mounting plate"
+    },
+    "109337": {
+      "name": "Cup hinge"
+    },
+    "124386": {
+      "name": "Phillips self-tapping screw"
+    },
+    "131351": {
+      "name": "Z-shaped metal marking gauge"
+    }
+  },
+  "tools": {
+    "铅笔": "Pencil"
+  },
+  "steps": {
+    "1": {
+      "title": "Fold the frame",
+      "hint": "Unfold the folding frame, fold it along the creases into a U shape, and fold the narrow strips at both ends onto the outside of the side panels."
+    },
+    "2": {
+      "title": "Fit the hinges",
+      "hint": "Fit the two hinges to the door panel, 2 screws each. After this the manual splits into two routes by opening direction."
+    },
+    "left:3": {
+      "title": "Mark line (Left)",
+      "hint": "Place the marking gauge on the front edge of the compartment floor on the left side and draw a pencil line (do not put the gauge on backwards)."
+    },
+    "left:4": {
+      "title": "Mark line (Right)",
+      "hint": "Draw a line on the right side in the same way."
+    },
+    "left:5": {
+      "title": "Push in the frame",
+      "hint": "Push the U-shaped frame into the compartment."
+    },
+    "left:6": {
+      "title": "Left lower plate",
+      "hint": "Press the frame against the left wall with its front edge on the pencil line, and fit the lower hinge mounting plate."
+    },
+    "left:7": {
+      "title": "Left upper plate",
+      "hint": "Fit the upper hinge mounting plate in the same way."
+    },
+    "left:8": {
+      "title": "Right side screws",
+      "hint": "On the right side, press the frame in, align it with the pencil line and drive in 2 screws directly."
+    },
+    "left:9": {
+      "title": "Hang the door",
+      "hint": "Hang the hinges on the mounting plates: hook on, press down, then tighten."
+    },
+    "left:10": {
+      "title": "Knob",
+      "hint": "Fit the knob; the screw goes in from the inside of the door."
+    },
+    "left:11": {
+      "title": "Bumper pads",
+      "hint": "Stick one bumper pad on each of the upper and lower corners on the opening side of the back of the door (1 sheet = 2 pads)."
+    },
+    "right:3": {
+      "title": "Mark line (Right)",
+      "hint": "Place the marking gauge on the front edge of the compartment floor on the right side and draw a pencil line (do not put the gauge on backwards)."
+    },
+    "right:4": {
+      "title": "Mark line (Left)",
+      "hint": "Draw a line on the left side in the same way."
+    },
+    "right:5": {
+      "title": "Push in the frame",
+      "hint": "Push the U-shaped frame into the compartment."
+    },
+    "right:6": {
+      "title": "Right lower plate",
+      "hint": "Press the frame against the right wall with its front edge on the pencil line, and fit the lower hinge mounting plate."
+    },
+    "right:7": {
+      "title": "Right upper plate",
+      "hint": "Fit the upper hinge mounting plate in the same way."
+    },
+    "right:8": {
+      "title": "Left side screws",
+      "hint": "On the left side, press the frame in, align it with the pencil line and drive in 2 screws directly."
+    },
+    "right:9": {
+      "title": "Hang the door",
+      "hint": "Hang the hinges on the mounting plates: hook on, press down, then tighten."
+    },
+    "right:10": {
+      "title": "Knob",
+      "hint": "Fit the knob; the screw goes in from the inside of the door."
+    },
+    "right:11": {
+      "title": "Bumper pads",
+      "hint": "Stick one bumper pad on each of the upper and lower corners on the opening side of the back of the door (1 sheet = 2 pads)."
+    }
+  }
+}

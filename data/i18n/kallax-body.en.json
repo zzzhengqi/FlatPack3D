@@ -1,0 +1,196 @@
+{
+  "title": "KALLAX shelving unit (5×5)",
+  "scope": "Manual steps 1–24: assembling and raising the frame. Excludes wall attachment (p27–p35) and all inserts.",
+  "overview": {
+    "title": "Check the parts",
+    "hint": "Check the panels and hardware against p5–p7. Only the frame hardware is used here; set the wall-attachment hardware aside."
+  },
+  "poses": {
+    "flat": {
+      "label": "Lying flat (back down)"
+    },
+    "lift": {
+      "label": "Lifting"
+    },
+    "upright": {
+      "label": "Upright"
+    }
+  },
+  "partTypes": {
+    "side": {
+      "name": "Side panel"
+    },
+    "shelf": {
+      "name": "Long shelf"
+    },
+    "bottom": {
+      "name": "Bottom panel"
+    },
+    "top": {
+      "name": "Top panel"
+    },
+    "divider": {
+      "name": "Divider"
+    }
+  },
+  "parts": {
+    "top": "Top panel",
+    "bottom": "Bottom panel (grey face down)",
+    "side-left": "Left side panel (step 1)",
+    "side-right": "Right side panel (step 17)",
+    "shelf-1": "Long shelf 1 (counted from top)",
+    "shelf-2": "Long shelf 2 (counted from top)",
+    "shelf-3": "Long shelf 3 (counted from top)",
+    "shelf-4": "Long shelf 4 (counted from top)",
+    "divider-r1-1": "Divider, row 1-1",
+    "divider-r1-2": "Divider, row 1-2",
+    "divider-r1-3": "Divider, row 1-3",
+    "divider-r1-4": "Divider, row 1-4",
+    "divider-r2-1": "Divider, row 2-1",
+    "divider-r2-2": "Divider, row 2-2",
+    "divider-r2-3": "Divider, row 2-3",
+    "divider-r2-4": "Divider, row 2-4",
+    "divider-r3-1": "Divider, row 3-1",
+    "divider-r3-2": "Divider, row 3-2",
+    "divider-r3-3": "Divider, row 3-3",
+    "divider-r3-4": "Divider, row 3-4",
+    "divider-r4-1": "Divider, row 4-1",
+    "divider-r4-2": "Divider, row 4-2",
+    "divider-r4-3": "Divider, row 4-3",
+    "divider-r4-4": "Divider, row 4-4",
+    "divider-r5-1": "Divider, row 5-1",
+    "divider-r5-2": "Divider, row 5-2",
+    "divider-r5-3": "Divider, row 5-3",
+    "divider-r5-4": "Divider, row 5-4"
+  },
+  "hardware": {
+    "100001": {
+      "name": "Z-shaped hex key"
+    },
+    "100372": {
+      "name": "Short Phillips self-tapping screw"
+    },
+    "101339": {
+      "name": "Wooden dowel"
+    },
+    "103693": {
+      "name": "Metal plate with keyhole slot"
+    },
+    "115753": {
+      "name": "Hinged wall fitting"
+    },
+    "153550": {
+      "name": "Round self-adhesive felt pad"
+    },
+    "10091413": {
+      "name": "L-shaped metal bracket"
+    },
+    "104321/104322": {
+      "name": "Long countersunk hex-socket screw"
+    },
+    "115754/118673/118225/119509": {
+      "name": "L-shaped corner cover cap"
+    }
+  },
+  "tools": {
+    "锤子": "Hammer"
+  },
+  "steps": {
+    "1": {
+      "title": "Top panel + left side panel",
+      "hint": "Join the top panel and the left side panel at a right angle and drive in 2 long screws with the Z-shaped hex key."
+    },
+    "2": {
+      "title": "Dowels for row 1 dividers",
+      "hint": "For the 4 dividers of row 1, hammer 2 dowels into one edge of each."
+    },
+    "3": {
+      "title": "Row 1 dividers",
+      "hint": "Insert the 4 dividers into the top panel."
+    },
+    "4": {
+      "title": "Dowels for the long shelves",
+      "hint": "Hammer dowels into both ends of the 4 long shelves, 32 in total."
+    },
+    "5": {
+      "title": "Long shelf 1",
+      "hint": "Press the long shelf onto the dividers and into the left side panel."
+    },
+    "6": {
+      "title": "Row 2 dowels",
+      "hint": "On long shelf 1, hammer in 8 dowels for the next row of dividers."
+    },
+    "7": {
+      "title": "Row 2 dividers",
+      "hint": "Fit the 4 dividers of row 2."
+    },
+    "8": {
+      "title": "Long shelf 2",
+      "hint": "Press long shelf 2 onto the dividers and into the left side panel."
+    },
+    "9": {
+      "title": "Row 3 dowels",
+      "hint": "Hammer 8 dowels into long shelf 2."
+    },
+    "10": {
+      "title": "Row 3 dividers",
+      "hint": "Fit the 4 dividers of row 3."
+    },
+    "11": {
+      "title": "Long shelf 3",
+      "hint": "Press long shelf 3 onto the dividers and into the left side panel."
+    },
+    "12": {
+      "title": "Row 4 dowels",
+      "hint": "Hammer 8 dowels into long shelf 3."
+    },
+    "13": {
+      "title": "Row 4 dividers",
+      "hint": "Fit the 4 dividers of row 4."
+    },
+    "14": {
+      "title": "Long shelf 4",
+      "hint": "Press long shelf 4 onto the dividers and into the left side panel."
+    },
+    "15": {
+      "title": "Row 5 dowels",
+      "hint": "Hammer 8 dowels into long shelf 4."
+    },
+    "16": {
+      "title": "Row 5 dividers",
+      "hint": "Fit the last row of 4 dividers."
+    },
+    "17": {
+      "title": "Right side panel",
+      "hint": "Turn the second side panel over and fit it onto the ends of all long shelves; mind the direction of the holes."
+    },
+    "18": {
+      "title": "Top-right corner screws",
+      "hint": "Drive 2 long screws into the corner between the right side panel and the top panel."
+    },
+    "19": {
+      "title": "Last row of dowels",
+      "hint": "Hammer 8 dowels into the exposed ends of the last row of dividers."
+    },
+    "20": {
+      "title": "Bottom panel",
+      "hint": "Turn the grey bottom panel over and fit it on."
+    },
+    "21": {
+      "title": "Bottom panel screws",
+      "hint": "Drive 2 long screws into each corner of the bottom panel, 4 in total."
+    },
+    "22": {
+      "title": "Felt pads",
+      "hint": "Stick 12 felt pads onto the grey face of the bottom panel."
+    },
+    "23": {
+      "title": "Lift",
+      "hint": "Two people lift the unit; mind where to hold it."
+    },
+    "24": {
+      "title": "Raise",
+      "hint": "Two people turn the unit upright. The next step is wall attachment (not covered here)."
+    }
+  }
+}
