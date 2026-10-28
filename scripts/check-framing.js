@@ -37,6 +37,8 @@ async function run({ lang = '', only = null, sizes = Object.keys(SIZES), quiet =
         for (const v of isSet && !data.variants ? [null] : variants) {
           const q = new URLSearchParams({ piece: piece.key, ...(v ? { variant: v } : {}), ...(lang ? { lang } : {}) });
           await page.goto(`${server.url}?${q}`);
+          // 页面脚本里有 await（读 JSON），load 事件之后才挂上 __flatpack，等它就绪
+          for (let k = 0; k < 100 && !(await page.evaluate('!!(window.__flatpack && window.__flatpack.view)')); k++) await sleep(100);
           const steps = isSet ? [null] : [data.overview.n, ...data.steps.filter((s) => !s.variant || s.variant === v).map((s) => s.n)];
           for (const n of steps) {
             if (n !== null) await page.evaluate(`(() => { const f = window.__flatpack; f.go(f.view.seq.findIndex((s) => s.n === ${n}) + 1, false); })()`);

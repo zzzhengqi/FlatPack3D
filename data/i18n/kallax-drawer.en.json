@@ -79,7 +79,9 @@
   },
   "tools": {
     "锤子": "Hammer",
-    "铅笔": "Pencil"
+    "铅笔": "Pencil",
+    "螺丝刀": "Screwdriver",
+    "一字螺丝刀": "Flat-head screwdriver"
   },
   "steps": {
     "1": {
@@ -88,7 +90,8 @@
     },
     "2": {
       "title": "Connecting bolts in the front",
-      "hint": "Lay the drawer front flat, inside face up, and screw in 2 connecting bolts. Do this for each of the two drawers."
+      "hint": "Lay the drawer front flat, inside face up, and screw in 2 connecting bolts. Do this for each of the two drawers.",
+      "motionNote": "Motion source: the rotation arrow on the screwdriver on p5 — the connector bolts turn as they go in."
     },
     "3": {
       "title": "Insert the sides",
@@ -96,7 +99,8 @@
     },
     "4": {
       "title": "Cam locks",
-      "hint": "Fit the cam locks into the holes in the sides and turn them tight with a flat-blade screwdriver."
+      "hint": "Fit the cam locks into the holes in the sides and turn them tight with a flat-blade screwdriver.",
+      "motionNote": "Motion source: the curved arrow on the screwdriver in the right-hand detail circle on p6 — the cam lock turns in place (the manual gives no angle; half a turn is used)."
     },
     "5": {
       "title": "Bottom",
@@ -112,11 +116,13 @@
     },
     "8": {
       "title": "Drawer runners",
-      "hint": "Fit the left (123801) and right (123802) runners, 2 screws each."
+      "hint": "Fit the left (123801) and right (123802) runners, 2 screws each.",
+      "motionNote": "Motion source: the rotation arrow on the screwdriver in the step 8 detail circle on p8 — the screws turn as they go in."
     },
     "9": {
       "title": "Knob and bumper pads",
-      "hint": "Screw the knob screw in from the inside of the front; stick bumper pads on the upper corners of the back of the front (1 sheet = 2 pads)."
+      "hint": "Screw the knob screw in from the inside of the front; stick bumper pads on the upper corners of the back of the front (1 sheet = 2 pads).",
+      "motionNote": "Motion source: the rotation arrow on the screwdriver in step 9 on p8 — the knob screw turns as it goes in."
     },
     "10": {
       "title": "Mark line (Left)",
@@ -132,7 +138,8 @@
     },
     "13": {
       "title": "Left side screws",
-      "hint": "On the left side, press the frame in, align it with the pencil line and drive in 2 screws."
+      "hint": "On the left side, press the frame in, align it with the pencil line and drive in 2 screws.",
+      "motionNote": "Motion source: the rotation arrow on the screwdriver in step 13 on p11 — the screws turn as they go in. Step 14 has no rotation arrow, so those screws do not turn."
     },
     "14": {
       "title": "Right side screws",

@@ -78,7 +78,7 @@
   "outlineFixing": "Final position of fitting {id} (cyan outline)",
   "roomKicker": "Room view",
   "roomFixings": "Fittings for this option",
-  "roomFooter": "Room view: WASD to move, Q/E to turn, the mouse still orbits and zooms; the cyan outlines show through the unit.",
+  "roomFooter": "Room view: WASD to move, Q/E to turn, the mouse still orbits and zooms; where the unit hides the cyan outlines they are drawn as faint dashed lines.",
   "roomPagesHint": "p2 is the safety warning page of the manual; the others are the wall-attachment pages for this option",
   "shortcutList": [
     {
@@ -129,5 +129,7 @@
       "keys": "Click a manual drawing",
       "text": "Jump to that step"
     }
-  ]
+  ],
+  "movingParts": "Panels in this step",
+  "zoomCount": "{n}×"
 }

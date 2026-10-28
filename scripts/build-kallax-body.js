@@ -82,13 +82,16 @@ const pads = () => padXs.flatMap((x) => [-15, 15].map((z) => ({
 })));
 
 const hw = (id, placements) => ({ id, count: placements.length, placements });
+// 动作：只加说明书画了箭头的。page 是箭头所在页，motionNote 写明是哪个箭头（见 docs/spec.md"动作"）
+const screwIn = (id, page, tool, o = {}) => ({ type: 'screw', id, tool, page, ...o });
+const WRENCH_NOTE = (p) => `动作依据：p${p} 扳手 100001 上的旋转箭头——螺钉边转边拧入，扳手跟着转。`;
 const DOWEL = '101339', SCREW = '104321/104322', PAD = '153550';
 
 // ---- 步骤（报告第 1 节步骤表，第 1–24 步）----
 const steps = [
   { n: 1, pages: [8], title: '顶板 + 左侧板', pose: 'flat', tools: ['100001'], parts: ['top', 'side-left'],
     hint: '顶板与左侧板拼成直角，用 Z 形扳手拧入 2 颗长螺钉。',
-    hardware: [hw(SCREW, screwsAt(-1, 1))] },
+    hardware: [hw(SCREW, screwsAt(-1, 1))], motions: [screwIn(SCREW, 8, '100001')], motionNote: WRENCH_NOTE(8) },
   { n: 2, pages: [9], title: '第 1 排隔板装木销', tools: ['锤子'], parts: [],
     hint: '第 1 排 4 块隔板，每块一侧边敲入 2 个木销。',
     hardware: [hw(DOWEL, dowelsOnDividerEdge(1, +1))] },
@@ -115,12 +118,12 @@ const steps = [
   { n: 17, pages: [20], title: '右侧板', parts: ['side-right'], approach: [1, 0, 0],
     hint: '第二块侧板翻过来，套到所有长层板端部，注意孔位方向。', hardware: [] },
   { n: 18, pages: [21], title: '右上角螺钉', tools: ['100001'], parts: [], hint: '右侧板与顶板的角拧入 2 颗长螺钉。',
-    hardware: [hw(SCREW, screwsAt(1, 1))] },
+    hardware: [hw(SCREW, screwsAt(1, 1))], motions: [screwIn(SCREW, 21, '100001')], motionNote: WRENCH_NOTE(21) },
   { n: 19, pages: [22], title: '最后一排木销', tools: ['锤子'], parts: [], hint: '最后一排隔板的外露端敲入 8 个木销。',
     hardware: [hw(DOWEL, dowelsOnDividerEdge(5, -1))] },
   { n: 20, pages: [23], title: '底板', parts: ['bottom'], approach: [0, -1, 0], hint: '灰色底板翻上来盖住。', hardware: [] },
   { n: 21, pages: [24], title: '底板螺钉', tools: ['100001'], parts: [], hint: '底板两角各拧入 2 颗长螺钉，共 4 颗。',
-    hardware: [hw(SCREW, [...screwsAt(-1, -1), ...screwsAt(1, -1)])] },
+    hardware: [hw(SCREW, [...screwsAt(-1, -1), ...screwsAt(1, -1)])], motions: [screwIn(SCREW, 24, '100001')], motionNote: WRENCH_NOTE(24) },
   { n: 22, pages: [25], title: '毡垫', parts: [], hint: '在底板灰色面贴 12 个毡垫。', hardware: [hw(PAD, pads())] },
   { n: 23, pages: [26], title: '抬起', pose: 'lift', parts: [], hint: '两人抬起柜体，注意手扶的位置。', hardware: [] },
   { n: 24, pages: [26], title: '竖起', pose: 'upright', parts: [],
@@ -148,14 +151,23 @@ const WALL_B = { center: vec(-W / 2 - 0.25 - 0.01 - 1, -H / 2 - 0.4 + 130, 0), s
 const WALL_B_X = -W / 2 - 0.26;
 
 steps.push(
-  { n: 25, variant: 'a', pages: [27], title: '装墙固定件', parts: [],
+  { n: 25, variant: 'a', pages: [27], title: '装墙固定件', parts: [], tools: ['螺丝刀'],
+    motions: [screwIn('100372', 27, '螺丝刀')], motionNote: '动作依据：p27 螺丝刀上的旋转箭头——螺钉边转边拧入。',
     hint: '柜体立在地上、背面贴墙时用这个方案。在左上、右上两格的顶板下沿各装 1 个墙固定件，每个 2 颗螺钉。',
     hardware: [hw('115753', fittings), hw('100372', fittingScrews)] },
   { n: 26, variant: 'a', pages: [28], title: '固定到墙上', tools: ['水平尺'], parts: [],
     hint: '用水平尺校正。墙用螺钉要用圆头，穿过葫芦孔片和固定件的大孔打进墙里。墙用螺钉和螺塞不随包装提供，要按墙体材质另购。',
     hardware: [hw('103693', keyPlates)],
     extras: [{ id: 'wall-screw', placements: [-1, 1].map((sx) => wallScrew([sx * (SIDE_IN - 1.5), FIT_Y, BACK + 0.35 - 2.5], [0, 0, 1])) }] },
-  { n: 27, variant: 'a', pages: [29], title: '调整并拧紧', parts: [], hint: '葫芦孔片可以左右、上下调整位置，调好后拧紧。', hardware: [] },
+  { n: 27, variant: 'a', pages: [29], title: '调整并拧紧', parts: [], tools: ['螺丝刀'], hint: '葫芦孔片可以左右、上下调整位置，调好后拧紧。', hardware: [],
+    motions: [
+      { type: 'slide', target: { step: 26, id: '103693' }, axis: 'x', amount: 0.5, page: 29 },
+      { type: 'slide', target: { step: 26, id: '103693' }, axis: 'y', amount: 0.5, page: 29 },
+      { type: 'tighten', target: { step: 26, extra: 'wall-screw' }, tool: '螺丝刀', page: 29 },
+    ],
+    // p29 的放大圆圈引线指向右上角那一格
+    zoomFocus: { index: 1, page: 29 },
+    motionNote: '动作依据：p29 放大圆圈里葫芦孔片上方的左右双向箭头、左侧的上下双向箭头，先左右、再上下调整；再按螺丝刀上的旋转箭头拧紧。' },
   { n: 28, variant: 'a', pages: [30], title: '盖帽', parts: [], hint: '盖上 2 个转角盖帽。', hardware: [hw('115754/118673/118225/119509', caps)] },
 
   { n: 25, variant: 'b', pages: [31], title: '放角码、划线', parts: [],
@@ -164,12 +176,17 @@ steps.push(
     marks: B_Z.map((z) => ({ position: vec(WALL_B_X - 0.03, H / 2, z), size: [0.06, 0.15, 4], frame: 'wall' })) },
   { n: 26, variant: 'b', pages: [32], title: '角码固定到墙上', pose: 'awayB', parts: [],
     hint: '角码用圆头墙用螺钉固定到墙上的划线处。墙用螺钉和螺塞不随包装提供，要按墙体材质另购。',
+    tools: ['螺丝刀'], motions: [{ type: 'screw', extra: 'wall-screw', tool: '螺丝刀', page: 32 }],
+    motionNote: '动作依据：p32 螺丝刀上的旋转箭头——墙用螺钉边转边拧入。p32 的整机图里柜体与左边的墙分开。',
     hardware: [], extras: [{ id: 'wall-screw', placements: B_Z.map((z) => wallScrew([-W / 2 - 2.5, H / 2 - 3, z], [1, 0, 0])) }] },
   { n: 27, variant: 'b', pages: [33], title: '拧出 2 颗长螺钉', tools: ['100001'], parts: [],
     hint: '用 Z 形扳手从顶板左端拧出 2 颗长螺钉（第 1 步装的那两颗）。',
-    hardware: [{ id: SCREW, count: 2, action: 'remove', placements: topLeftScrews }] },
+    hardware: [{ id: SCREW, count: 2, action: 'remove', placements: topLeftScrews }],
+    motions: [{ type: 'unscrew', id: SCREW, tool: '100001', page: 33 }],
+    motionNote: '动作依据：p33 扳手上的旋转箭头（方向与 p35 拧入时相反）和两个向上的箭头——螺钉边转边退出。' },
   { n: 28, variant: 'b', pages: [34], title: '推到角码下', pose: 'upright', parts: [], hint: '把柜体推向墙，让角码卡在顶板上。', hardware: [] },
-  { n: 29, variant: 'b', pages: [35], title: '拧回螺钉', tools: ['100001'], parts: [], hint: '把 2 颗长螺钉穿过角码拧回顶板。', hardware: [hw(SCREW, refitScrews)] },
+  { n: 29, variant: 'b', pages: [35], title: '拧回螺钉', tools: ['100001'], parts: [], hint: '把 2 颗长螺钉穿过角码拧回顶板。', hardware: [hw(SCREW, refitScrews)],
+    motions: [screwIn(SCREW, 35, '100001')], motionNote: WRENCH_NOTE(35) },
 );
 // （steps 在下方补上上墙步骤后统一处理）
 

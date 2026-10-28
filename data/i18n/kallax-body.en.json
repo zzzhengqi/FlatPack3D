@@ -98,12 +98,14 @@
   "tools": {
     "锤子": "Hammer",
     "水平尺": "Spirit level",
-    "铅笔": "Pencil"
+    "铅笔": "Pencil",
+    "螺丝刀": "Screwdriver"
   },
   "steps": {
     "1": {
       "title": "Top panel + left side panel",
-      "hint": "Join the top panel and the left side panel at a right angle and drive in 2 long screws with the Z-shaped hex key."
+      "hint": "Join the top panel and the left side panel at a right angle and drive in 2 long screws with the Z-shaped hex key.",
+      "motionNote": "Motion source: the rotation arrow on wrench 100001 on p8 — the screw turns as it goes in, and the wrench turns with it."
     },
     "2": {
       "title": "Dowels for row 1 dividers",
@@ -171,7 +173,8 @@
     },
     "18": {
       "title": "Top-right corner screws",
-      "hint": "Drive 2 long screws into the corner between the right side panel and the top panel."
+      "hint": "Drive 2 long screws into the corner between the right side panel and the top panel.",
+      "motionNote": "Motion source: the rotation arrow on wrench 100001 on p21 — the screw turns as it goes in, and the wrench turns with it."
     },
     "19": {
       "title": "Last row of dowels",
@@ -183,7 +186,8 @@
     },
     "21": {
       "title": "Bottom panel screws",
-      "hint": "Drive 2 long screws into each corner of the bottom panel, 4 in total."
+      "hint": "Drive 2 long screws into each corner of the bottom panel, 4 in total.",
+      "motionNote": "Motion source: the rotation arrow on wrench 100001 on p24 — the screw turns as it goes in, and the wrench turns with it."
     },
     "22": {
       "title": "Felt pads",
@@ -199,7 +203,8 @@
     },
     "a:25": {
       "title": "Fit the wall fittings",
-      "hint": "Use this option when the unit stands on the floor with its back against the wall. Fit one wall fitting under the top panel in the top-left and top-right compartments, 2 screws each."
+      "hint": "Use this option when the unit stands on the floor with its back against the wall. Fit one wall fitting under the top panel in the top-left and top-right compartments, 2 screws each.",
+      "motionNote": "Motion source: the rotation arrow on the screwdriver on p27 — the screws turn as they go in."
     },
     "a:26": {
       "title": "Fix to the wall",
@@ -207,7 +212,8 @@
     },
     "a:27": {
       "title": "Adjust and tighten",
-      "hint": "The keyhole plate can be adjusted left-right and up-down; tighten once it is in place."
+      "hint": "The keyhole plate can be adjusted left-right and up-down; tighten once it is in place.",
+      "motionNote": "Motion source: in the p29 detail circle, the left-right double arrow above the keyhole plate and the up-down double arrow beside it — first adjust left-right, then up-down; then tighten following the rotation arrow on the screwdriver."
     },
     "a:28": {
       "title": "Cover caps",
@@ -219,11 +225,13 @@
     },
     "b:26": {
       "title": "Fix brackets to the wall",
-      "hint": "Fix the brackets to the wall at the marks with round-head wall screws. Wall screws and plugs are not included; buy them to suit your wall material."
+      "hint": "Fix the brackets to the wall at the marks with round-head wall screws. Wall screws and plugs are not included; buy them to suit your wall material.",
+      "motionNote": "Motion source: the rotation arrow on the screwdriver on p32 — the wall screws turn as they go in. In the p32 overall drawing the unit stands apart from the wall on the left."
     },
     "b:27": {
       "title": "Take out 2 long screws",
-      "hint": "Use the Z-shaped hex key to take out the 2 long screws at the left end of the top panel (the two fitted in step 1)."
+      "hint": "Use the Z-shaped hex key to take out the 2 long screws at the left end of the top panel (the two fitted in step 1).",
+      "motionNote": "Motion source: the rotation arrow on the wrench on p33 (opposite to the screwing-in arrow on p35) and the two upward arrows — the screws turn as they come out."
     },
     "b:28": {
       "title": "Push under the brackets",
@@ -231,7 +239,8 @@
     },
     "b:29": {
       "title": "Put the screws back",
-      "hint": "Put the 2 long screws back through the brackets into the top panel."
+      "hint": "Put the 2 long screws back through the brackets into the top panel.",
+      "motionNote": "Motion source: the rotation arrow on wrench 100001 on p35 — the screw turns as it goes in, and the wrench turns with it."
     }
   },
   "variantTitle": "Wall attachment",

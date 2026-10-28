@@ -150,6 +150,15 @@
   .safety { border-left: 4px solid #d9534f; background: color-mix(in srgb, #d9534f 10%, transparent); border-radius: 6px; padding: 6px 10px; margin: 8px 0 0; font-size: 13px; line-height: 1.5; }
   #about .safety { font-size: 14px; padding: 10px 14px; margin: 0 0 16px; }
   #autoFrameBtn[aria-pressed="false"] { border-style: dashed; color: var(--muted); }
+  /* 放大圆圈：本步在动的零件在主画面里太小时出现（阈值见 docs/spec.md），引线连到零件在柜体上的位置 */
+  .zoom { position: absolute; z-index: 3; border-radius: 50%; overflow: hidden; border: 2px solid var(--ink); background: var(--stage-bg); box-shadow: 0 2px 14px rgba(0,0,0,.14); pointer-events: none; display: none; }
+  .zoom.on { display: block; }
+  .zoom canvas { display: block; width: 100%; height: 100%; }
+  .zoom .count { position: absolute; left: 50%; top: 8px; transform: translateX(-50%); font-size: 13px; font-weight: 700; padding: 0 7px; border-radius: 999px; background: color-mix(in srgb, var(--panel) 85%, transparent); }
+  #leader { position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
+  #leader line, #leader circle { stroke: var(--ink); stroke-width: 1.5; fill: none; }
+  #stage.drawing .zoom { background: #fff; border-color: #111; }
+  #stepCard .motion { font-size: 12px; color: var(--muted); line-height: 1.5; }
   #about .disclaimer { color: var(--muted); border-top: 1px solid var(--line); margin-top: 28px; padding-top: 12px; font-size: 13px; }
   #about .muted { color: var(--muted); }
 
@@ -161,6 +170,11 @@
   body.shot #shotTitle { display: block; position: absolute; left: 36px; bottom: 30px; font-size: 36px; font-weight: 700; color: var(--ink); }
   body.shot #shotTitle small { display: block; font-size: 20px; font-weight: 400; color: var(--muted); max-width: 520px; margin-top: 6px; line-height: 1.5; }
 
+  /* 笔记本宽度：两张卡片收窄一些，中间留出放大圆圈的位置（取景检查会验证） */
+  @media (max-width: 1100px) and (min-width: 761px) {
+    #stepCard { width: min(300px, calc(100% - 24px)); }
+    #hwCard { width: 220px; }
+  }
   @media (max-width: 760px) {
     main { grid-template-columns: 1fr; grid-template-rows: 34% 1fr; grid-template-areas: "manual" "stage"; }
     main.manual-hidden { grid-template-rows: 0 1fr; }
@@ -201,6 +215,7 @@
     </aside>
     <section id="stage">
       <div id="labels"></div>
+      <svg id="leader"></svg>
       <div class="card" id="stepCard"></div>
       <div class="card" id="hwCard"></div>
       <div class="card" id="viewCard">
@@ -345,7 +360,10 @@ const MAT = {
   white: new THREE.MeshStandardMaterial({ color: 0xf4f2ed, roughness: 0.85 }),
   frame: new THREE.MeshStandardMaterial({ color: 0xe4e0d8, roughness: 0.9 }),
   gray: new THREE.MeshStandardMaterial({ color: 0xb3b1ab, roughness: 0.9 }),
-  hilite: new THREE.MeshStandardMaterial({ color: 0xf6cf86, roughness: 0.75 }),
+  hilite: new THREE.MeshStandardMaterial({ color: 0xf6cf86, roughness: 0.75, emissive: 0xf0a020, emissiveIntensity: 0.15 }),
+  edgeHi: new THREE.LineBasicMaterial({ color: 0xd98a00 }),
+  tool: new THREE.MeshStandardMaterial({ color: 0x3b3f45, roughness: 0.4, metalness: 0.6 }),
+  toolHandle: new THREE.MeshStandardMaterial({ color: 0x55585e, roughness: 0.8 }),
   host: new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, transparent: true, opacity: 0.28, depthWrite: false }),
   edge: new THREE.LineBasicMaterial({ color: 0x2a2a28 }),
   hostEdge: new THREE.LineBasicMaterial({ color: 0x8a877f, transparent: true, opacity: 0.6 }),
@@ -368,10 +386,19 @@ function drawEquivalent(m) {
   if (m === MAT.mark) return MAT.mark;
   if (m === MAT.metal || m === MAT.metal2 || m === MAT.wood || m === MAT.pad) return DRAW.hw;
   if (m === MAT.outline) return MAT.outline;
+  if (isHiMat(m)) return DRAW.hilite;
+  if (m === MAT.tool || m === MAT.toolHandle) return DRAW.hw;
   return DRAW.white;
 }
 let drawing = false;
 function setMat(mesh, m) { mesh.userData.baseMat = m; mesh.material = drawing ? drawEquivalent(m) : m; }
+// 本步五金的高亮材质：原材质加琥珀色自发光，闪烁时调强弱（尺寸不变）
+const HI_MATS = new Map();
+function hiOf(m) {
+  if (!HI_MATS.has(m)) { const h = m.clone(); h.emissive = new THREE.Color(0xf0a020); h.emissiveIntensity = 0.6; HI_MATS.set(m, h); }
+  return HI_MATS.get(m);
+}
+const isHiMat = (m) => [...HI_MATS.values()].includes(m);
 
 const FACE_ORDER = ['+x', '-x', '+y', '-y', '+z', '-z'];
 const geoCache = new Map();
@@ -422,6 +449,28 @@ function makeHardware(def) {
   return cyl(r, r, s.length, def.kind === 'dowel' ? 10 : 24, { dowel: MAT.wood, pad: MAT.pad }[def.kind] || MAT.metal);
 }
 
+// 工具：Z 形内六角扳手 100001（p8、p21 等页的样子）或螺丝刀。原点在工具头，+y 沿螺钉轴向外（尺寸为示意，见 docs/dimensions.md）
+function makeTool(id) {
+  const g = new THREE.Group();
+  const rod = (r, a, b, mat, seg = 6) => {
+    const d = b.clone().sub(a), m = new THREE.Mesh(cylGeo(r, r, d.length(), seg), mat);
+    m.position.copy(a).add(b).multiplyScalar(0.5);
+    m.quaternion.setFromUnitVectors(UP, d.normalize());
+    m.userData.baseMat = mat;
+    addEdges(m, cylEdge(r, r, a.distanceTo(b), seg));
+    g.add(m);
+  };
+  if (id === '100001') { // 短边插进钉头，长边横出，另一端短边朝外
+    rod(0.3, V([0, 0, 0]), V([0, 2.6, 0]), MAT.tool);
+    rod(0.3, V([0, 2.6, 0]), V([7.5, 2.6, 0]), MAT.tool);
+    rod(0.3, V([7.5, 2.6, 0]), V([7.5, 6.2, 0]), MAT.tool);
+  } else {
+    rod(0.22, V([0, 0, 0]), V([0, 8, 0]), MAT.tool, 10);
+    rod(1.2, V([0, 8, 0]), V([0, 18, 0]), MAT.toolHandle, 16);
+  }
+  g.userData.kind = 'tool';
+  return g;
+}
 // 让最小尺寸朝上、最大尺寸沿 x 的"平放"姿态
 function flatPose(size) {
   const idx = [0, 1, 2].sort((a, b) => size[a] - size[b]);
@@ -451,7 +500,13 @@ function runTweens(now) {
     if (k >= 1) { tweens.splice(i, 1); tw.resolve(); }
   }
 }
-function stopTweens() { gen++; tweens.length = 0; }
+function stopTweens() { gen++; for (const tw of tweens.splice(0)) tw.resolve(); }
+// 小零件放慢：五金飞入 1.1 秒；拧螺钉 2 秒转 4 圈；原地转、拧紧 1.4 秒；滑动调整 1.6 秒；连播时每步结束停 1.5 秒
+const HW_FLY_MS = 1100, SCREW_MS = 2000, SCREW_TURNS = 4, SPIN_MS = 1400, SLIDE_MS = 1600, HOLD_MS = 1500;
+const SCREW_DEPTH = 0.8; // 拧入前螺钉先停在"钉尖刚进孔"的位置：离最终位置 0.8 个钉长
+const tmpQ = new THREE.Quaternion();
+const depthOf = (o) => SCREW_DEPTH * ((o.userData.def.shape && o.userData.def.shape.length) || 1);
+const headOf = (o) => ((o.userData.def.shape && o.userData.def.shape.length) || 1) / 2;
 
 // ================= 装配视图（主体 / 嵌件）=================
 class AssemblyView {
@@ -472,6 +527,8 @@ class AssemblyView {
     this.extraDef = Object.fromEntries((data.extras || []).map((h) => [h.id, h]));
     this.current = 0;
     this.explode = 0;
+    this.toolObjs = [];
+    this.done = Promise.resolve();
     // 墙组：柜体最终竖立位置的坐标系；固定在墙上的东西（角码、墙用螺钉、墙上的铅笔线）放这里，柜体移开时它们不动
     this.wallGroup = new THREE.Group();
     this.wallGroup.position.copy(V(data.poses.pivotWorld)).sub(V(data.poses.pivotLocal));
@@ -535,7 +592,7 @@ class AssemblyView {
       const placedAt = idx((s) => (s.parts || []).includes(p.id));
       const placeStep = this.seq[placedAt - 1];
       group.userData = {
-        kind: 'part', def: p, label: p.name, meshes, pieces, normalMats: mats(false), hiMats: mats(true),
+        kind: 'part', def: p, label: p.name, meshes, pieces, normalMats: mats(false), hiMats: mats(true), localBox: new THREE.Box3().setFromObject(group),
         base: V(v.position || p.position), anchor: V(p.position), final: V(v.position || p.position), finalQuat: eulerQuat(v.rotation || p.rotation),
         bench: V((placeStep && placeStep.bench) || [0, 0, 0]),
         placedAt, installAt: idx((s) => (s.install || []).includes(p.id)), foldAt: idx((s) => (s.fold || []).includes(p.id)),
@@ -573,7 +630,7 @@ class AssemblyView {
             kind, def, member: pl.member, stepIdx: i + 1, hwId: h.id, frame: pl.frame || null,
             label: kind === 'extra' ? def.name : `${def.name} ${pl.member || def.id}`, final: local, base: new THREE.Vector3(),
             quat: isBox ? new THREE.Quaternion() : new THREE.Quaternion().setFromUnitVectors(UP, out), out, parentPart,
-            scale: new THREE.Vector3(pl.mirrorX ? -1 : 1, 1, 1),
+            scale: new THREE.Vector3(pl.mirrorX ? -1 : 1, 1, 1), localBox: new THREE.Box3().setFromObject(obj),
           });
           this.hw.push(obj);
         }
@@ -665,6 +722,7 @@ class AssemblyView {
 
   snapTo(i) {
     stopTweens();
+    for (const tl of this.toolObjs.splice(0)) tl.removeFromParent();
     const pose = this.poseAt(i);
     this.applyPose(pose.tilt, pose.shift);
     for (const w of this.walls) w.visible = i >= this.wallFrom;
@@ -727,23 +785,98 @@ class AssemblyView {
       if (my !== gen) return;
     }
     for (const w of this.walls) if (i >= this.wallFrom) w.visible = true;
-    // 拧出：沿钉头方向退出后消失
+    // 姿态变化（翻转、移开柜体）在装五金之前：方案 B 第 26 步 p32 画的是柜体先离开墙，再固定角码
+    const target = this.poseAt(i);
+    if (target.tilt !== this.tilt || !target.shift.equals(this.shift)) {
+      const fromT = this.tilt, fromS = this.shift.clone();
+      await tween(1700, (k) => { const e = easeInOut(k); this.applyPose(fromT + (target.tilt - fromT) * e, fromS.clone().lerp(target.shift, e)); });
+      if (my !== gen) return;
+    }
+    const motions = s.motions || [];
+    // 拧出：有 unscrew 动作时先边转边退出一个钉长，再沿钉头方向抽走后消失
     const gone = this.hw.filter((o) => o.userData.removedAt === i);
     if (gone.length) {
+      const m = motions.find((x) => x.type === 'unscrew' && x.id === gone[0].userData.hwId);
+      if (m) { await this.spin(gone, m); if (my !== gen) return; }
       await Promise.all(gone.map((o) => { const from = o.userData.base.clone(); return tween(700, (k) => o.userData.base.copy(from).addScaledVector(o.userData.out, 14 * easeInOut(k))); }));
       for (const o of gone) o.visible = false;
       if (my !== gen) return;
     }
     const mine = this.hw.filter((o) => o.userData.stepIdx === i);
-    await Promise.all(mine.map((o, k) => this.fly(o, this.parentFor(o), o.userData.final, o.userData.quat,
-      o.userData.out, Math.min(10, this.approachDist / 2), k * (mine.length > 12 ? 28 : 80), 650)));
+    const own = motions.filter((m) => !m.target && m.type !== 'unscrew');
+    const motionOf = (o) => own.find((m) => (m.id ? o.userData.kind === 'hw' && o.userData.hwId === m.id : o.userData.kind === 'extra' && o.userData.hwId === m.extra));
+    // 要拧的螺钉先飞到"钉尖刚进孔"的位置
+    const entry = (o) => (motionOf(o) && motionOf(o).type === 'screw' ? o.userData.final.clone().addScaledVector(o.userData.out, depthOf(o)) : o.userData.final);
+    await Promise.all(mine.map((o, k) => this.fly(o, this.parentFor(o), entry(o), o.userData.quat,
+      o.userData.out, Math.min(10, this.approachDist / 2), k * (mine.length > 12 ? 28 : 80), HW_FLY_MS)));
     if (my !== gen) return;
-    for (const m of this.marks) if (m.userData.stepIdx === i) m.visible = true;
-    const target = this.poseAt(i);
-    if (target.tilt !== this.tilt || !target.shift.equals(this.shift)) {
-      const fromT = this.tilt, fromS = this.shift.clone();
-      await tween(1700, (k) => { const e = easeInOut(k); this.applyPose(fromT + (target.tilt - fromT) * e, fromS.clone().lerp(target.shift, e)); });
+    for (const m of own) {
+      const objs = mine.filter((o) => motionOf(o) === m);
+      if (objs.length) await this.spin(objs, m);
+      if (my !== gen) return;
     }
+    // 对之前装好的东西做的动作（方案 A 第 27 步：葫芦孔片左右、上下调整，再拧紧墙用螺钉）
+    for (const m of motions.filter((x) => x.target)) {
+      const objs = this.motionTargets(m);
+      await (m.type === 'slide' ? this.slide(objs, m) : this.spin(objs, m));
+      if (my !== gen) return;
+    }
+    for (const m of this.marks) if (m.userData.stepIdx === i) m.visible = true;
+  }
+
+  // 转动：screw 边转边拧入（从入口走到最终位置），unscrew 边转边退出，turn / tighten 原地转。
+  // 从钉头一侧看，拧入顺时针、拧出逆时针（p35 与 p33 扳手上的箭头方向相反）。工具挂在放大圆圈对准的那一个上
+  spin(objs, m) {
+    const turns = m.type === 'turn' ? (m.angle || 180) / 360 : m.type === 'tighten' ? 1.5 : SCREW_TURNS;
+    const sign = m.type === 'unscrew' ? 1 : -1;
+    const items = objs.map((o) => {
+      const u = o.userData, d = depthOf(o);
+      const from = m.type === 'screw' ? u.final.clone().addScaledVector(u.out, d) : u.final.clone();
+      const to = m.type === 'unscrew' ? u.final.clone().addScaledVector(u.out, d) : u.final.clone();
+      return { o, u, from, to };
+    });
+    // 工具挂在离放大圆圈焦点最近的那一个上（焦点可能是别的零件，例如第 27 步对准的是葫芦孔片）
+    const fx = zoom.active ? zoom.focuses().map((f) => this.finalBox(f).getCenter(new THREE.Vector3())) : [];
+    const near = (it) => { const c = this.finalBox(it.o).getCenter(new THREE.Vector3()); return fx.length ? Math.min(...fx.map((f) => f.distanceTo(c))) : 0; };
+    const holder = items.reduce((a, b) => (near(b) < near(a) ? b : a), items[0]);
+    const tool = m.tool ? makeTool(m.tool) : null;
+    if (tool) {
+      tool.traverse((x) => { if (x.isMesh) setMat(x, x.userData.baseMat); });
+      this.parentFor(holder.o).add(tool);
+      this.toolObjs.push(tool);
+    }
+    const dur = m.type === 'turn' || m.type === 'tighten' ? SPIN_MS : SCREW_MS;
+    return tween(dur, (k) => {
+      for (const it of items) {
+        it.u.base.lerpVectors(it.from, it.to, k);
+        it.o.quaternion.copy(it.u.quat).multiply(tmpQ.setFromAxisAngle(UP, sign * turns * 2 * Math.PI * k));
+      }
+      if (tool) {
+        tool.position.copy(holder.u.base).addScaledVector(holder.u.out, headOf(holder.o));
+        tool.quaternion.copy(holder.o.quaternion);
+      }
+    }).then(() => { if (tool) tool.removeFromParent(); });
+  }
+  // 滑动调整：沿 axis 先往正方向、再往负方向各走 amount，回到原位
+  slide(objs, m) {
+    const axis = AXIS[m.axis];
+    const items = objs.map((o) => ({ u: o.userData, from: o.userData.final.clone() }));
+    return tween(SLIDE_MS, (k) => { for (const it of items) it.u.base.copy(it.from).addScaledVector(axis, m.amount * Math.sin(2 * Math.PI * k)); });
+  }
+  // 动作对象：target.step 那一步装上的 target.id 五金或 target.extra 另购件
+  motionTargets(m) {
+    const idx = this.seq.findIndex((st) => st.n === m.target.step) + 1;
+    const key = m.target.id || m.target.extra;
+    return this.hw.filter((o) => o.userData.stepIdx === idx && o.userData.hwId === key);
+  }
+  // 零件或五金在第 current 步完成后的世界包围盒（动画过程中也按最终位置算）
+  finalBox(o) {
+    const u = o.userData;
+    const parent = u.kind === 'part' ? this.asm : this.parentFor(o);
+    parent.updateWorldMatrix(true, false);
+    const pos = u.kind === 'part' ? this.partTarget(o, this.current) : u.final;
+    const m = new THREE.Matrix4().compose(pos, u.kind === 'part' ? u.finalQuat : u.quat, u.scale || new THREE.Vector3(1, 1, 1)).premultiply(parent.matrixWorld);
+    return u.localBox.clone().applyMatrix4(m);
   }
 
   // 第 i 步完成后画面上应看到的东西：第 0 步是全部零件（含备料区），之后是格子示意、已放入的零件和五金
@@ -771,14 +904,47 @@ class AssemblyView {
     for (const [id, g] of Object.entries(this.parts)) {
       for (const m of g.userData.meshes) setMat(m, hi.has(id) ? g.userData.hiMats : g.userData.normalMats);
     }
+    const now = new Set(this.moving(i).filter((o) => o.userData.kind !== 'part'));
+    for (const o of this.hw) {
+      o.traverse((x) => {
+        if (x.isMesh) { x.userData.normalMat = x.userData.normalMat || x.userData.baseMat; setMat(x, now.has(o) ? hiOf(x.userData.normalMat) : x.userData.normalMat); }
+        else if (x.userData.isEdge) x.material = now.has(o) ? MAT.edgeHi : MAT.edge;
+      });
+    }
   }
 
   go(i, animate = true) {
     i = Math.max(0, Math.min(this.seq.length, i));
     this.current = i;
     this.highlight(i);
-    if (i === 0 || !animate) this.snapTo(i);
-    else { this.snapTo(i - 1); this.animate(i); }
+    if (i === 0 || !animate) { this.snapTo(i); this.done = Promise.resolve(); }
+    else { this.snapTo(i - 1); this.done = this.animate(i); }
+    return this.done;
+  }
+
+  // 第 i 步在动的东西：新放上（安装、折叠）的零件，新装、拧出的五金和另购件；姿态变化时整个柜体也在动
+  moving(i) {
+    const s = this.stepsList[i];
+    if (!i || !s) return [];
+    const ids = new Set([...(s.parts || []), ...(s.install || []), ...(s.fold || [])]);
+    const out = Object.values(this.parts).filter((g) => ids.has(g.userData.def.id));
+    out.push(...this.hw.filter((o) => o.userData.stepIdx === i || o.userData.removedAt === i));
+    for (const m of s.motions || []) if (m.target) out.push(...this.motionTargets(m));
+    const a = this.poseAt(i - 1), b = this.poseAt(i);
+    if (a.tilt !== b.tilt || !a.shift.equals(b.shift)) out.push(...Object.values(this.parts).filter((g) => g.userData.placedAt < i));
+    return [...new Set(out)];
+  }
+  // 分组量屏幕面积：本步的板件合成一组（一起放上去的一排隔板、翻转时的整个柜体，按合起来的包围盒算）；
+  // 五金按种类分组，取画面上最大的那一个
+  movingGroups(i) {
+    const groups = new Map();
+    for (const o of this.moving(i)) {
+      const u = o.userData;
+      const key = u.kind === 'part' ? 'parts' : `${u.kind}:${u.hwId}`;
+      if (!groups.has(key)) groups.set(key, { key, label: u.kind === 'part' ? t('movingParts') : u.def.name, union: u.kind === 'part', objs: [] });
+      groups.get(key).objs.push(o);
+    }
+    return [...groups.values()];
   }
 
   objects() { return [...Object.values(this.parts), ...this.hw]; }
@@ -881,18 +1047,24 @@ class RoomView extends SetView {
     this.variant = variant;
     await this.init(await loadData(room.set), { bodyVariant: variant });
     MAT.outline.color.set(room.outlineColor || '#00bcd4');
-    const mat = new THREE.LineBasicMaterial({ color: MAT.outline.color, depthTest: false, transparent: true });
+    // 看得见的部分画实线；被柜体挡住的部分只在"比已画的东西更远"处画，用半透明虚线
+    const mat = new THREE.LineBasicMaterial({ color: MAT.outline.color });
+    const hidden = new THREE.LineDashedMaterial({ color: MAT.outline.color, dashSize: 2.5, gapSize: 2, transparent: true, opacity: 0.45, depthFunc: THREE.GreaterDepth, depthWrite: false });
     this.outlineMat = mat;
+    const floorY = -this.body.wallGroup.position.y + 0.2; // 离地 0.2，免得和地面抢深度
     for (const o of room.outlines[variant]) {
       const [a0, y0, a1, y1] = o.rect;
-      const pt = (a, y) => (o.plane === 'z' ? [a, y, o.at] : [o.at, y, a]);
+      const at = o.at + 0.05 * Math.sign(-o.at || 1); // 稍微离开墙面，朝房间一侧
+      const pt = (a, y) => (o.plane === 'z' ? [a, Math.max(y, floorY), at] : [at, Math.max(y, floorY), a]);
       const pts = [pt(a0, y0), pt(a1, y0), pt(a1, y0), pt(a1, y1), pt(a1, y1), pt(a0, y1), pt(a0, y1), pt(a0, y0)].flat();
       const g = new THREE.BufferGeometry();
       g.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
       const line = new THREE.LineSegments(g, mat);
-      line.renderOrder = 10; // 透过柜体也能看见
       line.userData = { kind: 'outline', label: t(o.kind === 'cabinet' ? 'outlineCabinet' : 'outlineFixing', { id: o.id || '' }) };
-      this.body.wallGroup.add(line);
+      const back = new THREE.LineSegments(g, hidden);
+      back.computeLineDistances();
+      back.renderOrder = 10;
+      this.body.wallGroup.add(line, back);
     }
     return this;
   }
@@ -956,6 +1128,19 @@ function projectBox(box) {
   }
   return r;
 }
+// 包围盒在某个相机里的屏幕面积（投影包围矩形，裁到 w×h 画面内；在相机后面算 0）
+const AREA_MIN = 1600; // 40×40 CSS 像素，见 docs/spec.md
+function screenArea(box, cam, w, h) {
+  if (box.isEmpty()) return 0;
+  let l = Infinity, t = Infinity, r = -Infinity, b = -Infinity;
+  for (const p of boxCorners(box)) {
+    const q = p.project(cam);
+    if (q.z > 1 || q.z < -1) return 0;
+    const x = ((q.x + 1) / 2) * w, y = ((1 - q.y) / 2) * h;
+    l = Math.min(l, x); r = Math.max(r, x); t = Math.min(t, y); b = Math.max(b, y);
+  }
+  return Math.max(0, Math.min(r, w) - Math.max(l, 0)) * Math.max(0, Math.min(b, h) - Math.max(t, 0));
+}
 // 沿 dir 方向找最近的距离，使包围盒正好落在安全矩形里
 function fitBox(box, dir, rect) {
   const c = box.getCenter(new THREE.Vector3());
@@ -983,14 +1168,17 @@ function setAutoFrame(on) {
   b.textContent = t(on ? 'autoFrameOn' : 'autoFrameOff');
 }
 controls.addEventListener('start', () => setAutoFrame(false));
-function frameBox(box, { instant = false, reset = false, dir: fixedDir = null } = {}) {
-  if (!box || box.isEmpty()) return;
+function frameDest(box, { reset = false, dir: fixedDir = null } = {}) {
+  if (!box || box.isEmpty()) return null;
   lastBox = box.clone();
   const rect = safeRect();
   applyViewOffset(rect);
   let dir = camera.position.clone().sub(controls.target);
   dir = fixedDir ? fixedDir.clone().normalize() : reset || dir.lengthSq() < 1e-6 ? DEFAULT_DIR.clone() : dir.normalize();
-  const v = fitBox(box, dir, rect);
+  return fitBox(box, dir, rect);
+}
+function moveCamera(v, instant) {
+  if (!v) return;
   const p0 = camera.position.clone(), t0 = controls.target.clone();
   if (instant) { camera.position.copy(v.pos); controls.target.copy(v.target); controls.update(); return; }
   tween(900, (k) => {
@@ -999,6 +1187,247 @@ function frameBox(box, { instant = false, reset = false, dir: fixedDir = null } 
     controls.target.lerpVectors(t0, v.target, e);
   });
 }
+function frameBox(box, opts = {}) { moveCamera(frameDest(box, opts), opts.instant); }
+// 暂时把相机摆到 dest（取景终点）上量东西，量完放回；dest 为空时就用当前相机
+function withCamera(dest, fn) {
+  camera.updateMatrixWorld();
+  if (!dest) return fn();
+  const p0 = camera.position.clone(), q0 = camera.quaternion.clone();
+  camera.position.copy(dest.pos);
+  camera.lookAt(dest.target);
+  camera.updateMatrixWorld();
+  try { return fn(); } finally { camera.position.copy(p0); camera.quaternion.copy(q0); camera.updateMatrixWorld(); }
+}
+const toScreen = (p) => { const q = p.clone().project(camera); return { x: ((q.x + 1) / 2) * stage.clientWidth, y: ((1 - q.y) / 2) * stage.clientHeight, behind: q.z > 1 }; };
+
+// ================= 放大圆圈 =================
+// 本步在动的零件里，有哪一种在主画面上的屏幕面积低于 AREA_MIN，就开圆形小窗，用第二个相机特写它，并画引线连到它在柜体上的位置。
+// 小零件分在相距较远的两处时（例如抽屉第 9 步拉手在面板中间、防撞垫在两个上角），最多开两个圆圈。
+// 圆圈放在不压住步骤卡、五金卡、按钮条的地方，尽量少挡柜体、离零件近。
+const ZOOM_NEAR = 12;   // 和焦点相距 12 cm 以内的其他小零件放进同一个圆圈
+const ZOOM_MIN_R = 1; // 特写范围半径下限 1 cm
+const ZOOM_MAX = 2;
+const zoomRay = new THREE.Raycaster();
+const overlapArea = (a, b) => Math.max(0, Math.min(a.r, b.r) - Math.max(a.l, b.l)) * Math.max(0, Math.min(a.b, b.b) - Math.max(a.t, b.t));
+const centerOf = (o) => view.finalBox(o).getCenter(new THREE.Vector3());
+class ZoomCircle {
+  constructor() {
+    this.el = document.createElement('div');
+    this.el.className = 'zoom';
+    this.el.innerHTML = '<canvas></canvas><span class="count"></span>';
+    stage.append(this.el);
+    const svg = 'http://www.w3.org/2000/svg';
+    this.line = document.createElementNS(svg, 'line');
+    this.dot = document.createElementNS(svg, 'circle');
+    this.dot.setAttribute('r', 5);
+    $('leader').append(this.line, this.dot);
+    this.cam = new THREE.PerspectiveCamera(30, 1, 0.05, 4000);
+    this.renderer = null;
+    this.off();
+  }
+  off() {
+    Object.assign(this, { on: false, focus: null, members: [], travel: [], groups: [], D: 0, cx: 0, cy: 0 });
+    this.el.classList.remove('on');
+    this.line.style.display = this.dot.style.display = 'none';
+  }
+  visible() { return this.on && this.el.classList.contains('on'); }
+  rect() { return { l: this.cx - this.D / 2, t: this.cy - this.D / 2, r: this.cx + this.D / 2, b: this.cy + this.D / 2 }; }
+  place({ cx, cy, D }) {
+    Object.assign(this, { cx, cy, D, on: true });
+    Object.assign(this.el.style, { left: `${cx - D / 2}px`, top: `${cy - D / 2}px`, width: `${D}px`, height: `${D}px` });
+    this.el.querySelector('.count').textContent = this.count > 1 ? t('zoomCount', { n: this.count }) : '';
+    if (!this.renderer) {
+      this.renderer = new THREE.WebGLRenderer({ canvas: this.el.querySelector('canvas'), antialias: true, preserveDrawingBuffer: params.has('shot') });
+      this.renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    }
+    this.renderer.setSize(D, D, false);
+    this.el.classList.add('on');
+  }
+  aim(c, R, dir) {
+    const dist = (R / Math.sin(THREE.MathUtils.degToRad(this.cam.fov / 2))) * 1.05;
+    this.cam.position.copy(c).addScaledVector(dir, dist);
+    this.cam.up.copy(camera.up);
+    this.cam.lookAt(c);
+    this.cam.near = Math.max(0.05, dist - R * 1.6); // 焦点前方 1.6 倍范围半径以外的东西切掉
+    this.cam.far = dist + 4000;
+    this.cam.updateProjectionMatrix();
+    this.cam.updateMatrixWorld();
+    // 量面积用的范围：边长 1.8R 的立方体（对角线 1.56R，整个在近裁剪面之内）
+    this.region = new THREE.Box3().setFromCenterAndSize(c, new THREE.Vector3(1, 1, 1).multiplyScalar(R * 1.8));
+  }
+  // 圈里看得到的那一段的屏幕面积：比特写范围大的零件（如 34 cm 长的滑轨）只算范围里的部分
+  areaIn(box) {
+    const b = box.clone().intersect(this.region);
+    return b.isEmpty() ? 0 : screenArea(b, this.cam, this.D, this.D);
+  }
+  // 每帧：特写相机跟着主相机的视角方向转，对准这些零件的最终位置
+  update() {
+    if (!this.on) return;
+    const box = new THREE.Box3();
+    for (const o of this.members) box.union(view.finalBox(o));
+    for (const o of this.travel) { // 要拧的螺钉：把它在孔外的那段路也放进来
+      const u = o.userData;
+      box.expandByPoint(view.parentFor(o).localToWorld(u.final.clone().addScaledVector(u.out, depthOf(o) + headOf(o))));
+    }
+    let c = box.getCenter(new THREE.Vector3());
+    let R = Math.max(ZOOM_MIN_R, box.getSize(new THREE.Vector3()).length() / 2);
+    // 视角方向跟着主相机；如果主相机是从孔的背面看（例如第 18 步螺钉从顶板外侧打入，主画面看的是顶板内侧），
+    // 就转到螺钉的侧面、稍微偏向孔口一侧，像说明书的放大圆圈那样看得到螺钉进孔
+    let dir = camera.position.clone().sub(controls.target).normalize();
+    const fu = this.focus.userData;
+    const eye = centerOf(this.focus);
+    let out = null;
+    if (fu.out && fu.kind !== 'part') {
+      out = fu.out.clone().transformDirection(view.parentFor(this.focus).matrixWorld);
+      const d = dir.dot(out);
+      if (d < 0.35) {
+        const side = dir.clone().addScaledVector(out, -d);
+        if (side.lengthSq() < 1e-4) side.copy(UP).addScaledVector(out, -UP.dot(out));
+        dir = side.normalize().addScaledVector(out, 0.45).normalize();
+      }
+      eye.addScaledVector(out, headOf(this.focus) + 0.3); // 从孔口（钉头外面一点）往相机方向看有没有板挡着
+    }
+    // 有板挡在焦点和特写相机之间（例如方案 A 第 27 步从斜上方看格子里的固定件，侧板、顶板挡住），
+    // 依次试：放平视角、绕孔口方向左右上下偏斜（偏斜着看，扳手、螺丝刀才不会正对镜头），取第一个没被挡住的
+    const blocked = (d) => {
+      zoomRay.set(eye, d);
+      zoomRay.far = R * 1.5; // 再远的部分会被近裁剪面切掉，挡不住
+      return zoomRay.intersectObjects(view.bodyObjects(), true).some((h) => h.object.isMesh && h.object.visible);
+    };
+    if (blocked(dir)) {
+      const tries = [dir.clone().setY(dir.y * 0.35), dir.clone().setY(0)];
+      if (out) {
+        const hh = dir.clone().setY(0), hv = UP.clone();
+        for (const v of [hh, hv]) {
+          v.addScaledVector(out, -v.dot(out));
+          if (v.lengthSq() > 1e-4) { v.normalize(); tries.push(out.clone().addScaledVector(v, 0.6), out.clone().addScaledVector(v, -0.6)); }
+        }
+        tries.push(out.clone());
+      }
+      const ok = tries.map((d) => d.normalize()).find((d) => d.lengthSq() > 0.5 && !blocked(d));
+      if (ok) dir = ok;
+    }
+    this.aim(c, R, dir);
+    // 收紧：圈里最小的那种零件不到阈值的 1.3 倍，就把范围逐级缩小（每级 ×0.85，下限 ZOOM_MIN_R），
+    // 中心在原处或往最小的那个零件挪，取"最小的一种零件面积最大"的那一个；够 1.3 倍就停
+    const worstOf = () => {
+      let w = null;
+      for (const g of this.groups) {
+        const best = g.objs.filter((o) => this.members.includes(o)).map((o) => ({ o, a: this.areaIn(view.finalBox(o)) })).sort((a, b) => b.a - a.a)[0];
+        if (best && (!w || best.a < w.a)) w = best;
+      }
+      return w;
+    };
+    const goal = AREA_MIN * 1.3;
+    let worst = worstOf();
+    if (worst && worst.a < goal) {
+      const c0 = c.clone(), R0 = R, toward = centerOf(worst.o);
+      let pick = { a: worst.a, c: c0, R: R0 };
+      for (let R2 = R0 * 0.85; R2 >= ZOOM_MIN_R * 0.99 && pick.a < goal; R2 *= 0.85) {
+        for (const k of [0, 0.5, 1]) {
+          const c2 = c0.clone().lerp(toward, k * (1 - R2 / R0));
+          this.aim(c2, R2, dir);
+          const w = worstOf();
+          if (w && w.a > pick.a) pick = { a: w.a, c: c2, R: R2 };
+        }
+      }
+      c = pick.c; R = pick.R;
+      this.aim(c, R, dir);
+    }
+    // 引线：圆圈边缘 → 焦点在主画面上的位置
+    const a = toScreen(centerOf(this.focus));
+    const W = stage.clientWidth, H = stage.clientHeight;
+    const show = this.visible() && !a.behind && a.x >= 0 && a.x <= W && a.y >= 0 && a.y <= H && Math.hypot(a.x - this.cx, a.y - this.cy) > this.D / 2 + 6;
+    this.line.style.display = this.dot.style.display = show ? '' : 'none';
+    if (show) {
+      const dx = a.x - this.cx, dy = a.y - this.cy, n = Math.hypot(dx, dy);
+      this.line.setAttribute('x1', this.cx + (dx / n) * (this.D / 2)); this.line.setAttribute('y1', this.cy + (dy / n) * (this.D / 2));
+      this.line.setAttribute('x2', a.x - (dx / n) * 5); this.line.setAttribute('y2', a.y - (dy / n) * 5);
+      this.dot.setAttribute('cx', a.x); this.dot.setAttribute('cy', a.y);
+    }
+  }
+  render() {
+    if (!this.on) return;
+    this.el.classList.toggle('on', !(view && view.explode > 0));
+    this.update();
+    if (this.visible()) this.renderer.render(scene, this.cam);
+  }
+  areaOf(o) {
+    if (!this.visible()) return 0;
+    this.update();
+    return this.areaIn(new THREE.Box3().setFromObject(o));
+  }
+}
+const zoom = {
+  circles: [], active: false,
+  hide() { this.active = false; for (const z of this.circles) z.off(); },
+  shown() { return this.circles.filter((z) => z.visible()); },
+  focuses() { return this.circles.filter((z) => z.on).map((z) => z.focus); },
+  // 第 i 步：在取景终点 dest 下量一遍（此时零件已摆在第 i 步完成的位置）
+  setup(i, dest) {
+    this.hide();
+    if (!(view instanceof AssemblyView) || !i || params.get('zoom') === '0') return;
+    scene.updateMatrixWorld(true);
+    const W = stage.clientWidth, H = stage.clientHeight;
+    const groups = withCamera(dest, () => view.movingGroups(i).map((g) => ({ ...g, area: Math.max(...g.objs.map((o) => screenArea(view.finalBox(o), camera, W, H))) })));
+    let left = groups.filter((g) => g.area < AREA_MIN).sort((a, b) => a.area - b.area);
+    if (!left.length) return;
+    const st = view.stepsList[i];
+    const turning = (st.motions || []).filter((m) => m.type === 'screw' || m.type === 'unscrew');
+    const turns = (o) => turning.some((m) => (m.id ? o.userData.kind === 'hw' && o.userData.hwId === m.id : o.userData.kind === 'extra' && o.userData.hwId === m.extra));
+    const plans = [];
+    // 每个圆圈：对准剩下最小的那种零件的第 1 个（第一个圆圈可由 zoomFocus 指定），把 12 cm 以内的其他小零件一起放进来
+    while (left.length && plans.length < ZOOM_MAX) {
+      const fg = left[0];
+      const k = !plans.length && st.zoomFocus && st.zoomFocus.index < fg.objs.length ? st.zoomFocus.index : 0;
+      const focus = fg.objs[k];
+      const c0 = centerOf(focus);
+      const members = left.flatMap((g) => g.objs).filter((o) => o === focus || centerOf(o).distanceTo(c0) <= ZOOM_NEAR);
+      const covered = left.filter((g) => g.objs.some((o) => members.includes(o)));
+      plans.push({ focus, members, travel: members.filter(turns), groups: covered, count: fg.objs.length });
+      left = left.filter((g) => !covered.includes(g));
+    }
+    while (this.circles.length < plans.length) this.circles.push(new ZoomCircle());
+    plans.forEach((pl, k) => Object.assign(this.circles[k], pl));
+    this.active = true;
+    this.layout(dest);
+  },
+  // 圆圈放哪：在画布里按 8 px 网格找，不压面板和别的圆圈、不盖住任何引线终点，挡住柜体越少、离焦点越近越好
+  layout(dest) {
+    if (!this.active) return;
+    const W = stage.clientWidth, H = stage.clientHeight, pad = 8;
+    const list = this.circles.filter((z) => z.focus);
+    const obs = PANELS.map(panelRect).filter(Boolean).map((o) => ({ l: o.l - pad, t: o.t - pad, r: o.r + pad, b: o.b + pad }));
+    const { body, anchors } = withCamera(dest, () => ({ body: projectBox(view.currentBox()), anchors: list.map((z) => toScreen(centerOf(z.focus))) }));
+    const onScreen = (a) => !a.behind && a.x >= 0 && a.x <= W && a.y >= 0 && a.y <= H;
+    list.forEach((z, k) => {
+      const anchor = anchors[k];
+      let best = null;
+      // 先找不盖住引线终点的位置；面板把画布挤得很窄（例如笔记本宽度的英文界面）时，放宽到可以盖住
+      for (const keepAnchors of [true, false]) {
+      for (let D = Math.round(Math.max(120, Math.min(230, Math.min(W, H) * 0.36))); D >= 72 && !best; D = Math.round(D * 0.85)) {
+        for (let cy = D / 2 + pad; cy <= H - D / 2 - pad; cy += 8) {
+          for (let cx = D / 2 + pad; cx <= W - D / 2 - pad; cx += 8) {
+            const sq = { l: cx - D / 2, t: cy - D / 2, r: cx + D / 2, b: cy + D / 2 };
+            if (obs.some((o) => overlapArea(o, sq) > 0)) continue;
+            if (keepAnchors && anchors.some((a) => onScreen(a) && Math.hypot(a.x - cx, a.y - cy) < D / 2 + 24)) continue;
+            const dist = onScreen(anchor) ? Math.hypot(anchor.x - cx, anchor.y - cy) : 0;
+            const score = (overlapArea(sq, body) / (D * D)) * 400 + dist * 0.5;
+            if (!best || score < best.score) best = { score, cx, cy, D };
+          }
+        }
+      }
+      if (best) break;
+      }
+      if (!best) { z.off(); return; }
+      z.place(best);
+      obs.push({ l: best.cx - best.D / 2 - pad, t: best.cy - best.D / 2 - pad, r: best.cx + best.D / 2 + pad, b: best.cy + best.D / 2 + pad });
+    });
+    this.active = this.circles.some((z) => z.on);
+  },
+  render() { for (const z of this.circles) z.render(); },
+  areaOf(o) { return Math.max(0, ...this.circles.map((z) => z.areaOf(o))); },
+};
 // 取景对象：all = 场上所有零件（含备料区）；body = 已装上的零件
 function frameTargetBox(name) {
   scene.updateMatrixWorld(true);
@@ -1084,6 +1513,7 @@ async function load(piece, variant, { keepStep = false, step = null } = {}) {
   const keepN = keepStep && view instanceof AssemblyView ? view.stepsList[view.current].n : step;
   if (view) view.dispose();
   view = null;
+  zoom.hide();
   setLabels(showLabels);
   state = { piece: info.key, variant: null };
   for (const b of $('pieceSeg').children) b.setAttribute('aria-pressed', b.dataset.key === info.key);
@@ -1260,6 +1690,7 @@ function renderStepCard(i) {
     <h2>${esc(s.title)}</h2>
     <p>${esc(s.hint)}</p>
     <div class="chips">${chips.join('') || `<span class="chip">${esc(t('noNew'))}</span>`}</div>
+    ${s.motionNote ? `<p class="motion">${esc(s.motionNote)}</p>` : ''}
     ${data.room && s.n >= data.room.fromStep && i > 0 ? `<p class="safety">${esc(PRODUCT.safety.short)}</p>` : ''}`;
 }
 
@@ -1348,12 +1779,22 @@ function go(i, animate = true, { reset = false } = {}) {
   renderCounters(i);
   showPage(view.stepsList[i].pages[0]);
   const box = view.targetBox(i);
-  view.go(i, animate);
   if (reset) setAutoFrame(true);
-  if (autoFrame) frameBox(box, { instant: !animate, reset });
+  const dest = autoFrame ? frameDest(box, { reset }) : null;
+  zoom.setup(i, dest);
+  pulseUntil = animate ? performance.now() + 9000 : 0;
+  view.go(i, animate);
+  moveCamera(dest, !animate);
   syncUrl();
 }
 const current = () => (view instanceof AssemblyView ? view.current : 0);
+// 本步零件闪烁：动画期间自发光一明一暗，之后保持稳定的高亮
+let pulseUntil = 0;
+function pulse(now) {
+  const k = now < pulseUntil ? 0.5 + 0.5 * Math.sin(now / 150) : 0.5;
+  MAT.hilite.emissiveIntensity = 0.05 + 0.3 * k;
+  for (const m of HI_MATS.values()) m.emissiveIntensity = 0.25 + 0.75 * k;
+}
 
 // ---------- 点击零件 ----------
 const ray = new THREE.Raycaster();
@@ -1422,14 +1863,21 @@ renderer.domElement.addEventListener('pointermove', (e) => {
 renderer.domElement.addEventListener('pointerleave', () => { $('tip').style.display = 'none'; });
 
 // ---------- 控件与快捷键 ----------
-let chainTimer = null;
-function setChain(on) {
-  clearInterval(chainTimer);
-  chainTimer = null;
-  $('chain').setAttribute('aria-pressed', on && view instanceof AssemblyView);
-  if (!on || !(view instanceof AssemblyView)) return;
+let chainOn = false, chainRun = 0;
+async function setChain(on) {
+  chainOn = on && view instanceof AssemblyView;
+  const my = ++chainRun;
+  $('chain').setAttribute('aria-pressed', chainOn);
+  if (!chainOn) return;
   if (current() >= view.seq.length) go(0);
-  chainTimer = setInterval(() => (current() >= view.seq.length ? setChain(false) : go(current() + 1)), 3200);
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  while (chainRun === my) {
+    await wait(HOLD_MS);
+    if (chainRun !== my) return;
+    if (current() >= view.seq.length) { setChain(false); return; }
+    go(current() + 1);
+    await view.done;
+  }
 }
 function setExplode(v) {
   $('explode').value = v;
@@ -1444,7 +1892,7 @@ const resetView = () => {
 $('prev').onclick = () => go(current() - 1);
 $('next').onclick = () => go(current() + 1);
 $('replay').onclick = () => go(current());
-$('chain').onclick = () => setChain(!chainTimer);
+$('chain').onclick = () => setChain(!chainOn);
 $('viewAll').onclick = () => { setAutoFrame(true); if (view instanceof RoomView) view.frameRoom(); else frame('all', false, false); };
 $('autoFrameBtn').onclick = () => (autoFrame ? setAutoFrame(false) : resetView());
 $('viewBody').onclick = () => frame('body', false, false);
@@ -1491,7 +1939,7 @@ addEventListener('keydown', (e) => {
     '[': () => go(current() - 1), ']': () => go(current() + 1),
     ArrowLeft: () => go(current() - 1), ArrowRight: () => go(current() + 1),
     ' ': () => go(current()),
-    c: () => setChain(!chainTimer), r: resetView,
+    c: () => setChain(!chainOn), r: resetView,
     x: () => setExplode(Number($('explode').value) > 0 ? 0 : 0.6),
     n: () => setLabels(!showLabels), l: () => setDrawing(!drawing),
     Escape: () => { closePick(); $('shortcuts').classList.remove('open'); },
@@ -1569,6 +2017,7 @@ function resize() {
   lastSize = `${w}x${h}`;
   if (same) { camera.updateProjectionMatrix(); return; }
   if (lastBox) frameBox(lastBox, { instant: true }); else applyViewOffset(rect);
+  zoom.layout(null);
 }
 const ro = new ResizeObserver(() => resize());
 for (const el of [stage, $('stepCard'), $('hwCard'), $('viewCard')]) ro.observe(el);
@@ -1598,9 +2047,11 @@ renderer.setAnimationLoop((now) => {
   walk(Math.min(0.1, (now - lastNow) / 1000));
   lastNow = now;
   runTweens(now);
+  pulse(now);
   if (view) view.update();
   controls.update();
   renderer.render(scene, camera);
+  zoom.render();
   updateLabels();
 });
 
@@ -1635,9 +2086,29 @@ function framingReport() {
   const s = safeRect();
   const fill = Math.max((r.r - r.l) / (s.r - s.l), (r.b - r.t) / (s.b - s.t));
   if (fill < 0.6) problems.push(`取景太远：零件只占可用区域的 ${Math.round(fill * 100)}%`);
-  return { problems, rect: r, safe: s, canvas: [W, H] };
+  const circles = zoom.shown().map((c) => c.rect());
+  circles.forEach((z, k) => {
+    if (z.l < -tol || z.t < -tol || z.r > W + tol || z.b > H + tol) problems.push(`放大圆圈超出画布：${f(z)}`);
+    for (const id of PANELS) {
+      const o = panelRect(id);
+      if (o && o.l < z.r && o.r > z.l && o.t < z.b && o.b > z.t) problems.push(`放大圆圈压住 ${id}：圆圈 ${f(z)}，面板 ${f(o)}`);
+    }
+    for (const y of circles.slice(k + 1)) if (overlapArea(z, y) > 0) problems.push(`两个放大圆圈重叠：${f(z)}、${f(y)}`);
+  });
+  // 本步在动的零件：每一种在主画面或放大圆圈里的屏幕面积（投影包围矩形）不低于 AREA_MIN
+  const moving = [];
+  if (view instanceof AssemblyView) {
+    for (const g of view.movingGroups(view.current)) {
+      const main = g.union ? screenArea(g.objs.reduce((b, o) => b.expandByObject(o), new THREE.Box3()), camera, W, H)
+        : Math.max(...g.objs.map((o) => screenArea(new THREE.Box3().setFromObject(o), camera, W, H)));
+      const zoomed = zoom.active ? Math.max(0, ...g.objs.map((o) => zoom.areaOf(o))) : 0;
+      moving.push({ key: g.key, main: Math.round(main), zoom: Math.round(zoomed) });
+      if (Math.max(main, zoomed) < AREA_MIN) problems.push(`本步在动的零件太小：${g.label} 主画面 ${Math.round(main)} px²，放大圆圈 ${Math.round(zoomed)} px²（阈值 ${AREA_MIN}）`);
+    }
+  }
+  return { problems, rect: r, safe: s, canvas: [W, H], moving };
 }
-window.__flatpack = { go, load, frame, setDrawing, setLabels, setAutoFrame, framingReport, camera, controls, get view() { return view; }, get autoFrame() { return autoFrame; } }; // 调试与检查用
+window.__flatpack = { go, load, frame, setDrawing, setLabels, setAutoFrame, framingReport, camera, controls, zoom, get view() { return view; }, get autoFrame() { return autoFrame; } }; // 调试与检查用
 </script>
 </body>
 </html>

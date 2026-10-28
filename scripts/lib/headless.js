@@ -5,6 +5,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const http = require('http');
+const net = require('net');
 const { spawn } = require('child_process');
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -47,9 +48,11 @@ function findBrowser() {
 }
 
 // 启动无头浏览器，返回一个页面的控制对象
-async function launch({ width = 1280, height = 800, port = 9333 } = {}) {
+async function launch({ width = 1280, height = 800, port = null } = {}) {
   const browserPath = findBrowser();
   if (!browserPath) throw new Error('找不到 Chrome 或 Edge，可用环境变量 CHROME_PATH 指定');
+  // 调试端口每次另找一个空闲的：固定端口时，同时跑两个检查会连到同一个浏览器、互相干扰
+  if (!port) port = await new Promise((res, rej) => { const s = net.createServer(); s.once('error', rej); s.listen(0, '127.0.0.1', () => { const p = s.address().port; s.close(() => res(p)); }); });
   // 用临时配置目录，不碰日常使用的浏览器配置
   const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'flatpack3d-'));
   const proc = spawn(browserPath, [

@@ -313,6 +313,31 @@ function validateAssembly(data, md, file) {
       }
       const dataTools = (s.tools || []).filter((t) => /^\d+$/.test(t));
       check(sameList(tools, dataTools), `${tag}第 ${s.n} 步工具编号 [${dataTools}]`, `${tag}第 ${s.n} 步工具编号：报告 [${[...tools]}]，数据 [${dataTools}]`);
+      // 动作：只加说明书画了箭头的。依据页必须是本步的页，motionNote 要点名这一页；对象、工具、类型要对得上
+      for (const m of s.motions || []) {
+        const where = `${tag}第 ${s.n} 步动作 ${m.type}`;
+        if (!MOTION_TYPES.includes(m.type)) { errors.push(`${where}：未知类型（可用 ${MOTION_TYPES.join(' / ')}）`); continue; }
+        check(s.pages.includes(m.page), `${where} 依据 p${m.page}`, `${where}：依据页 p${m.page} 不是本步的页 p${s.pages}`);
+        check(!!s.motionNote && s.motionNote.includes(`p${m.page}`), `${where} 的依据写进了 motionNote`, `${where}：motionNote 没有写明依据页 p${m.page}`);
+        if (m.tool) check((s.tools || []).includes(m.tool), `${where} 的工具 ${m.tool} 在本步工具里`, `${where}：工具 ${m.tool} 不在本步 tools 里`);
+        if (m.target) {
+          const ts = seq.find((x) => x.n === m.target.step);
+          const ok = ts && seq.indexOf(ts) < seq.indexOf(s) && (m.target.id ? ts.hardware.some((h) => h.id === m.target.id && h.action !== 'remove') : (ts.extras || []).some((x) => x.id === m.target.extra));
+          check(ok, `${where} 的对象在第 ${m.target.step} 步装上`, `${where}：第 ${m.target.step} 步没有装 ${m.target.id || m.target.extra}，或那一步不在本步之前`);
+          if (m.type === 'slide') check(/^[xyz]$/.test(m.axis) && m.amount > 0, `${where} 沿 ${m.axis} ±${m.amount}`, `${where}：axis / amount 不对`);
+        } else {
+          const key = m.id || m.extra;
+          const list = m.type === 'unscrew' ? s.hardware.filter((h) => h.action === 'remove') : m.id ? s.hardware.filter((h) => h.action !== 'remove') : (s.extras || []);
+          check(list.some((h) => h.id === key), `${where} 的对象 ${key} 在本步`, `${where}：本步没有${m.type === 'unscrew' ? '拧出' : '装'} ${key}`);
+          const def = m.id ? cat[normId(m.id)] : (data.extras || []).find((e) => e.id === m.extra);
+          const kind = def && (def.kind || (def.shape && def.shape.type));
+          const want = m.type === 'turn' ? 'cam' : 'screw';
+          check(kind === want, `${where} 的对象是 ${want}`, `${where}：${key} 的种类是 ${kind}，应为 ${want}`);
+          if (m.type === 'turn') check(m.angle > 0, `${where} 转 ${m.angle}°`, `${where}：没有转角 angle`);
+        }
+      }
+      if (s.motionNote && !(s.motions || []).length) errors.push(`${tag}第 ${s.n} 步有 motionNote 但没有 motions`);
+      if (s.zoomFocus) check(s.pages.includes(s.zoomFocus.page) && s.zoomFocus.index >= 0, `${tag}第 ${s.n} 步放大圆圈对准第 ${s.zoomFocus.index + 1} 个（p${s.zoomFocus.page}）`, `${tag}第 ${s.n} 步 zoomFocus 的依据页不是本步的页`);
       for (const h of s.hardware) {
         const def = cat[normId(h.id)];
         if (!def) { errors.push(`${tag}第 ${s.n} 步引用了目录里没有的五金 ${h.id}`); continue; }
@@ -372,6 +397,8 @@ function validateAssembly(data, md, file) {
   const summary = `零件：报告 ${reportPartTotal} 块 / 数据 ${data.parts.length} 块；五金：报告 ${reportHwTotal} 件（${Object.keys(rep.hw).length} 种）/ 数据 ${dataHwTotal} 件`;
   return { errors, passes, summary };
 }
+
+const MOTION_TYPES = ['screw', 'unscrew', 'turn', 'slide', 'tighten'];
 
 // ---------------- 全套校验 ----------------
 function validateRoom(room, baseDir) {
@@ -551,7 +578,12 @@ function validateSite(site, baseDir) {
     else {
       need(o.scope, 'scope');
       need(o.overview && o.overview.title && o.overview.hint, 'overview');
-      for (const st of d.steps) { const k = st.variant ? `${st.variant}:${st.n}` : String(st.n); need(o.steps && o.steps[k] && o.steps[k].title && o.steps[k].hint, `steps.${k}`); }
+      for (const st of d.steps) {
+        const k = st.variant ? `${st.variant}:${st.n}` : String(st.n);
+        need(o.steps && o.steps[k] && o.steps[k].title && o.steps[k].hint, `steps.${k}`);
+        // 动作依据的译文也要点名同样的页
+        if (st.motionNote) need(o.steps && o.steps[k] && o.steps[k].motionNote && (st.motions || []).every((m) => o.steps[k].motionNote.includes(`p${m.page}`)), `steps.${k}.motionNote`);
+      }
       for (const pt of d.parts) need(o.parts && o.parts[pt.id], `parts.${pt.id}`);
       for (const k of Object.keys(d.partTypes)) need(o.partTypes && o.partTypes[k] && o.partTypes[k].name, `partTypes.${k}`);
       for (const h of d.hardware) { need(o.hardware && o.hardware[h.id] && o.hardware[h.id].name, `hardware.${h.id}`); if (h.unit) need(o.hardware && o.hardware[h.id] && o.hardware[h.id].unit, `hardware.${h.id}.unit`); }

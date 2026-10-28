@@ -60,7 +60,8 @@
     }
   },
   "tools": {
-    "铅笔": "Pencil"
+    "铅笔": "Pencil",
+    "十字螺丝刀": "Phillips screwdriver"
   },
   "steps": {
     "1": {
@@ -69,7 +70,8 @@
     },
     "2": {
       "title": "Fit the hinges",
-      "hint": "Fit the two hinges to the door panel, 2 screws each. After this the manual splits into two routes by which side the hinges go on."
+      "hint": "Fit the two hinges to the door panel, 2 screws each. After this the manual splits into two routes by which side the hinges go on.",
+      "motionNote": "Motion source: the rotation arrow on the screwdriver on p5 — the hinge screws turn as they go in."
     },
     "left:3": {
       "title": "Mark line (Left)",
@@ -85,7 +87,8 @@
     },
     "left:6": {
       "title": "Left lower plate",
-      "hint": "Press the frame against the left wall with its front edge on the pencil line, and fit the lower hinge mounting plate."
+      "hint": "Press the frame against the left wall with its front edge on the pencil line, and fit the lower hinge mounting plate.",
+      "motionNote": "Motion source: the rotation arrow on the screwdriver on p7 — the screws turn as they go in. Steps 7 and 8 have no rotation arrow, so those screws do not turn."
     },
     "left:7": {
       "title": "Left upper plate",
@@ -101,7 +104,8 @@
     },
     "left:10": {
       "title": "Knob",
-      "hint": "Fit the knob; the screw goes in from the inside of the door."
+      "hint": "Fit the knob; the screw goes in from the inside of the door.",
+      "motionNote": "Motion source: the rotation arrow on the screwdriver on p9 — the knob screw turns as it goes in."
     },
     "left:11": {
       "title": "Bumper pads",
@@ -121,7 +125,8 @@
     },
     "right:6": {
       "title": "Right lower plate",
-      "hint": "Press the frame against the right wall with its front edge on the pencil line, and fit the lower hinge mounting plate."
+      "hint": "Press the frame against the right wall with its front edge on the pencil line, and fit the lower hinge mounting plate.",
+      "motionNote": "Motion source: the rotation arrow on the screwdriver on p13 — the screws turn as they go in. Steps 7 and 8 have no rotation arrow, so those screws do not turn."
     },
     "right:7": {
       "title": "Right upper plate",
@@ -137,7 +142,8 @@
     },
     "right:10": {
       "title": "Knob",
-      "hint": "Fit the knob; the screw goes in from the inside of the door."
+      "hint": "Fit the knob; the screw goes in from the inside of the door.",
+      "motionNote": "Motion source: the rotation arrow on the screwdriver on p15 — the knob screw turns as it goes in."
     },
     "right:11": {
       "title": "Bumper pads",

@@ -68,9 +68,18 @@ Chain of reasoning: nominal insert size 33×33 (product page) → front face of 
 35. The sizes of the wall fittings, keyhole plates 103693, corner cover caps and L-shaped brackets 10091413 have no source; in 3D they are schematic plates and blocks.
 36. In option A the wall is behind the unit, with a 0.3 gap between the back of the unit and the wall; in option B the wall is on the left of the unit (judged from the drawings in report section 7), with the vertical leg of the bracket, taken as 0.25 thick, between the left side panel and the wall.
 37. The two brackets in option B are at the left end of the top panel, at ±10 in the depth direction, lined up with the two long screws from step 1 (whose positions are themselves the guess in item 8).
-38. In step 26 of option B the demo first moves the unit 25 to the right, fixes the brackets, and pushes the unit back in step 28. The instructions only show step 28 "push the unit towards the wall"; the distance and timing of moving it away are inferred.
-39. One wall screw (not included) is drawn per wall fitting or bracket, shaped Ø0.5×5; the close-ups on p28 and p32 both say "2x". Which screw to actually use depends on the wall; in 3D it is only schematic.
+38. In step 26 of option B the demo first moves the unit 25 to the right, then fixes the brackets, and pushes the unit back in step 28. In the p32 overall drawing the unit stands apart from the wall on the left, and step 28 on p34 shows "push the unit towards the wall"; the distance of 25 is a guess.
+39. One wall screw (not included) per wall fitting or bracket: the "2x" on p28 and p32 means doing it once for each of the two fittings (brackets) (report section 8). The Ø0.5×5 shape is a guess; which screw to actually use depends on the wall, and in 3D it is only schematic.
 40. In Room view the wall sizes (option A 400×260, option B 300×260), the eye height of 160, the walking speed of 150 per second and the turning speed of 60° per second are demo settings, not from the instructions; the cyan outlines are drawn on the wall from the unit's outline and the fitting positions.
+
+### Phase 5: detail circle and motions
+
+41. The sizes of the Z-shaped hex key 100001 (short leg 2.6, long leg 7.5, other short leg 3.6, thickness 0.6) and of the screwdriver (shaft 8, handle 10 long and 2.4 thick) are schematic; they only appear while a screw is being turned.
+42. Screwing in starts with the tip just entering the hole (0.8 of the screw length from the final position) and takes 4 turns; screwing out also takes 4 turns over 0.8 of the length; the tightening in step 27 of option A takes 1.5 turns; the cam lock in drawer step 4 turns half a turn. The instructions give none of these turn counts, depths or angles.
+43. The direction of rotation follows the opposite wrench arrows on p33 and p35: seen from the screw head, screwing in is clockwise and screwing out anticlockwise (report section 8). The arrows on other pages are drawn in perspective and are hard to read, so the same rule is used everywhere.
+44. In step 27 of option A the keyhole plate is adjusted ±0.5 left-right and up-down: p29 only shows double arrows, not how far.
+45. Timing: hardware flies in over 1.1 s, a screw turns in over 2 s, turning in place and tightening take 1.4 s, each sliding adjustment 1.6 s; in continuous play the demo pauses 1.5 s after each step. All demo settings.
+46. By default the detail circle shows the first item of the smallest kind of hardware in the step, together with any other small items within 12 cm, with a second circle for those farther away; only step 27 of option A follows the p29 leader to the top-right compartment and shows the right-hand one. Which item each detail circle in the instructions shows has not been matched page by page.
 
 ### Hinge positions of the two door-insert routes (basis in the instructions)
 

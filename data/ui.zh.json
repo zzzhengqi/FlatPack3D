@@ -78,7 +78,7 @@
   "outlineFixing": "固定件 {id} 的最终位置（青色轮廓）",
   "roomKicker": "Room 视图",
   "roomFixings": "本方案的固定件",
-  "roomFooter": "Room 视图：WASD 移动、Q/E 转向，鼠标照常旋转和缩放；青色轮廓会透过柜体显示。",
+  "roomFooter": "Room 视图：WASD 移动、Q/E 转向，鼠标照常旋转和缩放；青色轮廓被柜体挡住的部分画成半透明虚线。",
   "roomPagesHint": "p2 是说明书的安全警告页，其余是本方案的上墙步骤页",
   "shortcutList": [
     {
@@ -129,5 +129,7 @@
       "keys": "点说明书图",
       "text": "跳到对应步骤"
     }
-  ]
+  ],
+  "movingParts": "本步的板件",
+  "zoomCount": "{n}×"
 }
