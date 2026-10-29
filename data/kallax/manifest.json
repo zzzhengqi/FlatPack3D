@@ -1,0 +1,51 @@
+{
+  "schema": "flatpack3d/manifest@1",
+  "id": "kallax",
+  "title": "KALLAX 置物架 + 门嵌件 + 双抽屉嵌件",
+  "analysis": "data/kallax/analysis.md",
+  "dimensions": "data/kallax/dimensions.md",
+  "sites": {
+    "zh": "data/kallax/site.json",
+    "en": "data/kallax/site.en.json"
+  },
+  "build": [
+    "data/kallax/build/body.js",
+    "data/kallax/build/inserts.js"
+  ],
+  "sources": {
+    "manuals": [
+      {
+        "key": "shelf",
+        "file": "kallax-shelving-unit-white__AA-2334148-2-100.pdf",
+        "docId": "AA-2334148-2",
+        "url": "https://www.ikea.com/jp/en/assembly_instructions/kallax-shelving-unit-white__AA-2334148-2-100.pdf",
+        "pages": 36
+      },
+      {
+        "key": "door",
+        "file": "kallax-insert-with-door-white__AA-1009339-8-100.pdf",
+        "docId": "AA-1009339-8",
+        "url": "https://www.ikea.com/jp/en/assembly_instructions/kallax-insert-with-door-white__AA-1009339-8-100.pdf",
+        "pages": 16
+      },
+      {
+        "key": "drawers",
+        "file": "kallax-insert-with-2-drawers-white__AA-1009361-5-100.pdf",
+        "docId": "AA-1009361-5",
+        "url": "https://www.ikea.com/jp/en/assembly_instructions/kallax-insert-with-2-drawers-white__AA-1009361-5-100.pdf",
+        "pages": 12
+      }
+    ],
+    "productPages": [
+      {
+        "url": "https://www.ikea.com/jp/en/p/kallax-shelving-unit-with-10-inserts-white-s89278339/",
+        "used": "整体尺寸 182 × 182 × 39 cm、嵌件外形 33 × 33；全套的嵌件排布（商品图）"
+      }
+    ],
+    "images": {
+      "dir": "refs/kallax",
+      "from": "https://www.ikea.com/jp/en/p/kallax-shelving-unit-with-10-inserts-white-s89278339/",
+      "note": "商品图只在本机参考，不入库（.gitignore 里有 refs/）"
+    }
+  }
+}

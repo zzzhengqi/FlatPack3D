@@ -1,0 +1,97 @@
+{
+  "schema": "flatpack3d/room@1",
+  "id": "kallax-room",
+  "title": "KALLAX 靠墙摆放（Room）",
+  "set": "data/kallax/set.json",
+  "variantTitle": "上墙方案",
+  "variants": {
+    "a": {
+      "label": "墙固定件",
+      "note": "柜体背面贴墙（方案 A，p27–p30）",
+      "default": true
+    },
+    "b": {
+      "label": "L 形角码",
+      "note": "柜体左侧板贴墙（方案 B，p31–p35；墙在左侧是按图判断）"
+    }
+  },
+  "outlines": {
+    "a": [
+      {
+        "kind": "cabinet",
+        "plane": "z",
+        "at": -19.75,
+        "rect": [
+          -91,
+          -91.4,
+          91,
+          91
+        ]
+      },
+      {
+        "kind": "fixing",
+        "id": "115753",
+        "plane": "z",
+        "at": -19.75,
+        "rect": [
+          -87,
+          81.75,
+          -84,
+          86.25
+        ]
+      },
+      {
+        "kind": "fixing",
+        "id": "115753",
+        "plane": "z",
+        "at": -19.75,
+        "rect": [
+          84,
+          81.75,
+          87,
+          86.25
+        ]
+      }
+    ],
+    "b": [
+      {
+        "kind": "cabinet",
+        "plane": "x",
+        "at": -91.21,
+        "rect": [
+          -19.5,
+          -91.4,
+          19.5,
+          91
+        ]
+      },
+      {
+        "kind": "fixing",
+        "id": "10091413",
+        "plane": "x",
+        "at": -91.21,
+        "rect": [
+          -11.5,
+          86,
+          -8.5,
+          91
+        ]
+      },
+      {
+        "kind": "fixing",
+        "id": "10091413",
+        "plane": "x",
+        "at": -91.21,
+        "rect": [
+          8.5,
+          86,
+          11.5,
+          91
+        ]
+      }
+    ]
+  },
+  "outlineColor": "#00bcd4",
+  "eyeHeight": 160,
+  "note": "青色轮廓：柜体贴墙的那一面和固定件在墙上的最终位置。"
+}

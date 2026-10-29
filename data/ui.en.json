@@ -49,9 +49,8 @@
   "setInstancedVal": "{n} InstancedMesh",
   "setLayoutNote": "This layout comes from the product images, not from the assembly instructions.",
   "refImage": "Image {n}",
-  "refsMissing": "{url} not found. Product images live in refs/ and are not committed to the repository.",
+  "refsMissing": "{url} not found. Product images are only kept locally for reference and are not committed.",
   "pageAlt": "Manual page {p}",
-  "pageMissing": "{url} not found. Manual page images are not committed; run python scripts/render-pages.py first.",
   "pageHint": "Click a step drawing on the page to jump to that step",
   "pageNoStep": "This page has no assembly step for the current route",
   "pageJumped": "Jumped to step {n}",
@@ -62,7 +61,7 @@
   "loadError": "Could not read the data ({msg}). Start a local server in the project root and reopen, e.g. python -m http.server 8137",
   "pickCode": "Internal code {id}",
   "pickType": "{type}",
-  "pickPartNote": "The manual gives no part numbers for the wooden panels; the internal code is this project's data id, not an IKEA part number",
+  "pickPartNote": "The manual gives no part numbers for these parts; the internal code is this project's data id, not a manufacturer part number",
   "pickHwId": "Hardware no. {id}",
   "pickInsert": "{title} (row {r}, column {c})",
   "pickClose": "Close",
@@ -79,7 +78,7 @@
   "roomKicker": "Room view",
   "roomFixings": "Fittings for this option",
   "roomFooter": "Room view: WASD to move, Q/E to turn, the mouse still orbits and zooms; where the unit hides the cyan outlines they are drawn as faint dashed lines.",
-  "roomPagesHint": "p2 is the safety warning page of the manual; the others are the wall-attachment pages for this option",
+  "roomPagesHint": "p{p} is the safety warning page of the manual; the others are the fixing steps for this option",
   "shortcutList": [
     {
       "keys": "[  ]",
@@ -132,5 +131,11 @@
   ],
   "movingParts": "Panels in this step",
   "zoomCount": "{n}×",
-  "zoomSource": "Per {pages}"
+  "zoomSource": "Per {pages}",
+  "pageFallbackTitle": "Manual page {p} (page images are not rendered on this machine)",
+  "pageOpenPdf": "Open page {p} of the official PDF ({doc})",
+  "pageRenderHint": "Manual page images are not committed. Put the PDF in manuals/{product}/ and run python scripts/render-pages.py {product}; the page images will then appear here automatically.",
+  "roomPagesHintNoSafety": "The fixing steps for this option",
+  "byline": "by 蒸汽",
+  "bylineTitle": "蒸汽 ZHENGQI"
 }

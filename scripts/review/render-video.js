@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // 复查视频：用虚拟时钟逐帧推进页面，每一步完整播放第一遍，再停留 HOLD 毫秒（停留期间放大圆圈里的动作继续循环），
 // 每帧截图（JPEG），最后用 Python + OpenCV 合成 mp4（MPEG-4，本机没有 H.264 编码器）。
-// 用法：node scripts/review/render-video.js <输出 mp4> <piece> [variant] [--width=1920 --height=1080 --fps=30 --hold=1500]
+// 用法：node scripts/review/render-video.js <输出 mp4> <产品 id> <piece> [variant] [--width=1920 --height=1080 --fps=30 --hold=1500]
 'use strict';
 const fs = require('fs');
 const os = require('os');
@@ -11,13 +11,13 @@ const vt = require('./vtime');
 
 const args = process.argv.slice(2).filter((a) => !a.startsWith('--'));
 const opt = (k, d) => Number((process.argv.find((a) => a.startsWith(`--${k}=`)) || '').split('=')[1] || d);
-const [outFile, piece, variant] = args;
+const [outFile, product, piece, variant] = args;
 const W = opt('width', 1920), H = opt('height', 1080), FPS = opt('fps', 30), HOLD = opt('hold', 1500);
 const FRAME = 1000 / FPS;
 
 (async () => {
   const frames = fs.mkdtempSync(path.join(os.tmpdir(), 'flatpack3d-video-'));
-  const { page, close } = await vt.open(vt.root, { width: W, height: H, query: `piece=${piece}${variant ? `&variant=${variant}` : ''}` });
+  const { page, close } = await vt.open(vt.root, { width: W, height: H, query: `product=${product}&piece=${piece}${variant ? `&variant=${variant}` : ''}` });
   let count = 0;
   const shot = async () => {
     const r = await page.send('Page.captureScreenshot', { format: 'jpeg', quality: 88 });

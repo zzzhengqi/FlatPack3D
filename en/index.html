@@ -6,13 +6,13 @@
 <meta name="flatpack-lang" content="en">
 <!-- 由 scripts/build-meta.js 从 index.html 生成，请勿手改 -->
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<!-- meta:start（由 scripts/build-meta.js 按 data/kallax-product.json 生成，请勿手改） -->
+<!-- meta:start（由 scripts/build-meta.js 按默认产品的文案生成，请勿手改） -->
 <title>FlatPack3D · KALLAX 3D assembly demo</title>
 <meta name="description" content="The assembly instructions for the IKEA KALLAX shelving unit, insert with door and insert with 2 drawers, turned into an interactive step-by-step 3D demo: step animations, hardware counters, side-by-side manual pages and a line-art view.">
 <meta property="og:type" content="website">
 <meta property="og:title" content="FlatPack3D · KALLAX 3D assembly demo">
 <meta property="og:description" content="The assembly instructions for the IKEA KALLAX shelving unit, insert with door and insert with 2 drawers, turned into an interactive step-by-step 3D demo: step animations, hardware counters, side-by-side manual pages and a line-art view.">
-<meta property="og:image" content="og-image.en.png">
+<meta property="og:image" content="data/kallax/og-image.en.png">
 <meta property="og:image:alt" content="3D render of a KALLAX 5×5 shelving unit fitted with 5 door inserts and 5 double-drawer inserts">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="alternate" hreflang="zh-CN" href="./">
@@ -130,7 +130,13 @@
   #error { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; padding: 24px; text-align: center; line-height: 1.7; color: var(--muted); background: var(--stage-bg); z-index: 10; }
 
   footer { border-top: 1px solid var(--line); background: var(--panel); display: flex; align-items: center; gap: 8px; padding: 8px 12px; min-width: 0; min-height: 49px; }
-  footer.static > :not(#staticNote) { display: none; }
+  footer.static > :not(#staticNote):not(.byline) { display: none; }
+  footer .byline { margin-left: auto; display: flex; align-items: center; gap: 6px; flex: none; font-size: 12px; color: var(--muted); text-decoration: none; padding: 0 2px; }
+  footer .byline img { display: block; border-radius: 5px; }
+  footer .byline:hover { color: var(--ink); }
+  @media (max-width: 760px) { footer .byline span { display: none; } }
+  #manual .missing b { color: var(--ink); }
+  #manual .missing .jump { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
   #staticNote { display: none; color: var(--muted); font-size: 13px; }
   footer.static #staticNote { display: block; }
   footer .nav { border: 1px solid var(--line); background: transparent; border-radius: 8px; min-width: 36px; height: 32px; cursor: pointer; flex: none; font-size: 15px; padding: 0 8px; }
@@ -153,7 +159,7 @@
   .safety { border-left: 4px solid #d9534f; background: color-mix(in srgb, #d9534f 10%, transparent); border-radius: 6px; padding: 6px 10px; margin: 8px 0 0; font-size: 13px; line-height: 1.5; }
   #about .safety { font-size: 14px; padding: 10px 14px; margin: 0 0 16px; }
   #autoFrameBtn[aria-pressed="false"] { border-style: dashed; color: var(--muted); }
-  /* 放大圆圈：本步在动的零件在主画面里太小时出现（阈值见 docs/spec.md），引线连到零件在柜体上的位置 */
+  /* 放大圆圈：本步在动的零件在主画面里太小时出现（阈值见 skills/manual-to-3d/references/spec.md），引线连到零件在柜体上的位置 */
   .zoom { position: absolute; z-index: 3; border-radius: 50%; overflow: hidden; border: 2px solid var(--ink); background: var(--stage-bg); box-shadow: 0 2px 14px rgba(0,0,0,.14); pointer-events: none; display: none; }
   .zoom.on { display: block; }
   .zoom canvas { display: block; width: 100%; height: 100%; }
@@ -249,6 +255,7 @@
     <div id="steps"></div>
     <button class="nav" id="chain" aria-pressed="false" data-title="chainTitle">C ▶▶</button>
     <span id="staticNote" data-t="staticNote"></span>
+    <a class="byline" href="brand/README.md" target="_blank" rel="noopener" data-title="bylineTitle"><img src="brand/steam-icon-64.png" alt="" width="20" height="20"><span data-t="byline"></span></a>
   </footer>
 </div>
 <section id="about"></section>
@@ -276,16 +283,29 @@ function getJson(url) {
   }
   return jsonCache[url];
 }
-// 语言：?lang=en 读 data/site.en.json，默认读 data/site.json（?site= 可直接指定站点文件）
+// 产品：data/products.json 列出所有产品（由 scripts/build-index.js 按 data/*/manifest.json 生成），?product= 选一个，缺省用 default。
+// 语言：?lang=en 或英文页的 <meta name="flatpack-lang">；读该产品这种语言的站点文件（?site= 可直接指定站点文件）
 const LANG = params.get('lang') || document.querySelector('meta[name="flatpack-lang"]')?.content || '';
-let SITE, UI, PRODUCT;
+let SITE, UI, PRODUCT, PRODUCT_ID;
 try {
-  SITE = await getJson(params.get('site') || (LANG && LANG !== 'zh' ? `data/site.${LANG}.json` : 'data/site.json'));
+  const index = await getJson('data/products.json');
+  const entry = index.products.find((x) => x.id === params.get('product')) || index.products.find((x) => x.id === index.default) || index.products[0];
+  if (!entry) throw new Error('data/products.json 里没有产品（运行 node scripts/build-index.js）');
+  PRODUCT_ID = entry.id;
+  SITE = await getJson(params.get('site') || entry.sites[LANG && LANG !== 'zh' ? LANG : 'zh'] || entry.sites.zh);
   [UI, PRODUCT] = await Promise.all([getJson(SITE.ui), getJson(SITE.product)]);
 } catch (err) {
   // 还没读到文案文件，只能显示原始错误
-  document.body.textContent = `${err.message} — python -m http.server 8137`;
+  document.body.textContent = `${err.message} — node scripts/serve.js`;
   throw err;
+}
+// 说明书 PDF 的官方链接：按文件名在产品文案的 about.links 里找（没有页面图时说明书面板用它）
+const manualLink = (file) => ((PRODUCT.about && PRODUCT.about.links && PRODUCT.about.links.items) || []).find((l) => file && l.url.split('/').pop().split('?')[0] === file) || null;
+// 没有渲染页面图时说明书面板显示的内容：第几页、打开官方 PDF 的这一页、这一页上的步骤（点了跳过去）
+function pageFallback(p, file, steps = []) {
+  const link = manualLink(file);
+  const btns = steps.map(({ i, label }) => `<button class="ghost" data-i="${i}">${esc(label)}</button>`).join(' ');
+  return `<div class="missing"><b>${esc(t('pageFallbackTitle', { p }))}</b><br>${link ? `<a href="${esc(link.url)}#page=${p}" target="_blank" rel="noopener">${esc(t('pageOpenPdf', { p, doc: link.docId || file }))}</a><br>` : ''}<span>${esc(t('pageRenderHint', { product: PRODUCT_ID }))}</span>${btns ? `<div class="jump">${btns}</div>` : ''}</div>`;
 }
 const t = (key, vars = {}) => String(UI[key] ?? key).replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? '');
 document.documentElement.lang = SITE.lang || 'zh-CN';
@@ -459,7 +479,7 @@ function makeHardware(def) {
   return cyl(r, r, s.length, def.kind === 'dowel' ? 10 : 24, { dowel: MAT.wood, pad: MAT.pad }[def.kind] || MAT.metal);
 }
 
-// 工具：Z 形内六角扳手 100001（p8、p21 等页的样子）或螺丝刀。原点在工具头，+y 沿螺钉轴向外（尺寸为示意，见 docs/dimensions.md）
+// 工具：Z 形内六角扳手 100001（p8、p21 等页的样子）或螺丝刀。原点在工具头，+y 沿螺钉轴向外（尺寸为示意，见 data/kallax/dimensions.md）
 function makeTool(id) {
   const g = new THREE.Group();
   const rod = (r, a, b, mat, seg = 6) => {
@@ -1216,7 +1236,7 @@ function projectBox(box) {
   return r;
 }
 // 包围盒在某个相机里的屏幕面积（投影包围矩形，裁到 w×h 画面内；在相机后面算 0）
-const AREA_MIN = 1600; // 40×40 CSS 像素，见 docs/spec.md
+const AREA_MIN = 1600; // 40×40 CSS 像素，见 skills/manual-to-3d/references/spec.md
 function screenArea(box, cam, w, h) {
   if (box.isEmpty()) return 0;
   let l = Infinity, t = Infinity, r = -Infinity, b = -Infinity;
@@ -1229,7 +1249,7 @@ function screenArea(box, cam, w, h) {
   return Math.max(0, Math.min(r, w) - Math.max(l, 0)) * Math.max(0, Math.min(b, h) - Math.max(t, 0));
 }
 // 细长零件（最长边至少是次长边的 3 倍：长螺钉、木销、滑轨）的包围矩形很窄，面积不能说明看不看得清，
-// 改按投影长度折算：投影长度 THIN_LEN px 折合 AREA_MIN（取两者中较大的）。见 docs/spec.md
+// 改按投影长度折算：投影长度 THIN_LEN px 折合 AREA_MIN（取两者中较大的）。见 skills/manual-to-3d/references/spec.md
 const THIN_LEN = 60;
 const isThin = (o) => { const d = o.userData.localBox.getSize(new THREE.Vector3()).toArray().sort((a, b) => b - a); return d[0] >= 3 * d[1]; };
 function screenVis(box, cam, w, h, thin) {
@@ -1266,7 +1286,12 @@ function setAutoFrame(on) {
   b.setAttribute('aria-pressed', on);
   b.textContent = t(on ? 'autoFrameOn' : 'autoFrameOff');
 }
-controls.addEventListener('start', () => setAutoFrame(false));
+let dragFrom = null;
+controls.addEventListener('start', () => { dragFrom = { pos: camera.position.clone(), target: controls.target.clone() }; });
+controls.addEventListener('change', () => {
+  if (dragFrom && (camera.position.distanceTo(dragFrom.pos) > 1e-3 || controls.target.distanceTo(dragFrom.target) > 1e-3)) { setAutoFrame(false); dragFrom = null; }
+});
+controls.addEventListener('end', () => { dragFrom = null; });
 function frameDest(box, { reset = false, dir: fixedDir = null } = {}) {
   if (!box || box.isEmpty()) return null;
   lastBox = box.clone();
@@ -1818,14 +1843,14 @@ function renderRoomUi(room) {
     <h2>${esc(room.title)}</h2>
     <p>${esc(room.note)}</p>
     <p>${esc(room.variants[state.variant].note)}</p>
-    <p class="safety">${esc(PRODUCT.safety.text)}</p>`;
+    ${PRODUCT.safety ? `<p class="safety">${esc(PRODUCT.safety.text)}</p>` : ''}`;
   $('hwCard').innerHTML = `<h3>${esc(t('roomFixings'))}</h3>${Object.entries(fix).map(([id, n]) => { const d = body.hardware.find((h) => h.id === id); return `<div class="row"><span class="name">${esc(d.name)}</span><span class="num">×${n}</span><span class="id">${esc(id)}</span></div>`; }).join('')}
     ${(body.extras || []).map((x) => `<div class="tool"><span>${esc(x.name)}</span><span class="id" style="color:var(--muted)">${esc(x.note || '')}</span></div>`).join('')}`;
   // 左侧：说明书的警告页和本方案的上墙页
   $('manualLabel').textContent = t('manualLabel', { docId: body.source.docId });
   $('pageNav').style.display = 'none';
-  $('pageHintText').textContent = t('roomPagesHint');
-  const pages = [2, ...new Set(vs.flatMap((st) => st.pages))];
+  $('pageHintText').textContent = PRODUCT.safety && PRODUCT.safety.page ? t('roomPagesHint', { p: PRODUCT.safety.page }) : t('roomPagesHintNoSafety');
+  const pages = [...new Set([...(PRODUCT.safety && PRODUCT.safety.page ? [PRODUCT.safety.page] : []), ...vs.flatMap((st) => st.pages)])];
   const tabs = $('pageTabs');
   tabs.innerHTML = pages.map((pg, i) => `<button aria-pressed="${i === 0}" data-p="${pg}">p${pg}</button>`).join('');
   const show = (pg) => {
@@ -1835,7 +1860,7 @@ function renderRoomUi(room) {
     $('pageView').innerHTML = '';
     const img = new Image();
     img.alt = t('pageAlt', { p: pg });
-    img.onerror = () => { $('pageView').innerHTML = `<div class="missing">${esc(t('pageMissing', { url }))}</div>`; };
+    img.onerror = () => { $('pageView').innerHTML = pageFallback(pg, body.source.manual); const l = manualLink(body.source.manual); if (l) $('pageOpen').href = `${l.url}#page=${pg}`; };
     img.src = url;
     $('pageView').append(img);
   };
@@ -1876,7 +1901,11 @@ function renderSetUi(set) {
     $('pageView').innerHTML = '';
     const img = new Image();
     img.alt = set.layoutSource;
-    img.onerror = () => { $('pageView').innerHTML = `<div class="missing">${esc(t('refsMissing', { url }))}</div>`; };
+    img.onerror = () => {
+      const src = PRODUCT.about && PRODUCT.about.links && PRODUCT.about.links.source;
+      $('pageView').innerHTML = `<div class="missing">${esc(t('refsMissing', { url }))}${src ? `<br><a href="${esc(src.url)}" target="_blank" rel="noopener">${esc(src.label)}</a>` : ''}</div>`;
+      if (src) $('pageOpen').href = src.url;
+    };
     img.src = url;
     $('pageView').append(img);
   };
@@ -1907,7 +1936,7 @@ function renderStepCard(i) {
     <p>${esc(s.hint)}</p>
     <div class="chips">${chips.join('') || `<span class="chip">${esc(t('noNew'))}</span>`}</div>
     ${s.motionNote ? `<p class="motion">${esc(s.motionNote)}</p>` : ''}
-    ${data.room && s.n >= data.room.fromStep && i > 0 ? `<p class="safety">${esc(PRODUCT.safety.short)}</p>` : ''}`;
+    ${data.room && PRODUCT.safety && s.n >= data.room.fromStep && i > 0 ? `<p class="safety">${esc(PRODUCT.safety.short)}</p>` : ''}`;
 }
 
 function renderCounters(i) {
@@ -1956,7 +1985,13 @@ function showPage(p) {
   sheet.className = 'sheet';
   const img = new Image();
   img.alt = t('pageAlt', { p: manualPage });
-  img.onerror = () => { pv.innerHTML = `<div class="missing">${esc(t('pageMissing', { url }))}</div>`; };
+  img.onerror = () => {
+    const steps = here.map((h) => ({ i: h.i, label: h.i === 0 ? t('stepOverview') : t('stepTitle', { n: view.stepsList[h.i].n, title: view.stepsList[h.i].title }) }));
+    pv.innerHTML = pageFallback(manualPage, view.data.source && view.data.source.manual, steps);
+    for (const b of pv.querySelectorAll('.jump button')) b.onclick = () => go(Number(b.dataset.i));
+    const l = manualLink(view.data.source && view.data.source.manual);
+    if (l) $('pageOpen').href = `${l.url}#page=${manualPage}`;
+  };
   img.onclick = (e) => {
     const r = img.getBoundingClientRect();
     const y = (e.clientY - r.top) / r.height;
@@ -2172,7 +2207,7 @@ addEventListener('keydown', (e) => {
 function inlineMd(s) {
   return esc(s).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/`([^`]+)`/g, '<code>$1</code>');
 }
-// 从 docs/dimensions.md 的猜测清单原样取出：### 小标题、编号条目、列表项和段落（跳过表格）
+// 从 data/kallax/dimensions.md 的猜测清单原样取出：### 小标题、编号条目、列表项和段落（跳过表格）
 function parseGuesses(md, heading) {
   const start = md.indexOf(heading);
   if (start < 0) return '';
@@ -2207,7 +2242,7 @@ async function renderAbout() {
   try { guesses = parseGuesses(await (await fetch(a.approximate.source)).text(), a.approximate.heading); } catch { guesses = ''; }
   const ex = PRODUCT.explainers;
   $('about').innerHTML = `
-    <p class="safety"><strong>${esc(PRODUCT.safety.title)}</strong> ${esc(PRODUCT.safety.text)}</p>
+    ${PRODUCT.safety ? `<p class="safety"><strong>${esc(PRODUCT.safety.title)}</strong> ${esc(PRODUCT.safety.text)}</p>` : ''}
     <h2>${esc(a.title)}</h2>
     <div class="cols">
       <div class="card box"><h3>${esc(a.exact.title)}</h3><ul>${a.exact.items.map((s) => `<li>${inlineMd(s)}</li>`).join('')}</ul></div>
@@ -2215,8 +2250,8 @@ async function renderAbout() {
     </div>
     ${a.notes.map((n) => `<p class="note">${inlineMd(n)}</p>`).join('')}
     <details open><summary>${esc(a.approximate.source)} · ${esc(a.approximate.heading.replace(/^#+\s*/, ''))}</summary>${guesses}</details>
-    <h3>${esc(ex.title)}</h3>
-    <div class="cols">${ex.items.map((it) => `<div class="card box"><h4>${esc(it.title)}</h4><ul>${it.points.map((p) => `<li>${inlineMd(p)}</li>`).join('')}</ul></div>`).join('')}</div>
+    ${ex && ex.items.length ? `<h3>${esc(ex.title)}</h3>
+    <div class="cols">${ex.items.map((it) => `<div class="card box"><h4>${esc(it.title)}</h4><ul>${it.points.map((p) => `<li>${inlineMd(p)}</li>`).join('')}</ul></div>`).join('')}</div>` : ''}
     <h3>${esc(a.links.title)}</h3>
     <ul>${a.links.items.map((l) => `<li><a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)}</a> <span class="muted">${esc(l.article)} · ${esc(l.docId)}</span></li>`).join('')}</ul>
     <p class="muted"><a href="${esc(a.links.source.url)}" target="_blank" rel="noopener">${esc(a.links.source.label)}</a></p>

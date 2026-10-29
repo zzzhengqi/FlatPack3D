@@ -1,20 +1,16 @@
 #!/usr/bin/env node
 // 用分析报告校验装配数据：零件数、五金总数、逐步页码与五金用量、几何；"全套"另查嵌件数量与重叠。
+// 产品都在 data/<id>/（有 manifest.json），每个产品对照自己的分析报告（manifest.analysis）校验。
 // 用法：
-//   node scripts/validate.js                    校验 data/ 下的主体、门、抽屉、全套、中英文站点文案，再跑取景截图检查
-//   node scripts/validate.js --no-framing       同上，但跳过取景截图检查（不需要浏览器）
-//   node scripts/validate.js <数据.json> [报告.md] 只校验一份（装配数据或全套数据）
+//   node scripts/validate.js                     校验所有产品的装配数据、全套、Room、各语言站点文案，再跑取景截图检查
+//   node scripts/validate.js --no-framing        同上，但跳过取景截图检查（不需要浏览器）
+//   node scripts/validate.js --product=<id>      只校验一个产品
+//   node scripts/validate.js <数据.json> [报告.md] 只校验一份（报告缺省取该文件所在产品的 analysis.md）
 // 装配数据靠 source.reportSection（如 "## 2."）找到报告里对应的一节。有任何不一致就以退出码 1 结束。
 'use strict';
 const fs = require('fs');
 const path = require('path');
-
-const root = path.resolve(__dirname, '..');
-const DEFAULT_REPORT = path.join(root, 'docs/analysis/kallax-manuals.md');
-const DEFAULT_FILES = ['data/kallax-body.json', 'data/kallax-door.json', 'data/kallax-drawer.json', 'data/kallax-set.json', 'data/kallax-room.json', 'data/site.json', 'data/site.en.json'];
-const BASE_SITE = 'data/site.json'; // 其他语言的站点文案都要与它逐项对齐
-// 全套里应有的嵌件数量：来自任务要求，排布依据是 refs/ 商品图（第 3 排 5 个门、第 4 排 5 个双抽屉）
-const EXPECTED_SET = { door: 5, drawer: 5 };
+const { root, listProducts, buildIndex } = require('./lib/products');
 
 const normId = (s) => s.replace(/\s+/g, '');
 const sameList = (a, b) => JSON.stringify([...a].map(String).sort()) === JSON.stringify([...b].map(String).sort());
@@ -44,19 +40,25 @@ function tables(text) {
   return out;
 }
 
-// 五金列 → [{id, count|null}]；count 为 null 表示报告里只写了编号
-function hwItems(col) {
+// 五金列 → [{id, count|null}]：只认 knownIds 里的编号（报告五金表里的编号 + 成套五金的成员编号），长的先认；
+// 编号后面跟"×N"就是数量，没写数量时 count 为 null。编号可以是任何写法（宜家的 6 位数字、"A"、"B2"、"M6×30"……）
+const reEsc = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, (c) => `\\${c}`);
+function hwItems(col, knownIds) {
   const items = [];
-  const counted = /(\d{5,}(?:\s*\/\s*\d{5,})*)\s*×\s*(\d+)/g;
-  for (const m of col.matchAll(counted)) items.push({ id: normId(m[1]), count: Number(m[2]) });
-  for (const m of col.replace(counted, '').matchAll(/(?<![\d/])(\d{6,}(?:\/\d{6,})*)(?![\d/])/g)) items.push({ id: m[1], count: null });
+  let text = col;
+  for (const id of [...knownIds].sort((a, b) => b.length - a.length)) {
+    const pat = id.split(/([/+])/).map((x) => (x === '/' || x === '+' ? `\\s*${reEsc(x)}\\s*` : reEsc(x))).join('');
+    const re = new RegExp(`(?<![A-Za-z0-9_/+])${pat}(?![A-Za-z0-9_/+])(?:\\s*×\\s*(\\d+))?`, 'g');
+    text = text.replace(re, (m, n) => { items.push({ id, count: n ? Number(n) : null }); return ' '.repeat(m.length); });
+  }
   return items;
 }
 
-function parseReport(md, heading) {
+function parseReport(md, heading, listLabels = []) {
   const sec = sectionOf(md, heading);
   const ts = tables(sec);
   const rep = { found: !!sec, parts: [], hw: {}, steps: {}, altPages: {}, stepTables: [] };
+  for (const lb of listLabels) rep.altPages[lb] = {};
   for (const t of ts) {
     if (t.header[0] === '图示' && t.header[1] === '数量') rep.parts.push(...t.rows.map((r) => ({ label: r[0], qty: r[1] })));
     if (t.header[0] === '编号' && t.header[1] === '数量') for (const r of t.rows) rep.hw[normId(r[0])] = parseInt(r[1], 10);
@@ -69,20 +71,22 @@ function parseReport(md, heading) {
         for (const into of [rep.steps, own.steps]) {
           const st = (into[r[1]] = into[r[1]] || { pages: new Set(), items: [], raw: '' });
           st.pages.add(Number(page[1]));
-          st.items.push(...hwItems(r[3] || ''));
-          st.raw += ` ${r[3] || ''}`;
+          st.raw += ` ${r[3] || ''}`; // 五金列原文；编号在校验时按报告五金表认（hwItems）
         }
       }
     }
   }
-  // 门嵌件的右铰链路线是列表："- p13：第 6、7 步……"，五金与左铰链路线相同（报告原话：左右镜像）
-  const alt = /\*\*右铰链路线[^\n]*\n([\s\S]*?)(?:\n\s*\n|$)/.exec(sec);
-  if (alt) {
+  // 某条路线在报告里只写成列表（variants[v].reportList 给出加粗标签，例如门嵌件的"**右铰链路线**"）：
+  // "- p13：第 6、7 步……"，五金与主路线相同，只核对页码
+  for (const lb of listLabels) {
+    const esc = lb.replace(/[.*+?^${}()|[\]\\]/g, (c) => `\\${c}`);
+    const alt = new RegExp(`\\*\\*${esc}[^\\n]*\\n([\\s\\S]*?)(?:\\n\\s*\\n|$)`).exec(sec);
+    if (!alt) continue;
     for (const line of alt[1].split(/\r?\n/)) {
       const m = /^- p(\d+)：(.*)$/.exec(line.trim());
       if (!m) continue;
       for (const g of m[2].matchAll(/第\s*([\d、]+)\s*步/g)) {
-        for (const n of g[1].split('、')) (rep.altPages[n] = rep.altPages[n] || new Set()).add(Number(m[1]));
+        for (const n of g[1].split('、')) (rep.altPages[lb][n] = rep.altPages[lb][n] || new Set()).add(Number(m[1]));
       }
     }
   }
@@ -143,13 +147,17 @@ function validateAssembly(data, md, file) {
   const errors = [], passes = [];
   const check = (ok, okMsg, errMsg) => (ok ? passes.push(okMsg) : errors.push(errMsg));
   const heading = data.source && data.source.reportSection;
-  const rep = parseReport(md, heading || '\u0000');
+  const listLabels = Object.values(data.variants || {}).map((x) => x.reportList).filter(Boolean);
+  const rep = parseReport(md, heading || '\u0000', listLabels);
   if (!rep.found) return { errors: [`报告里找不到 ${heading || '(未写 source.reportSection)'} 一节`], passes, summary: '' };
 
   const cat = Object.fromEntries(data.hardware.map((h) => [normId(h.id), h]));
   const memberOf = {};
   for (const h of data.hardware) for (const m of h.members || []) memberOf[m] = normId(h.id);
-  const drawerCount = data.meta && data.meta.drawerCount;
+  const knownIds = () => [...Object.keys(rep.hw), ...Object.keys(memberOf)];
+  // 按"每个<单位>"重复做的步骤（例如双抽屉嵌件每个抽屉做一遍）：meta.repeat = { count, unit }
+  const repeatCount = data.meta && data.meta.repeat && data.meta.repeat.count;
+  const repeatUnit = (data.meta && data.meta.repeat && data.meta.repeat.unit) || '';
 
   // 0. 页码、步骤图位置、名称与编号
   const pageCount = data.manualPages && data.manualPages.count;
@@ -204,11 +212,12 @@ function validateAssembly(data, md, file) {
   for (const row of rep.parts) {
     const entry = Object.entries(data.partTypes).find(([, t]) => t.report === row.label);
     let qty = null;
-    const per = /每个抽屉\s*(\d+)/.exec(row.qty);
+    const per = /每个(\S+?)\s*(\d+)/.exec(row.qty);
     if (per) {
-      if (!drawerCount) { errors.push(`报告按"每个抽屉"计数（${row.label}），但数据没有 meta.drawerCount`); continue; }
-      qty = Number(per[1]) * drawerCount;
-      if (entry) check(entry[1].perDrawer === Number(per[1]), `${row.label} 每个抽屉 ${per[1]} 块`, `${row.label}：报告每个抽屉 ${per[1]} 块，数据 perDrawer=${entry[1].perDrawer}`);
+      if (!repeatCount) { errors.push(`报告按"每个${per[1]}"计数（${row.label}），但数据没有 meta.repeat`); continue; }
+      if (repeatUnit && per[1] !== repeatUnit) errors.push(`报告按"每个${per[1]}"计数，数据 meta.repeat.unit 是"${repeatUnit}"`);
+      qty = Number(per[2]) * repeatCount;
+      if (entry) check(entry[1].perRepeat === Number(per[2]), `${row.label} 每个${per[1]} ${per[2]} 块`, `${row.label}：报告每个${per[1]} ${per[2]} 块，数据 perRepeat=${entry[1].perRepeat}`);
     } else qty = parseInt(row.qty, 10);
     reportPartTotal += qty;
     if (!entry) { errors.push(`报告板件"${row.label}"在数据 partTypes 里没有对应（report 字段）`); continue; }
@@ -241,7 +250,6 @@ function validateAssembly(data, md, file) {
       for (const [n, st] of Object.entries(t.steps)) {
         const m = (merged[n] = merged[n] || { pages: new Set(), items: [], raw: '' });
         for (const pg of st.pages) m.pages.add(pg);
-        m.items.push(...st.items);
         m.raw += st.raw;
       }
     }
@@ -253,7 +261,7 @@ function validateAssembly(data, md, file) {
     const use = {}, tools = new Set();
     if (!s) return { use, tools };
     const setsSeen = new Set();
-    for (const it of s.items) {
+    for (const it of hwItems(s.raw, knownIds())) {
       if (it.count !== null) { use[it.id] = (use[it.id] || 0) + it.count; continue; }
       if (cat[it.id] && cat[it.id].kind === 'tool') { tools.add(it.id); continue; }
       if (memberOf[it.id]) { // 成套五金（如 123801 + 123802）：报告列出成员即算 1 套
@@ -279,11 +287,12 @@ function validateAssembly(data, md, file) {
     const consumed = {};
     const placed = {};
     for (const s of seq) {
-      const repPages = (v && v !== 'left' && rep.altPages[s.n]) || (repSteps[s.n] && repSteps[s.n].pages);
+      const listLabel = v && data.variants[v].reportList;
+      const repPages = (listLabel && rep.altPages[listLabel] && rep.altPages[listLabel][s.n]) || (repSteps[s.n] && repSteps[s.n].pages);
       if (repPages) check(sameList(repPages, s.pages), `${tag}第 ${s.n} 步页码 p${s.pages}`, `${tag}第 ${s.n} 步页码：报告 p${[...repPages]}，数据 p${s.pages}`);
-      else if (v && v !== 'left') errors.push(`${tag}第 ${s.n} 步：报告的路线列表里找不到页码`);
+      else if (listLabel) errors.push(`${tag}第 ${s.n} 步：报告的"${listLabel}"列表里找不到页码`);
       const repeat = s.repeat || 1;
-      if (s.repeat) check(s.repeat === drawerCount, `${tag}第 ${s.n} 步按 ${s.repeat} 个抽屉重复`, `${tag}第 ${s.n} 步 repeat=${s.repeat}，与 meta.drawerCount=${drawerCount} 不符`);
+      if (s.repeat) check(s.repeat === repeatCount, `${tag}第 ${s.n} 步按 ${s.repeat} 个${repeatUnit}重复`, `${tag}第 ${s.n} 步 repeat=${s.repeat}，与 meta.repeat.count=${repeatCount} 不符`);
       const { use, tools } = expectStep(s.n, v);
       const got = {}, removed = {};
       for (const h of s.hardware) {
@@ -293,7 +302,7 @@ function validateAssembly(data, md, file) {
       for (const id of new Set([...Object.keys(use), ...Object.keys(got)])) {
         const want = (use[id] || 0) * repeat;
         check(want === (got[id] || 0), `${tag}第 ${s.n} 步 ${id} ×${got[id]}`,
-          `${tag}第 ${s.n} 步 ${id}：报告 ×${use[id] || 0}${repeat > 1 ? `（×${repeat} 个抽屉 = ${want}）` : ''}，数据 ×${got[id] || 0}`);
+          `${tag}第 ${s.n} 步 ${id}：报告 ×${use[id] || 0}${repeat > 1 ? `（×${repeat} 个${repeatUnit} = ${want}）` : ''}，数据 ×${got[id] || 0}`);
         consumed[id] = (consumed[id] || 0) + (got[id] || 0) - 2 * (removed[id] || 0);
       }
       // 拧出：位置必须是之前步骤装上的同一种五金
@@ -302,11 +311,15 @@ function validateAssembly(data, md, file) {
         const miss = h.placements.filter((pl) => !before.some((b) => b.position.every((c, i) => Math.abs(c - pl.position[i]) < 0.01)));
         check(!miss.length, `${tag}第 ${s.n} 步拧出的 ${h.id} 都是之前装上的`, `${tag}第 ${s.n} 步拧出的 ${h.id} 有 ${miss.length} 处在之前步骤里没有装过`);
       }
-      // 不随包装提供的东西（墙用螺钉）：报告写了"墙钉（不含）"的步骤必须有，反之亦然
+      // 不随包装提供的东西（例如墙用螺钉）：data.extras 里每种的 reportTag 是报告五金列里的写法（例如"墙钉（不含）"），
+      // 报告写了的步骤必须有这种另购件，反之亦然
       const extraIds = (s.extras || []).map((x) => x.id);
-      const repSays = /墙钉（不含）/.test((repSteps[s.n] && repSteps[s.n].raw) || '');
-      check(repSays === extraIds.length > 0, `${tag}第 ${s.n} 步墙用螺钉与报告一致`,
-        `${tag}第 ${s.n} 步：报告${repSays ? '写了' : '没写'}"墙钉（不含）"，数据${extraIds.length ? '有' : '没有'} extras`);
+      for (const def of (data.extras || []).filter((x) => x.reportTag)) {
+        const repSays = ((repSteps[s.n] && repSteps[s.n].raw) || '').includes(def.reportTag);
+        const has = extraIds.includes(def.id);
+        check(repSays === has, `${tag}第 ${s.n} 步${def.name}与报告一致`,
+          `${tag}第 ${s.n} 步：报告${repSays ? '写了' : '没写'}"${def.reportTag}"，数据${has ? '有' : '没有'} extras ${def.id}`);
+      }
       for (const x of s.extras || []) {
         const def = (data.extras || []).find((e) => e.id === x.id);
         if (!def || !def.notIncluded) errors.push(`${tag}第 ${s.n} 步 extras ${x.id} 不在 data.extras 里或没有标 notIncluded`);
@@ -379,19 +392,19 @@ function validateAssembly(data, md, file) {
     }
   }
 
-  // 抽屉数要能由五金数量推出来：只在重复步骤里用到的五金，清单数 ÷ 每个抽屉用量 = 抽屉数
-  if (drawerCount) {
-    const perDrawer = {}, elsewhere = new Set();
+  // 重复次数要能由五金数量推出来：只在重复步骤里用到的五金，清单数 ÷ 每次用量 = 重复次数
+  if (repeatCount) {
+    const perRepeat = {}, elsewhere = new Set();
     for (const s of data.steps) {
       const { use } = expectStep(s.n);
       for (const [id, c] of Object.entries(use)) {
-        if (s.repeat) perDrawer[id] = (perDrawer[id] || 0) + c; else elsewhere.add(id);
+        if (s.repeat) perRepeat[id] = (perRepeat[id] || 0) + c; else elsewhere.add(id);
       }
     }
-    const implied = Object.entries(perDrawer).filter(([id]) => !elsewhere.has(id)).map(([id, c]) => [id, rep.hw[id] / c]);
-    const okAll = implied.length > 0 && implied.every(([, k]) => k === drawerCount);
-    check(okAll, `按五金数量推得抽屉数 = ${drawerCount}（${implied.map(([id, k]) => `${id}:${k}`).join('，')}）`,
-      `五金数量推出的抽屉数与 meta.drawerCount=${drawerCount} 不符：${implied.map(([id, k]) => `${id}→${k}`).join('，')}`);
+    const implied = Object.entries(perRepeat).filter(([id]) => !elsewhere.has(id)).map(([id, c]) => [id, rep.hw[id] / c]);
+    const okAll = implied.length > 0 && implied.every(([, k]) => k === repeatCount);
+    check(okAll, `按五金数量推得${repeatUnit}数 = ${repeatCount}（${implied.map(([id, k]) => `${id}:${k}`).join('，')}）`,
+      `五金数量推出的${repeatUnit}数与 meta.repeat.count=${repeatCount} 不符：${implied.map(([id, k]) => `${id}→${k}`).join('，')}`);
   }
 
   const summary = `零件：报告 ${reportPartTotal} 块 / 数据 ${data.parts.length} 块；五金：报告 ${reportHwTotal} 件（${Object.keys(rep.hw).length} 种）/ 数据 ${dataHwTotal} 件`;
@@ -463,10 +476,13 @@ function validateSet(set, baseDir) {
       insertBoxes.push(...bx);
     }
   }
-  for (const [id, n] of Object.entries(EXPECTED_SET)) {
+  // 应有的嵌件数量写在 set.expected（来源要在 layoutSource / notes 里说明）
+  const expected = set.expected || {};
+  if (!set.expected) errors.push('全套数据缺少 expected（每种嵌件应有的数量）');
+  for (const [id, n] of Object.entries(expected)) {
     check(counts[id] === n, `全套 ${id} 嵌件 ${n} 个`, `全套 ${id} 嵌件：应为 ${n}，数据 ${counts[id] || 0}`);
   }
-  for (const id of Object.keys(counts)) if (!(id in EXPECTED_SET)) errors.push(`全套里有未预期的嵌件种类：${id}`);
+  for (const id of Object.keys(counts)) if (!(id in expected)) errors.push(`全套里有未预期的嵌件种类：${id}`);
   const withBody = overlaps(insertBoxes, bodyBoxes);
   check(withBody.length === 0, '嵌件与主体板件没有重叠', `嵌件与主体板件重叠：${withBody.slice(0, 12).join('，')}${withBody.length > 12 ? ` 等 ${withBody.length} 处` : ''}`);
   const between = overlaps(insertBoxes).filter((s) => s.split('↔').map((x) => x.split('/')[0]).reduce((a, b) => a !== b));
@@ -477,7 +493,8 @@ function validateSet(set, baseDir) {
 
 // ---------------- 站点文案校验 ----------------
 // 界面文字都要在文案文件里；分享信息与 index.html 一致；PDF 链接覆盖每份说明书；近似清单能从 dimensions.md 取到
-function validateSite(site, baseDir) {
+function validateSite(site, baseDir, ctx) {
+  const BASE_SITE = ctx.baseSite; // 其他语言的站点文案都要与它逐项对齐
   const errors = [], passes = [];
   const check = (ok, okMsg, errMsg) => (ok ? passes.push(okMsg) : errors.push(errMsg));
   const at = (p) => path.resolve(baseDir, p);
@@ -505,6 +522,13 @@ function validateSite(site, baseDir) {
     const link = links.find((l) => path.basename(new URL(l.url).pathname) === d.source.manual);
     check(link && link.docId === d.source.docId && /^https:\/\//.test(link.url), `${d.source.docId} 有官方 PDF 链接`,
       `${d.source.manual}（${d.source.docId}）在 ${site.product} 里没有对应的官方 PDF 链接，或文档号不一致`);
+    // 说明书要登记在 manifest.sources.manuals 里；页面图目录 = renders/<产品>/<key>，页数一致
+    const m = ((ctx.manifest.sources && ctx.manifest.sources.manuals) || []).find((x) => x.file === d.source.manual);
+    check(m && m.docId === d.source.docId && m.url === (link && link.url), `${d.source.manual} 登记在 manifest.json`, `${d.source.manual} 没有登记在 ${ctx.manifest.dir}/manifest.json 的 sources.manuals 里，或文档号、链接与产品文案不一致`);
+    if (m && d.manualPages) {
+      const dir = `renders/${ctx.manifest.id}/${m.key}`;
+      check(d.manualPages.dir === dir && d.manualPages.count === m.pages, `${piece.key} 的页面图目录 ${dir}、${m.pages} 页`, `${piece.key} 的 manualPages 应为 dir=${dir}、count=${m.pages}，数据是 dir=${d.manualPages.dir}、count=${d.manualPages.count}`);
+    }
   }
 
   // 分享信息
@@ -512,7 +536,7 @@ function validateSite(site, baseDir) {
   check(sh.title && sh.description && sh.image, '分享标题、描述、图片都已填写', '产品文案 share 缺少 title / description / image');
   check(sh.image && exists(sh.image), `分享图 ${sh.image} 存在`, `分享图不存在：${sh.image}（运行 node scripts/make-og-image.js 生成）`);
   // index.html 的 <head> 是静态的，只写基准语言（爬虫不执行脚本）；其他语言的标题由页面运行时设置
-  if (path.resolve(baseDir, site.__file || '') === path.resolve(baseDir, BASE_SITE)) {
+  if (ctx.isDefault && path.resolve(baseDir, site.__file || '') === path.resolve(baseDir, BASE_SITE)) {
     const metaOk = html.includes(`<title>${sh.title}</title>`) && html.includes(`<meta name="description" content="${sh.description}">`) && html.includes(`content="${sh.image}"`);
     check(metaOk, 'index.html 的 <title>、description、og:image 与文案一致', 'index.html 的分享信息与产品文案不一致（运行 node scripts/build-meta.js）');
   }
@@ -523,15 +547,20 @@ function validateSite(site, baseDir) {
   const sec = md ? sectionOf(md, ap.heading) : '';
   const items = (sec.match(/^\d+\.\s/gm) || []).length;
   check(items > 0, `近似清单可从 ${ap && ap.source} 取到 ${items} 条`, `近似清单取不到：${ap ? `${ap.source} 里没有 "${ap.heading}" 或没有编号条目` : '缺少 about.approximate'}`);
-  const sf = product.safety || {};
-  check(sf.title && sf.text && sf.short && /p2/.test(sf.text), '有安全提示（转述说明书 p2 的警告）', '产品文案缺少 safety（title / text / short），或没有注明出自说明书 p2');
-  if (path.resolve(baseDir, site.__file || '') === path.resolve(baseDir, BASE_SITE)) {
+  // 安全提示（说明书里有安全警告时写）：要注明出自哪一页（safety.page），正文里写 p<页>
+  if (product.safety) {
+    const sf = product.safety;
+    check(sf.title && sf.text && sf.short && Number.isInteger(sf.page) && sf.text.includes(`p${sf.page}`), `有安全提示（转述说明书 p${sf.page} 的警告）`, '产品文案 safety 要有 title / page / text / short，且 text 里写明 p<page>');
+  }
+  if (ctx.isDefault && path.resolve(baseDir, site.__file || '') === path.resolve(baseDir, BASE_SITE)) {
     const built = require('./build-meta').build();
     const stale = Object.entries(built).filter(([f, html]) => !fs.existsSync(at(f)) || fs.readFileSync(at(f), 'utf8') !== html).map(([f]) => f);
     check(!stale.length, `各语言页面头部与文案一致（${Object.keys(built).join('、')}）`, `${stale.join('、')} 与文案不一致（运行 node scripts/build-meta.js）`);
   }
+  // 版权和商标声明：about.trademarks 列出的每个名字都要在 about.disclaimer 里出现
   const disc = (product.about && product.about.disclaimer) || '';
-  check(disc.includes('IKEA') && disc.includes('Inter IKEA Systems B.V.'), '有商标声明', '缺少 IKEA 商标声明');
+  const tms = (product.about && product.about.trademarks) || [];
+  check(disc.trim() && tms.length && tms.every((x) => disc.includes(x)), `有商标声明（${tms.join('、')}）`, '缺少 about.disclaimer，或 about.trademarks 为空，或声明里没有写到 trademarks 里的名字');
   // 语言切换列表
   const langs = site.languages || [];
   check(langs.some((l) => l.code === site.langCode), `语言列表含本语言 ${site.langCode}`, `languages 里没有本语言 ${site.langCode}`);
@@ -551,7 +580,7 @@ function validateSite(site, baseDir) {
     const shape = (pr) => JSON.stringify({
       exact: pr.about.exact.items.length, notes: pr.about.notes.length,
       ex: pr.explainers.items.map((it) => it.points.length),
-      safety: pr.safety ? Object.keys(pr.safety).sort() : null,
+      safety: pr.safety ? Object.keys(pr.safety).sort().concat(pr.safety.page) : null, trademarks: pr.about.trademarks,
       links: pr.about.links.items.map((l) => [l.url, l.docId, l.article]), source: pr.about.links.source.url,
     });
     check(shape(product) === shape(bp), `产品文案结构与 ${baseSite.product} 一致`, `产品文案结构与 ${baseSite.product} 不一致（条目数、讲解要点数或链接不同）`);
@@ -605,15 +634,48 @@ function validateSite(site, baseDir) {
 // ---------------- 入口 ----------------
 const flags = process.argv.slice(2).filter((a) => a.startsWith('--'));
 const args = process.argv.slice(2).filter((a) => !a.startsWith('--'));
-const files = args.length ? [path.resolve(args[0])] : DEFAULT_FILES.map((f) => path.join(root, f));
-const reportPath = path.resolve(args[1] || DEFAULT_REPORT);
-const md = fs.readFileSync(reportPath, 'utf8');
+const onlyProduct = (flags.find((a) => a.startsWith('--product=')) || '').split('=')[1] || null;
+const products = listProducts();
+const defaultId = buildIndex().default;
 let failed = 0;
-console.log(`报告：${rel(reportPath)}\n`);
-for (const file of files) {
+if (!products.length) { console.error('data/ 下没有产品（data/<id>/manifest.json）'); process.exit(1); }
+// 每份要校验的文件：{ file, product, md }
+const jobs = [];
+if (args.length) {
+  const file = path.resolve(args[0]);
+  const prod = products.find((x) => file.startsWith(path.join(root, x.dir) + path.sep)) || products[0];
+  jobs.push({ file, prod, report: path.resolve(args[1] || path.join(root, prod.analysis)) });
+} else {
+  for (const prod of products.filter((x) => !onlyProduct || x.id === onlyProduct)) {
+    const report = path.join(root, prod.analysis);
+    const sites = Object.values(prod.sites);
+    const pieces = [...new Set(sites.flatMap((f) => readJson(path.join(root, f)).pieces.map((x) => x.url)))];
+    for (const f of [...pieces, ...sites]) jobs.push({ file: path.join(root, f), prod, report });
+  }
+  // 产品索引要与 data/*/manifest.json 一致
+  const idx = path.join(root, 'data', 'products.json');
+  const fresh = fs.existsSync(idx) && fs.readFileSync(idx, 'utf8') === JSON.stringify(buildIndex(), null, 2) + '\n';
+  if (fresh) console.log(`✔ data/products.json：${products.map((x) => x.id).join('、')}，默认 ${defaultId}\n`);
+  else { failed++; console.log('✘ data/products.json 与 data/*/manifest.json 不一致（运行 node scripts/build-index.js）\n'); }
+  // 技能有两份：skills/manual-to-3d（发布用）和 .claude/skills/manual-to-3d（Claude Code 自动识别），内容必须一样
+  const skillSrc = path.join(root, 'skills', 'manual-to-3d'), skillDst = path.join(root, '.claude', 'skills', 'manual-to-3d');
+  if (fs.existsSync(skillSrc)) {
+    const list = (d, base = d) => (fs.existsSync(d) ? fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? list(path.join(d, e.name), base) : [path.relative(base, path.join(d, e.name))])) : []);
+    const a = list(skillSrc), b = list(skillDst);
+    const diff = [...a.filter((f) => !b.includes(f) || !fs.readFileSync(path.join(skillSrc, f)).equals(fs.readFileSync(path.join(skillDst, f)))), ...b.filter((f) => !a.includes(f))];
+    if (diff.length) { failed++; console.log(`✘ .claude/skills/manual-to-3d 与 skills/manual-to-3d 不一致：${diff.slice(0, 8).join('、')}（运行 node skills/manual-to-3d/scripts/flatpack.js sync-skill）\n`); }
+    else console.log(`✔ 技能两份一致（${a.length} 个文件）\n`);
+  }
+}
+let lastReport = '';
+for (const { file, prod, report } of jobs) {
+  if (report !== lastReport) { console.log(`== 产品 ${prod.id}，报告：${rel(report)}\n`); lastReport = report; }
+  if (!fs.existsSync(report)) { failed++; console.log(`✘ 报告不存在：${rel(report)}\n`); continue; }
+  const md = fs.readFileSync(report, 'utf8');
   const data = readJson(file);
   if (data.pieces) data.__file = path.relative(root, file).split(path.sep).join('/');
-  const res = data.pieces ? validateSite(data, root)
+  const ctx = { manifest: prod, baseSite: prod.sites.zh || Object.values(prod.sites)[0], isDefault: prod.id === defaultId };
+  const res = data.pieces ? validateSite(data, root, ctx)
     : data.schema && data.schema.startsWith('flatpack3d/room') ? validateRoom(data, root)
     : data.schema && data.schema.startsWith('flatpack3d/set') ? validateSet(data, root) : validateAssembly(data, md, file);
   const head = `${rel(file)}${data.source && data.source.reportSection ? `（报告 ${data.source.reportSection.replace('## ', '第 ').replace('.', ' 节')}）` : ''}`;
@@ -624,13 +686,14 @@ for (const file of files) {
   } else {
     console.log(`✔ ${head}\n  ${res.summary}\n  通过 ${res.passes.length} 项检查`);
   }
+  if (flags.includes('--verbose')) for (const x of res.passes) console.log(`    · ${x}`); // 列出每一项通过的检查
   console.log('');
 }
 (async () => {
   if (!args.length && !flags.includes('--no-framing')) {
     const { run } = require('./check-framing');
     for (const job of [{ lang: '' }, { lang: 'en', sizes: ['desktop', 'mobile'] }]) {
-      const res = await run({ ...job, quiet: true });
+      const res = await run({ ...job, product: onlyProduct, quiet: true });
       const tag = `取景截图检查（${job.lang || 'zh'}）`;
       if (res.failures.length) {
         failed++;

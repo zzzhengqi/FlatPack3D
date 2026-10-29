@@ -14,3 +14,6 @@ Thumbs.db
 
 # 对照图、复查视频等导出物（由脚本生成）
 exports/
+refs/
+video_analysis/
+.workbuddy-ai/

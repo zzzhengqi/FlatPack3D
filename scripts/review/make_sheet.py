@@ -1,24 +1,33 @@
 # 对照图：每步一行，左边说明书该步的放大圆圈（没有圆圈就是整步的图），右边 3D 放大圆圈在动画中途（没有圆圈就是主画面）
-# 用法：python scripts/review/make_sheet.py <说明书圆圈目录> <3D 截图目录> <输出目录>
+# 用法：python scripts/review/make_sheet.py <说明书圆圈目录> <3D 截图目录> <输出 png> <件名，如 body-a> <标题>
+# 一般不单独运行，由 scripts/review/make-review.js 调用。
 import json, os, sys
 from PIL import Image, ImageDraw, ImageFont
 
-mc, cs, out = sys.argv[1:4]
+sys.stdout.reconfigure(encoding='utf-8')
+mc, cs, out_png, key, title = sys.argv[1:6]
+out = os.path.dirname(out_png)
 os.makedirs(out, exist_ok=True)
 H = 280
 LW = 210  # 左边文字栏宽
-try:
-    font = ImageFont.truetype('C:/Windows/Fonts/msyh.ttc', 20)
-    small = ImageFont.truetype('C:/Windows/Fonts/msyh.ttc', 15)
-except OSError:
+# 中文字体：依次试 Windows、macOS、Linux 常见位置；都没有就用 Pillow 默认字体（中文会显示成方块，图本身不受影响）
+FONTS = ['C:/Windows/Fonts/msyh.ttc', '/System/Library/Fonts/PingFang.ttc', '/System/Library/Fonts/STHeiti Medium.ttc',
+         '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc', '/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc']
+font = small = None
+for f in FONTS:
+    try:
+        font, small = ImageFont.truetype(f, 20), ImageFont.truetype(f, 15)
+        break
+    except OSError:
+        continue
+if font is None:
     font = small = ImageFont.load_default()
 
 def fit(im, h):
     im = im.convert('RGB')
     return im.resize((max(1, round(im.width * h / im.height)), h))
 
-titles = {'body-a': 'KALLAX 置物架主体（墙固定件路线）', 'door-left': 'KALLAX 门嵌件（铰链在左）', 'drawer': 'KALLAX 双抽屉嵌件'}
-for key, title in titles.items():
+for key, title in [(key, title)]:
     man = {i['n']: i for i in json.load(open(os.path.join(mc, key, 'manual.json'), encoding='utf-8'))}
     shots = {i['n']: i for i in json.load(open(os.path.join(cs, key, 'index.json'), encoding='utf-8'))}
     rows = []
@@ -49,5 +58,5 @@ for key, title in titles.items():
     y = 56
     for r in rows:
         sheet.paste(r, (0, y)); y += r.height
-    sheet.save(os.path.join(out, f'{key}.png'), optimize=True)
+    sheet.save(out_png, optimize=True)
     print(key, sheet.size)

@@ -1,0 +1,1627 @@
+{
+  "schema": "flatpack3d/assembly@1",
+  "id": "kallax-drawer",
+  "title": "KALLAX 双抽屉嵌件",
+  "scope": "说明书第 1–15 步。2 个抽屉；安装在一个格子里；不含上墙固定。",
+  "source": {
+    "manual": "kallax-insert-with-2-drawers-white__AA-1009361-5-100.pdf",
+    "docId": "AA-1009361-5",
+    "analysis": "data/kallax/analysis.md",
+    "dimensions": "data/kallax/dimensions.md",
+    "reportSection": "## 3."
+  },
+  "manualPages": {
+    "dir": "renders/kallax/drawers",
+    "pattern": "p{NN}.png",
+    "count": 12
+  },
+  "staging": {
+    "origin": [
+      -110,
+      150
+    ],
+    "width": 230
+  },
+  "explodeScale": 1.6,
+  "placeApproach": [
+    0,
+    1,
+    0
+  ],
+  "approachDist": 25,
+  "meta": {
+    "overall": [
+      33,
+      33,
+      39
+    ],
+    "repeat": {
+      "count": 2,
+      "unit": "抽屉"
+    },
+    "approximate": [
+      "嵌件外形 33×33 来自商品页；抽屉各部分尺寸均为近似值，见 data/kallax/dimensions.md"
+    ]
+  },
+  "defaultPose": "upright",
+  "poses": {
+    "pivotLocal": [
+      0,
+      -18.36,
+      -19.5
+    ],
+    "pivotWorld": [
+      0,
+      0,
+      -19.5
+    ],
+    "upright": {
+      "tilt": 0,
+      "label": "装在格子里"
+    }
+  },
+  "host": {
+    "cell": [
+      33.52,
+      33.52,
+      39
+    ],
+    "wall": 1.6,
+    "note": "一个格子的内腔与四周隔板（主体近似尺寸）"
+  },
+  "partTypes": {
+    "frame": {
+      "name": "折叠外框",
+      "quantity": 1,
+      "report": "折叠外框"
+    },
+    "front": {
+      "name": "抽屉面板",
+      "quantity": 2,
+      "perRepeat": 1,
+      "report": "抽屉面板"
+    },
+    "side": {
+      "name": "抽屉侧板",
+      "quantity": 4,
+      "perRepeat": 2,
+      "report": "抽屉侧板"
+    },
+    "bottom": {
+      "name": "抽屉底板",
+      "quantity": 2,
+      "perRepeat": 1,
+      "report": "抽屉底板（薄板）"
+    },
+    "back": {
+      "name": "抽屉背板",
+      "quantity": 2,
+      "perRepeat": 1,
+      "report": "抽屉背板"
+    }
+  },
+  "parts": [
+    {
+      "id": "frame",
+      "type": "frame",
+      "name": "折叠外框",
+      "size": [
+        33,
+        33,
+        37.1
+      ],
+      "position": [
+        0,
+        -0.26,
+        -0.95
+      ],
+      "pieces": [
+        {
+          "id": "back",
+          "size": [
+            30.2,
+            33,
+            0.7
+          ],
+          "offset": [
+            0,
+            0,
+            -18.2
+          ],
+          "unfolded": {
+            "offset": [
+              0,
+              0,
+              -18.2
+            ],
+            "rotation": [
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        {
+          "id": "side-left",
+          "size": [
+            0.7,
+            33,
+            37.1
+          ],
+          "offset": [
+            -15.45,
+            0,
+            0
+          ],
+          "unfolded": {
+            "offset": [
+              -33.65,
+              0,
+              -18.2
+            ],
+            "rotation": [
+              0,
+              -90,
+              0
+            ]
+          }
+        },
+        {
+          "id": "strip-left",
+          "size": [
+            0.7,
+            33,
+            4
+          ],
+          "offset": [
+            -16.15,
+            0,
+            16.55
+          ],
+          "unfolded": {
+            "offset": [
+              -54.2,
+              0,
+              -18.2
+            ],
+            "rotation": [
+              0,
+              -90,
+              0
+            ]
+          }
+        },
+        {
+          "id": "rail-left-1",
+          "size": [
+            0.65,
+            2.5,
+            35
+          ],
+          "offset": [
+            -14.77,
+            2.4,
+            1
+          ],
+          "unfolded": {
+            "offset": [
+              -34.65,
+              2.4,
+              -17.52
+            ],
+            "rotation": [
+              0,
+              -90,
+              0
+            ]
+          }
+        },
+        {
+          "id": "rail-left-2",
+          "size": [
+            0.65,
+            2.5,
+            35
+          ],
+          "offset": [
+            -14.77,
+            -14.25,
+            1
+          ],
+          "unfolded": {
+            "offset": [
+              -34.65,
+              -14.25,
+              -17.52
+            ],
+            "rotation": [
+              0,
+              -90,
+              0
+            ]
+          }
+        },
+        {
+          "id": "side-right",
+          "size": [
+            0.7,
+            33,
+            37.1
+          ],
+          "offset": [
+            15.45,
+            0,
+            0
+          ],
+          "unfolded": {
+            "offset": [
+              33.65,
+              0,
+              -18.2
+            ],
+            "rotation": [
+              0,
+              90,
+              0
+            ]
+          }
+        },
+        {
+          "id": "strip-right",
+          "size": [
+            0.7,
+            33,
+            4
+          ],
+          "offset": [
+            16.15,
+            0,
+            16.55
+          ],
+          "unfolded": {
+            "offset": [
+              54.2,
+              0,
+              -18.2
+            ],
+            "rotation": [
+              0,
+              90,
+              0
+            ]
+          }
+        },
+        {
+          "id": "rail-right-1",
+          "size": [
+            0.65,
+            2.5,
+            35
+          ],
+          "offset": [
+            14.78,
+            2.4,
+            1
+          ],
+          "unfolded": {
+            "offset": [
+              34.65,
+              2.4,
+              -17.52
+            ],
+            "rotation": [
+              0,
+              90,
+              0
+            ]
+          }
+        },
+        {
+          "id": "rail-right-2",
+          "size": [
+            0.65,
+            2.5,
+            35
+          ],
+          "offset": [
+            14.78,
+            -14.25,
+            1
+          ],
+          "unfolded": {
+            "offset": [
+              34.65,
+              -14.25,
+              -17.52
+            ],
+            "rotation": [
+              0,
+              90,
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "drawer1-front",
+      "type": "front",
+      "name": "抽屉1面板",
+      "size": [
+        33,
+        16.35,
+        1.6
+      ],
+      "position": [
+        0,
+        8.07,
+        18.7
+      ]
+    },
+    {
+      "id": "drawer1-side-left",
+      "type": "side",
+      "name": "抽屉1左侧板",
+      "size": [
+        1.2,
+        13,
+        35.7
+      ],
+      "position": [
+        -13.2,
+        7.39,
+        0.05
+      ]
+    },
+    {
+      "id": "drawer1-side-right",
+      "type": "side",
+      "name": "抽屉1右侧板",
+      "size": [
+        1.2,
+        13,
+        35.7
+      ],
+      "position": [
+        13.2,
+        7.39,
+        0.05
+      ]
+    },
+    {
+      "id": "drawer1-bottom",
+      "type": "bottom",
+      "name": "抽屉1底板",
+      "size": [
+        25.2,
+        0.3,
+        35.7
+      ],
+      "position": [
+        0,
+        2.04,
+        0.05
+      ]
+    },
+    {
+      "id": "drawer1-back",
+      "type": "back",
+      "name": "抽屉1背板",
+      "size": [
+        25.2,
+        11.7,
+        1.2
+      ],
+      "position": [
+        0,
+        8.04,
+        -17.2
+      ]
+    },
+    {
+      "id": "drawer2-front",
+      "type": "front",
+      "name": "抽屉2面板",
+      "size": [
+        33,
+        16.35,
+        1.6
+      ],
+      "position": [
+        0,
+        -8.58,
+        18.7
+      ]
+    },
+    {
+      "id": "drawer2-side-left",
+      "type": "side",
+      "name": "抽屉2左侧板",
+      "size": [
+        1.2,
+        13,
+        35.7
+      ],
+      "position": [
+        -13.2,
+        -9.26,
+        0.05
+      ]
+    },
+    {
+      "id": "drawer2-side-right",
+      "type": "side",
+      "name": "抽屉2右侧板",
+      "size": [
+        1.2,
+        13,
+        35.7
+      ],
+      "position": [
+        13.2,
+        -9.26,
+        0.05
+      ]
+    },
+    {
+      "id": "drawer2-bottom",
+      "type": "bottom",
+      "name": "抽屉2底板",
+      "size": [
+        25.2,
+        0.3,
+        35.7
+      ],
+      "position": [
+        0,
+        -14.61,
+        0.05
+      ]
+    },
+    {
+      "id": "drawer2-back",
+      "type": "back",
+      "name": "抽屉2背板",
+      "size": [
+        25.2,
+        11.7,
+        1.2
+      ],
+      "position": [
+        0,
+        -8.61,
+        -17.2
+      ]
+    }
+  ],
+  "hardware": [
+    {
+      "id": "110519",
+      "name": "带倒刺圆头钉",
+      "quantity": 4,
+      "kind": "screw",
+      "drive": "hammer",
+      "shape": {
+        "type": "screw",
+        "diameter": 0.5,
+        "length": 3,
+        "headDiameter": 1
+      }
+    },
+    {
+      "id": "118331",
+      "name": "偏心件连接杆",
+      "quantity": 4,
+      "kind": "screw",
+      "shape": {
+        "type": "screw",
+        "diameter": 0.6,
+        "length": 3.5,
+        "headDiameter": 1
+      }
+    },
+    {
+      "id": "100412",
+      "name": "机制螺钉（拉手用）",
+      "quantity": 2,
+      "kind": "screw",
+      "shape": {
+        "type": "screw",
+        "diameter": 0.5,
+        "length": 2.5,
+        "headDiameter": 1
+      }
+    },
+    {
+      "id": "124386",
+      "name": "十字自攻螺钉",
+      "quantity": 4,
+      "kind": "screw",
+      "shape": {
+        "type": "screw",
+        "diameter": 0.4,
+        "length": 3,
+        "headDiameter": 0.9
+      }
+    },
+    {
+      "id": "100365",
+      "name": "短十字螺钉（滑轨用）",
+      "quantity": 8,
+      "kind": "screw",
+      "shape": {
+        "type": "screw",
+        "diameter": 0.4,
+        "length": 1.5,
+        "headDiameter": 0.9
+      }
+    },
+    {
+      "id": "101345",
+      "name": "木销",
+      "quantity": 4,
+      "kind": "dowel",
+      "shape": {
+        "type": "cylinder",
+        "diameter": 0.8,
+        "length": 3
+      }
+    },
+    {
+      "id": "119030",
+      "name": "偏心件",
+      "quantity": 4,
+      "kind": "cam",
+      "shape": {
+        "type": "cylinder",
+        "diameter": 1.5,
+        "length": 1
+      }
+    },
+    {
+      "id": "106266",
+      "name": "圆柱拉手",
+      "quantity": 2,
+      "kind": "knob",
+      "shape": {
+        "type": "cylinder",
+        "diameter": 1.6,
+        "length": 2.2
+      }
+    },
+    {
+      "id": "123482",
+      "name": "Z 形金属定位片",
+      "quantity": 1,
+      "kind": "tool"
+    },
+    {
+      "id": "107091",
+      "name": "防撞垫贴片",
+      "quantity": 2,
+      "kind": "pad",
+      "pieces": 2,
+      "unit": "片",
+      "shape": {
+        "type": "cylinder",
+        "diameter": 1,
+        "length": 0.3
+      }
+    },
+    {
+      "id": "123801+123802",
+      "name": "抽屉侧滑轨（左+右）",
+      "quantity": 2,
+      "kind": "rail",
+      "pieces": 2,
+      "unit": "套",
+      "members": [
+        "123801",
+        "123802"
+      ],
+      "shape": {
+        "type": "box",
+        "size": [
+          0.65,
+          2.5,
+          34
+        ]
+      }
+    }
+  ],
+  "overview": {
+    "n": 0,
+    "pages": [
+      3
+    ],
+    "title": "清点零件",
+    "hint": "对照 p3 清点五金。五金按 2 个抽屉配齐：每个抽屉的第 2–9 步各做一遍。"
+  },
+  "steps": [
+    {
+      "n": 1,
+      "pages": [
+        4
+      ],
+      "tools": [],
+      "parts": [
+        "frame"
+      ],
+      "hardware": [],
+      "title": "折叠外框",
+      "fold": [
+        "frame"
+      ],
+      "bench": [
+        -60,
+        0,
+        85
+      ],
+      "hint": "展开折叠外框（侧板上已装好滑轨），折成 U 形。"
+    },
+    {
+      "n": 2,
+      "pages": [
+        5
+      ],
+      "tools": [
+        "螺丝刀"
+      ],
+      "parts": [
+        "drawer1-front",
+        "drawer2-front"
+      ],
+      "hardware": [
+        {
+          "id": "118331",
+          "count": 4,
+          "placements": [
+            {
+              "position": [
+                -13.2,
+                10.39,
+                16.15
+              ],
+              "dir": [
+                0,
+                0,
+                1
+              ],
+              "attachTo": "drawer1-front"
+            },
+            {
+              "position": [
+                13.2,
+                10.39,
+                16.15
+              ],
+              "dir": [
+                0,
+                0,
+                1
+              ],
+              "attachTo": "drawer1-front"
+            },
+            {
+              "position": [
+                -13.2,
+                -6.26,
+                16.15
+              ],
+              "dir": [
+                0,
+                0,
+                1
+              ],
+              "attachTo": "drawer2-front"
+            },
+            {
+              "position": [
+                13.2,
+                -6.26,
+                16.15
+              ],
+              "dir": [
+                0,
+                0,
+                1
+              ],
+              "attachTo": "drawer2-front"
+            }
+          ]
+        }
+      ],
+      "title": "面板装连接杆",
+      "repeat": 2,
+      "bench": [
+        55,
+        0,
+        85
+      ],
+      "motions": [
+        {
+          "type": "screw",
+          "id": "118331",
+          "tool": "螺丝刀",
+          "page": 5
+        }
+      ],
+      "motionNote": "动作依据：p5 螺丝刀上的旋转箭头——连接杆边转边拧入。",
+      "hint": "抽屉面板内面朝上平放，拧入 2 根连接杆。两个抽屉各做一次。",
+      "figure": [
+        0,
+        0.5
+      ]
+    },
+    {
+      "n": 3,
+      "pages": [
+        5
+      ],
+      "tools": [],
+      "parts": [
+        "drawer1-side-left",
+        "drawer1-side-right",
+        "drawer2-side-left",
+        "drawer2-side-right"
+      ],
+      "hardware": [
+        {
+          "id": "101345",
+          "count": 4,
+          "placements": [
+            {
+              "position": [
+                -13.2,
+                4.39,
+                17.9
+              ],
+              "dir": [
+                0,
+                0,
+                1
+              ],
+              "attachTo": "drawer1-front"
+            },
+            {
+              "position": [
+                13.2,
+                4.39,
+                17.9
+              ],
+              "dir": [
+                0,
+                0,
+                1
+              ],
+              "attachTo": "drawer1-front"
+            },
+            {
+              "position": [
+                -13.2,
+                -12.26,
+                17.9
+              ],
+              "dir": [
+                0,
+                0,
+                1
+              ],
+              "attachTo": "drawer2-front"
+            },
+            {
+              "position": [
+                13.2,
+                -12.26,
+                17.9
+              ],
+              "dir": [
+                0,
+                0,
+                1
+              ],
+              "attachTo": "drawer2-front"
+            }
+          ]
+        }
+      ],
+      "title": "插侧板",
+      "repeat": 2,
+      "bench": [
+        55,
+        0,
+        85
+      ],
+      "approach": [
+        0,
+        0,
+        -1
+      ],
+      "hint": "敲入 2 个木销，把两块侧板竖着插到面板上。",
+      "figure": [
+        0.5,
+        1
+      ]
+    },
+    {
+      "n": 4,
+      "pages": [
+        6
+      ],
+      "tools": [
+        "一字螺丝刀"
+      ],
+      "parts": [],
+      "hardware": [
+        {
+          "id": "119030",
+          "count": 4,
+          "placements": [
+            {
+              "position": [
+                -13.2,
+                10.39,
+                16.15
+              ],
+              "dir": [
+                1,
+                0,
+                0
+              ],
+              "attachTo": "drawer1-side-left"
+            },
+            {
+              "position": [
+                13.2,
+                10.39,
+                16.15
+              ],
+              "dir": [
+                -1,
+                0,
+                0
+              ],
+              "attachTo": "drawer1-side-right"
+            },
+            {
+              "position": [
+                -13.2,
+                -6.26,
+                16.15
+              ],
+              "dir": [
+                1,
+                0,
+                0
+              ],
+              "attachTo": "drawer2-side-left"
+            },
+            {
+              "position": [
+                13.2,
+                -6.26,
+                16.15
+              ],
+              "dir": [
+                -1,
+                0,
+                0
+              ],
+              "attachTo": "drawer2-side-right"
+            }
+          ]
+        }
+      ],
+      "title": "偏心件",
+      "repeat": 2,
+      "hint": "侧板孔里装偏心件，用一字螺丝刀转紧。",
+      "motions": [
+        {
+          "type": "turn",
+          "id": "119030",
+          "tool": "一字螺丝刀",
+          "angle": 180,
+          "page": 6
+        }
+      ],
+      "motionNote": "动作依据：p6 右侧放大圆圈里螺丝刀上的弯箭头——偏心件原地转紧（转角说明书没写，取半圈）。",
+      "figure": [
+        0,
+        0.5
+      ]
+    },
+    {
+      "n": 5,
+      "pages": [
+        6
+      ],
+      "tools": [],
+      "parts": [
+        "drawer1-bottom",
+        "drawer2-bottom"
+      ],
+      "hardware": [],
+      "title": "底板",
+      "repeat": 2,
+      "bench": [
+        55,
+        0,
+        85
+      ],
+      "approach": [
+        0,
+        0,
+        -1
+      ],
+      "hint": "底板沿槽滑进去。",
+      "figure": [
+        0.5,
+        1
+      ]
+    },
+    {
+      "n": 6,
+      "pages": [
+        7
+      ],
+      "tools": [],
+      "parts": [
+        "drawer1-back",
+        "drawer2-back"
+      ],
+      "hardware": [],
+      "title": "背板",
+      "repeat": 2,
+      "bench": [
+        55,
+        0,
+        85
+      ],
+      "approach": [
+        0,
+        0,
+        -1
+      ],
+      "hint": "背板压下来，卡进侧板顶端的缺口。",
+      "figure": [
+        0,
+        0.5
+      ]
+    },
+    {
+      "n": 7,
+      "pages": [
+        7
+      ],
+      "tools": [
+        "锤子"
+      ],
+      "parts": [],
+      "hardware": [
+        {
+          "id": "110519",
+          "count": 4,
+          "placements": [
+            {
+              "position": [
+                -12.3,
+                8.39,
+                -17.2
+              ],
+              "dir": [
+                -1,
+                0,
+                0
+              ],
+              "attachTo": "drawer1-side-left"
+            },
+            {
+              "position": [
+                12.3,
+                8.39,
+                -17.2
+              ],
+              "dir": [
+                1,
+                0,
+                0
+              ],
+              "attachTo": "drawer1-side-right"
+            },
+            {
+              "position": [
+                -12.3,
+                -8.26,
+                -17.2
+              ],
+              "dir": [
+                -1,
+                0,
+                0
+              ],
+              "attachTo": "drawer2-side-left"
+            },
+            {
+              "position": [
+                12.3,
+                -8.26,
+                -17.2
+              ],
+              "dir": [
+                1,
+                0,
+                0
+              ],
+              "attachTo": "drawer2-side-right"
+            }
+          ]
+        }
+      ],
+      "title": "钉背板",
+      "repeat": 2,
+      "hint": "侧板与背板之间用钉子敲入固定。",
+      "figure": [
+        0.5,
+        1
+      ]
+    },
+    {
+      "n": 8,
+      "pages": [
+        8
+      ],
+      "tools": [
+        "螺丝刀"
+      ],
+      "parts": [],
+      "hardware": [
+        {
+          "id": "123801+123802",
+          "count": 2,
+          "placements": [
+            {
+              "position": [
+                -14.12,
+                2.14,
+                0.05
+              ],
+              "dir": [
+                -1,
+                0,
+                0
+              ],
+              "attachTo": "drawer1-side-left",
+              "member": "123801"
+            },
+            {
+              "position": [
+                14.12,
+                2.14,
+                0.05
+              ],
+              "dir": [
+                1,
+                0,
+                0
+              ],
+              "attachTo": "drawer1-side-right",
+              "member": "123802"
+            },
+            {
+              "position": [
+                -14.12,
+                -14.51,
+                0.05
+              ],
+              "dir": [
+                -1,
+                0,
+                0
+              ],
+              "attachTo": "drawer2-side-left",
+              "member": "123801"
+            },
+            {
+              "position": [
+                14.12,
+                -14.51,
+                0.05
+              ],
+              "dir": [
+                1,
+                0,
+                0
+              ],
+              "attachTo": "drawer2-side-right",
+              "member": "123802"
+            }
+          ]
+        },
+        {
+          "id": "100365",
+          "count": 8,
+          "placements": [
+            {
+              "position": [
+                -13.7,
+                2.14,
+                -10
+              ],
+              "dir": [
+                -1,
+                0,
+                0
+              ],
+              "attachTo": "drawer1-side-left"
+            },
+            {
+              "position": [
+                -13.7,
+                2.14,
+                10
+              ],
+              "dir": [
+                -1,
+                0,
+                0
+              ],
+              "attachTo": "drawer1-side-left"
+            },
+            {
+              "position": [
+                13.7,
+                2.14,
+                -10
+              ],
+              "dir": [
+                1,
+                0,
+                0
+              ],
+              "attachTo": "drawer1-side-right"
+            },
+            {
+              "position": [
+                13.7,
+                2.14,
+                10
+              ],
+              "dir": [
+                1,
+                0,
+                0
+              ],
+              "attachTo": "drawer1-side-right"
+            },
+            {
+              "position": [
+                -13.7,
+                -14.51,
+                -10
+              ],
+              "dir": [
+                -1,
+                0,
+                0
+              ],
+              "attachTo": "drawer2-side-left"
+            },
+            {
+              "position": [
+                -13.7,
+                -14.51,
+                10
+              ],
+              "dir": [
+                -1,
+                0,
+                0
+              ],
+              "attachTo": "drawer2-side-left"
+            },
+            {
+              "position": [
+                13.7,
+                -14.51,
+                -10
+              ],
+              "dir": [
+                1,
+                0,
+                0
+              ],
+              "attachTo": "drawer2-side-right"
+            },
+            {
+              "position": [
+                13.7,
+                -14.51,
+                10
+              ],
+              "dir": [
+                1,
+                0,
+                0
+              ],
+              "attachTo": "drawer2-side-right"
+            }
+          ]
+        }
+      ],
+      "title": "抽屉滑轨",
+      "repeat": 2,
+      "hint": "装左（123801）、右（123802）滑轨，每条 2 颗螺钉。",
+      "motions": [
+        {
+          "type": "screw",
+          "id": "100365",
+          "tool": "螺丝刀",
+          "page": 8
+        }
+      ],
+      "motionNote": "动作依据：p8 第 8 步放大圆圈里螺丝刀上的旋转箭头——螺钉边转边拧入。",
+      "figure": [
+        0,
+        0.5
+      ]
+    },
+    {
+      "n": 9,
+      "pages": [
+        8
+      ],
+      "tools": [
+        "螺丝刀"
+      ],
+      "parts": [],
+      "hardware": [
+        {
+          "id": "106266",
+          "count": 2,
+          "placements": [
+            {
+              "position": [
+                0,
+                8.07,
+                20.6
+              ],
+              "dir": [
+                0,
+                0,
+                1
+              ],
+              "attachTo": "drawer1-front"
+            },
+            {
+              "position": [
+                0,
+                -8.58,
+                20.6
+              ],
+              "dir": [
+                0,
+                0,
+                1
+              ],
+              "attachTo": "drawer2-front"
+            }
+          ]
+        },
+        {
+          "id": "100412",
+          "count": 2,
+          "placements": [
+            {
+              "position": [
+                0,
+                8.07,
+                19.15
+              ],
+              "dir": [
+                0,
+                0,
+                -1
+              ],
+              "attachTo": "drawer1-front"
+            },
+            {
+              "position": [
+                0,
+                -8.58,
+                19.15
+              ],
+              "dir": [
+                0,
+                0,
+                -1
+              ],
+              "attachTo": "drawer2-front"
+            }
+          ]
+        },
+        {
+          "id": "107091",
+          "count": 2,
+          "placements": [
+            {
+              "position": [
+                -15.5,
+                14.74,
+                17.75
+              ],
+              "dir": [
+                0,
+                0,
+                -1
+              ],
+              "attachTo": "drawer1-front"
+            },
+            {
+              "position": [
+                15.5,
+                14.74,
+                17.75
+              ],
+              "dir": [
+                0,
+                0,
+                -1
+              ],
+              "attachTo": "drawer1-front"
+            },
+            {
+              "position": [
+                -15.5,
+                -1.91,
+                17.75
+              ],
+              "dir": [
+                0,
+                0,
+                -1
+              ],
+              "attachTo": "drawer2-front"
+            },
+            {
+              "position": [
+                15.5,
+                -1.91,
+                17.75
+              ],
+              "dir": [
+                0,
+                0,
+                -1
+              ],
+              "attachTo": "drawer2-front"
+            }
+          ]
+        }
+      ],
+      "title": "拉手和防撞垫",
+      "repeat": 2,
+      "hint": "拉手螺钉从面板内侧拧入；面板背面上角贴防撞垫（1 片 = 2 个垫）。",
+      "motions": [
+        {
+          "type": "screw",
+          "id": "100412",
+          "tool": "螺丝刀",
+          "page": 8
+        }
+      ],
+      "motionNote": "动作依据：p8 第 9 步螺丝刀上的旋转箭头——拉手螺钉边转边拧入。",
+      "figure": [
+        0.5,
+        1
+      ]
+    },
+    {
+      "n": 10,
+      "pages": [
+        9
+      ],
+      "tools": [
+        "123482",
+        "铅笔"
+      ],
+      "parts": [],
+      "hardware": [],
+      "title": "划线（左）",
+      "marks": [
+        {
+          "position": [
+            -14.76,
+            -16.73,
+            17.6
+          ],
+          "size": [
+            3,
+            0.06,
+            0.15
+          ]
+        }
+      ],
+      "hint": "定位片卡在格子底板前沿左侧，用铅笔划线。",
+      "figure": [
+        0,
+        0.5
+      ]
+    },
+    {
+      "n": 11,
+      "pages": [
+        9
+      ],
+      "tools": [
+        "123482",
+        "铅笔"
+      ],
+      "parts": [],
+      "hardware": [],
+      "title": "划线（右）",
+      "marks": [
+        {
+          "position": [
+            14.76,
+            -16.73,
+            17.6
+          ],
+          "size": [
+            3,
+            0.06,
+            0.15
+          ]
+        }
+      ],
+      "hint": "右侧同样划线。",
+      "figure": [
+        0.5,
+        1
+      ]
+    },
+    {
+      "n": 12,
+      "pages": [
+        10
+      ],
+      "tools": [],
+      "parts": [],
+      "hardware": [],
+      "title": "推入外框",
+      "install": [
+        "frame"
+      ],
+      "hint": "把 U 形外框推进格子。"
+    },
+    {
+      "n": 13,
+      "pages": [
+        11
+      ],
+      "tools": [
+        "螺丝刀"
+      ],
+      "parts": [],
+      "hardware": [
+        {
+          "id": "124386",
+          "count": 2,
+          "placements": [
+            {
+              "position": [
+                -16.6,
+                -8.26,
+                15.6
+              ],
+              "dir": [
+                1,
+                0,
+                0
+              ],
+              "attachTo": "frame"
+            },
+            {
+              "position": [
+                -16.6,
+                7.74,
+                15.6
+              ],
+              "dir": [
+                1,
+                0,
+                0
+              ],
+              "attachTo": "frame"
+            }
+          ]
+        }
+      ],
+      "title": "左侧螺钉",
+      "hint": "左侧压紧外框、对齐铅笔线，打 2 颗螺钉。",
+      "motions": [
+        {
+          "type": "screw",
+          "id": "124386",
+          "tool": "螺丝刀",
+          "page": 11
+        }
+      ],
+      "motionNote": "动作依据：p11 第 13 步螺丝刀上的旋转箭头——螺钉边转边拧入。第 14 步的图上没有画旋转箭头，那一步不加转动。",
+      "figure": [
+        0,
+        0.5
+      ]
+    },
+    {
+      "n": 14,
+      "pages": [
+        11
+      ],
+      "tools": [],
+      "parts": [],
+      "hardware": [
+        {
+          "id": "124386",
+          "count": 2,
+          "placements": [
+            {
+              "position": [
+                16.6,
+                -8.26,
+                15.6
+              ],
+              "dir": [
+                -1,
+                0,
+                0
+              ],
+              "attachTo": "frame"
+            },
+            {
+              "position": [
+                16.6,
+                7.74,
+                15.6
+              ],
+              "dir": [
+                -1,
+                0,
+                0
+              ],
+              "attachTo": "frame"
+            }
+          ]
+        }
+      ],
+      "title": "右侧螺钉",
+      "hint": "右侧同样操作。",
+      "figure": [
+        0.5,
+        1
+      ]
+    },
+    {
+      "n": 15,
+      "pages": [
+        12
+      ],
+      "tools": [],
+      "parts": [],
+      "hardware": [],
+      "title": "推入抽屉",
+      "install": [
+        "drawer1-front",
+        "drawer2-front",
+        "drawer1-side-left",
+        "drawer1-side-right",
+        "drawer2-side-left",
+        "drawer2-side-right",
+        "drawer1-bottom",
+        "drawer2-bottom",
+        "drawer1-back",
+        "drawer2-back"
+      ],
+      "hint": "两个抽屉放到滑轨上推进去。"
+    }
+  ]
+}

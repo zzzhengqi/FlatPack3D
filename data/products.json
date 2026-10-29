@@ -1,0 +1,15 @@
+{
+  "schema": "flatpack3d/products@1",
+  "note": "由 scripts/build-index.js 按 data/*/manifest.json 生成，请勿手改",
+  "default": "kallax",
+  "products": [
+    {
+      "id": "kallax",
+      "title": "KALLAX 置物架 + 门嵌件 + 双抽屉嵌件",
+      "sites": {
+        "zh": "data/kallax/site.json",
+        "en": "data/kallax/site.en.json"
+      }
+    }
+  ]
+}
