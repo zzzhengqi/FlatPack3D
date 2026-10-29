@@ -1,0 +1,38 @@
+MIT License
+
+Copyright (c) 2026 zzzhengqi (蒸汽 / ZHENGQI)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+------------------------------------------------------------------------------
+Exclusions / 不在本许可范围内
+
+1. brand/ — The 蒸汽 / ZHENGQI logo images in the brand/ directory are owned by
+   the author and are NOT licensed under the MIT License above. They may not be
+   copied, modified or used in other projects without the author's permission.
+   brand/ 目录里的蒸汽 / ZHENGQI 标识图片归作者所有，不适用上面的 MIT 许可；
+   未经作者同意，不得转载、改作或用于其他项目。
+
+2. vendor/three@0.160.0/ — three.js, Copyright © 2010-2023 three.js authors,
+   distributed under its own MIT License (see vendor/three@0.160.0/LICENSE).
+
+3. Trademarks — Product names and trademarks mentioned in this repository
+   (e.g. IKEA, KALLAX, trademarks of Inter IKEA Systems B.V.) belong to their
+   owners. This license grants no rights to them. Manufacturer manuals and
+   product images are not included in this repository.

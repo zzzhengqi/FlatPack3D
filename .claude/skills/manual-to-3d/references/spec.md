@@ -5,7 +5,7 @@
 
 本规范按项目的开发阶段分节，越往后越新；同一个字段以后面的说明为准。**一个产品（一套家具）的目录结构见最后的"产品目录"一节。**
 
-**从哪里开始**：`node skills/manual-to-3d/scripts/flatpack.js new <id>` 生成的 `data/<id>/build/main.js` 是一份最小可用的装配数据构建脚本（一张小桌：3 块板、4 颗螺钉、2 步），必需的字段都在里面：`schema`、`id`、`title`、`scope`、`source`（`manual`、`docId`、`analysis`、`dimensions`、`reportSection`）、`manualPages`、`meta.overall`、`poses`（加 `defaultPose`）、`partTypes`、`parts`、`hardware`、`overview`、`steps`。先照它写出能通过校验的骨架，再按下面各节加路线、动作、嵌件、全套等。完整的大例子是 `data/kallax/build/`。
+**从哪里开始**：`node scripts/flatpack.js new <id>` 生成的 `data/<id>/build/main.js` 是一份最小可用的装配数据构建脚本（一张小桌：3 块板、4 颗螺钉、2 步），必需的字段都在里面：`schema`、`id`、`title`、`scope`、`source`（`manual`、`docId`、`analysis`、`dimensions`、`reportSection`）、`manualPages`、`meta.overall`、`poses`（加 `defaultPose`）、`partTypes`、`parts`、`hardware`、`overview`、`steps`。先照它写出能通过校验的骨架，再按下面各节加路线、动作、嵌件、全套等。完整的大例子是 `data/kallax/build/`。
 
 ## 坐标与单位
 
@@ -142,7 +142,7 @@
   "schema": "flatpack3d/set@1",
   "body": "data/kallax/body.json",
   "layoutSource": "排布依据（商品图）",
-  "references": ["refs/…png"],
+  "references": ["inputs/<产品>/images/…png"],
   "inserts": [
     { "id": "door", "data": "data/kallax/door.json", "variant": "left",
       "placements": [{ "cell": [1, 3], "origin": [-70.24, 0, 0] }] }   // cell = [列, 行]，都从 1 起，行从上数；origin = 格子内腔中心
@@ -313,9 +313,9 @@ data/
     i18n/<件>.en.json      装配数据的英文译文
     build/*.js             构建脚本（manifest.build 列出，按顺序运行）
     og-image.png og-image.en.png  分享图（scripts/make-og-image.js 生成）
-manuals/<产品>/*.pdf        说明书 PDF（不入库）
+inputs/<产品>/*.pdf         说明书 PDF（不入库）
 renders/<产品>/<key>/pNN.png 说明书页面图（scripts/render-pages.py 生成，不入库）
-refs/<产品>/               商品图（不入库）
+inputs/<产品>/images/       商品图（不入库）
 ```
 
 ### manifest.json
@@ -332,7 +332,7 @@ refs/<产品>/               商品图（不入库）
   "sources": {
     "manuals": [{ "key": "shelf", "file": "….pdf", "docId": "AA-2334148-2", "url": "https://…", "pages": 36 }],
     "productPages": [{ "url": "https://…", "used": "从这一页取了什么" }],
-    "images": { "dir": "refs/kallax", "from": "https://…", "note": "…" }
+    "images": { "dir": "inputs/kallax/images", "from": "https://…", "note": "…" }
   }
 }
 ```

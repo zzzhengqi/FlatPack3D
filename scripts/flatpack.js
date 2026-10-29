@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-// manual-to-3d 技能的命令入口：找到 FlatPack3D 仓库，调用仓库里的脚本。
-// 用法：node skills/manual-to-3d/scripts/flatpack.js <命令> [参数]
+// FlatPack3D 的命令入口（manual-to-3d 技能用它）：在仓库根目录运行，调用仓库里的各个脚本。
+// 用法：node scripts/flatpack.js <命令> [参数]
 //   doctor                                   检查前提（Node、Python 包、浏览器、仓库文件）
 //   new <id> [--title=名称] [--no-en]          新建产品骨架 data/<id>/（能跑通的示例占位）
-//   render <id> [--width=1000]               把 manuals/<id>/ 下的 PDF 渲染成 renders/<id>/<key>/pNN.png
+//   render <id> [--width=1000]               把 inputs/<id>/ 下的 PDF 渲染成 renders/<id>/<key>/pNN.png
 //   build <id>                               运行产品的构建脚本，更新产品索引和页面头部
 //   validate [--product=<id>] [--no-framing] [--verbose]   数据校验（默认最后跑取景检查）
 //   framing [--product=<id>] [--lang=en] [--sizes=desktop,laptop,mobile] [--only=<件>]   取景和放大圆圈检查
@@ -34,7 +34,7 @@ const run = (exe, args) => { const r = spawnSync(exe, args, { cwd: root, stdio: 
 const node = (script, args) => run(process.execPath, [path.join(root, script), ...args]);
 
 if (!root) {
-  console.error('找不到 FlatPack3D 仓库（要有 index.html、scripts/validate.js、vendor/）。请在仓库目录里运行，或先克隆 FlatPack3D 仓库。');
+  console.error('找不到 FlatPack3D 仓库（要有 index.html、scripts/validate.js、vendor/）。先克隆：git clone --depth 1 --branch v0.1.0 https://github.com/zzzhengqi/FlatPack3D.git，再进入 FlatPack3D 目录运行。');
   process.exit(1);
 }
 
@@ -55,7 +55,7 @@ function doctor() {
   ok('vendor/three@0.160.0', fs.existsSync(path.join(root, 'vendor', 'three@0.160.0', 'build', 'three.module.js')), '仓库不完整：缺 three.js');
   ok('data/products.json', fs.existsSync(path.join(root, 'data', 'products.json')), '运行 node scripts/build-index.js');
   const gi = fs.existsSync(path.join(root, '.gitignore')) ? fs.readFileSync(path.join(root, '.gitignore'), 'utf8') : '';
-  ok('.gitignore 挡住 manuals/ renders/ refs/ exports/', ['manuals/', 'renders/', 'refs/', 'exports/'].every((x) => gi.includes(x)), '在 .gitignore 里加上 manuals/、renders/、refs/、exports/（说明书和商品图不能入库）');
+  ok('.gitignore 挡住 inputs/ renders/ exports/', ['inputs/', 'renders/', 'exports/'].every((x) => gi.includes(x)), '在 .gitignore 里加上 inputs/、renders/、exports/（说明书和商品图不能入库）');
   for (const [a, b, c] of rows) console.log(`${a} ${b}${c ? `  → ${c}` : ''}`);
   console.log(`仓库：${root}`);
   process.exit(rows.some((r) => r[0] === '✘') ? 1 : 0);
@@ -68,7 +68,7 @@ function syncSkill(check) {
   const a = list(src).sort(), b = list(dst).sort();
   const diff = [...a.filter((f) => !b.includes(f) || !fs.readFileSync(path.join(src, f)).equals(fs.readFileSync(path.join(dst, f)))), ...b.filter((f) => !a.includes(f))];
   if (check) {
-    console.log(diff.length ? `✘ .claude/skills/manual-to-3d 与 skills/manual-to-3d 不一致：${diff.join('、')}（运行 sync-skill）` : '✔ .claude/skills/manual-to-3d 与 skills/manual-to-3d 一致');
+    console.log(diff.length ? `✘ .claude/skills/manual-to-3d 与 skills/manual-to-3d 不一致：${diff.join('、')}（运行 node scripts/flatpack.js sync-skill）` : '✔ .claude/skills/manual-to-3d 与 skills/manual-to-3d 一致');
     process.exit(diff.length ? 1 : 0);
   }
   fs.rmSync(dst, { recursive: true, force: true });

@@ -3,7 +3,7 @@
 // 生成的是一个能跑通的"示例占位"（一张小桌：顶板 + 两块侧板 + 4 颗螺钉 A），用来确认环境和流程都正常；
 // 之后按 skills/manual-to-3d/SKILL.md 的阶段，把每个文件里的示例内容换成真实资料。
 // 用法：node scripts/new-product.js <id> [--title=名称] [--no-en] [--force]
-//   id 用小写字母、数字和连字符，例如 hemnes-bed。会在 data/<id>/ 下建文件，并新建 manuals/<id>/、refs/<id>/ 两个本机目录。
+//   id 用小写字母、数字和连字符，例如 hemnes-bed。会在 data/<id>/ 下建文件，并新建本机目录 inputs/<id>/（放说明书 PDF）和 inputs/<id>/images/（放商品图），都不入库。
 'use strict';
 const fs = require('fs');
 const path = require('path');
@@ -38,10 +38,10 @@ files['manifest.json'] = json({
   sites: { zh: `${D}/site.json`, ...(en ? { en: `${D}/site.en.json` } : {}) },
   build: [`${D}/build/main.js`],
   sources: {
-    // 示例占位：换成真实说明书。file 放在 manuals/<id>/ 下（不入库），url 是官方下载地址，pages 是总页数
+    // 示例占位：换成真实说明书。file 放在 inputs/<id>/ 下（不入库），url 是官方下载地址，pages 是总页数
     manuals: [{ key: 'main', file: `${id}-manual.pdf`, docId: 'EXAMPLE-1', url: `https://example.com/${id}-manual.pdf`, pages: 4 }],
     productPages: [{ url: 'https://example.com/product', used: '示例占位：写明从这一页取了什么（例如整体尺寸）' }],
-    images: { dir: `refs/${id}`, from: 'https://example.com/product', note: '商品图只在本机参考，不入库' },
+    images: { dir: `inputs/${id}/images`, from: 'https://example.com/product', note: '商品图只在本机参考，不入库' },
   },
 });
 
@@ -229,8 +229,8 @@ for (const [f, text] of Object.entries(files)) {
   fs.mkdirSync(path.dirname(p), { recursive: true });
   fs.writeFileSync(p, text);
 }
-for (const d of [`manuals/${id}`, `refs/${id}`]) fs.mkdirSync(path.join(root, d), { recursive: true });
-console.log(`已建 data/${id}/（${Object.keys(files).length} 个文件）和本机目录 manuals/${id}/、refs/${id}/`);
+for (const d of [`inputs/${id}/images`]) fs.mkdirSync(path.join(root, d), { recursive: true });
+console.log(`已建 data/${id}/（${Object.keys(files).length} 个文件）和本机目录 inputs/${id}/（PDF）、inputs/${id}/images/（商品图）`);
 // 生成数据、更新产品索引
 const r = spawnSync(process.execPath, [path.join(root, 'scripts', 'build.js'), id], { cwd: root, stdio: 'inherit' });
 if (r.status) process.exit(r.status);
@@ -239,6 +239,6 @@ const og = spawnSync(process.execPath, [path.join(root, 'scripts', 'make-og-imag
 if (og.status) console.log(`分享图没有生成（需要本机 Chrome 或 Edge）。之后运行 node scripts/make-og-image.js ${id}`);
 console.log(`
 下一步：
-  node scripts/validate.js --product=${id}       校验（示例占位应全部通过）
-  node scripts/serve.js 8137 --open              打开页面，地址后加 ?product=${id}
+  node scripts/flatpack.js validate --product=${id}   校验（示例占位应全部通过）
+  node scripts/flatpack.js serve 8137 --open         打开页面，地址后加 ?product=${id}
 然后按 skills/manual-to-3d/SKILL.md 从阶段 1 开始，把示例内容换成真实资料。`);

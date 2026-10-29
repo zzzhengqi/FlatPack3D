@@ -2,7 +2,7 @@
 // 生成门嵌件、双抽屉嵌件和"全套"的装配数据：
 //   data/kallax/door.json    门嵌件 AA-1009339-8（报告第 2 节），左开 / 右开两条路线
 //   data/kallax/drawer.json  双抽屉嵌件 AA-1009361-5（报告第 3 节），2 个抽屉
-//   data/kallax/set.json     主体 + 5 门 + 5 双抽屉，排布来自 refs/ 商品图
+//   data/kallax/set.json     主体 + 5 门 + 5 双抽屉，排布来自商品图（inputs/kallax/images/，不入库）
 // 坐标：嵌件以所在格子的内腔中心为原点（x 右、y 上、z 朝前），格子深度方向与主体一致（z = ±19.5）。
 // 尺寸和每一条猜测见 data/kallax/dimensions.md。
 // 用法：node data/kallax/build/inserts.js
@@ -293,19 +293,19 @@ function buildDrawer() {
 
 // ======================= 全套 =======================
 function buildSet() {
-  // 排布来自 refs/ 里的商品图（不是说明书内容）：从上数第 3 排 5 个门嵌件（拉手在右 → 左开），第 4 排 5 个双抽屉嵌件
+  // 排布来自 inputs/kallax/images/ 里的商品图（不是说明书内容）：从上数第 3 排 5 个门嵌件（拉手在右 → 左开），第 4 排 5 个双抽屉嵌件
   const row = (r) => [1, 2, 3, 4, 5].map((c) => ({ cell: [c, r], origin: K.cellCenter(c, r) }));
   return {
     schema: 'flatpack3d/set@1',
     id: 'kallax-set',
     title: 'KALLAX 全套（主体 + 5 门 + 5 双抽屉）',
     body: 'data/kallax/body.json',
-    layoutSource: '商品图 refs/…pe748007_s5.png、refs/…pe618893_s5.png：第 3 排 5 个门（拉手在右，铰链在左）、第 4 排 5 个双抽屉，其余格子空。此排布来自商品图，不是说明书内容。',
+    layoutSource: '商品图 …pe748007_s5.png、…pe618893_s5.png：第 3 排 5 个门（拉手在右，铰链在左）、第 4 排 5 个双抽屉，其余格子空。此排布来自商品图，不是说明书内容。',
     // 嵌件说明书 p3 ⓘ（报告第 4、6 节）：装了墙固定件的左上、右上两格如果装嵌件，要拿掉转角盖帽
     notes: ['嵌件说明书 p3 提示：柜体用墙固定件 115753 上墙时，左上、右上两格如果要装嵌件，需要拿掉那里的转角盖帽。当前排布的嵌件都在第 3、4 排，不受影响。'],
     references: [
-      'refs/kallax/imageye___-_imgi_1338_kallax-shelving-unit-with-10-inserts-black-brown__0754648_pe748007_s5.png',
-      'refs/kallax/imageye___-_imgi_1339_kallax-shelving-unit-with-10-inserts-white-stained-oak-effect__0480309_pe618893_s5.png',
+      'inputs/kallax/images/imageye___-_imgi_1338_kallax-shelving-unit-with-10-inserts-black-brown__0754648_pe748007_s5.png',
+      'inputs/kallax/images/imageye___-_imgi_1339_kallax-shelving-unit-with-10-inserts-white-stained-oak-effect__0480309_pe618893_s5.png',
     ],
     // 全套里每种嵌件应有的数量（来自任务要求；排布依据是商品图）。校验按这里核对
     expected: { door: 5, drawer: 5 },

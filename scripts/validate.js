@@ -663,7 +663,7 @@ if (args.length) {
     const list = (d, base = d) => (fs.existsSync(d) ? fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? list(path.join(d, e.name), base) : [path.relative(base, path.join(d, e.name))])) : []);
     const a = list(skillSrc), b = list(skillDst);
     const diff = [...a.filter((f) => !b.includes(f) || !fs.readFileSync(path.join(skillSrc, f)).equals(fs.readFileSync(path.join(skillDst, f)))), ...b.filter((f) => !a.includes(f))];
-    if (diff.length) { failed++; console.log(`✘ .claude/skills/manual-to-3d 与 skills/manual-to-3d 不一致：${diff.slice(0, 8).join('、')}（运行 node skills/manual-to-3d/scripts/flatpack.js sync-skill）\n`); }
+    if (diff.length) { failed++; console.log(`✘ .claude/skills/manual-to-3d 与 skills/manual-to-3d 不一致：${diff.slice(0, 8).join('、')}（运行 node scripts/flatpack.js sync-skill）\n`); }
     else console.log(`✔ 技能两份一致（${a.length} 个文件）\n`);
   }
 }

@@ -1,12 +1,12 @@
 # 发布前检查清单
 
-逐条打勾。命令都在仓库根目录运行，`flatpack` = `node skills/manual-to-3d/scripts/flatpack.js`。
+逐条打勾。命令都在仓库根目录运行，`flatpack` = `node scripts/flatpack.js`。
 
 ## 资料不入库
 
-- [ ] `git ls-files | grep -iE '\.(pdf|jpe?g|webp)$|^renders/|^manuals/|^refs/|^exports/'` 没有输出。
+- [ ] `git ls-files | grep -iE '\.(pdf|jpe?g|webp)$|^inputs/|^renders/|^manuals/|^refs/|^exports/'` 没有输出。
 - [ ] `git log --all --name-only --pretty=format: | sort -u | grep -iE '\.(pdf|png|jpe?g|webp)$'` 只有自己生成的 3D 截图（`data/*/og-image*.png`、`skills/manual-to-3d/examples/*/screens/*.png`）和 `brand/` 里的标识。历史里一旦进过说明书页面图或商品图，要先清理历史再发布。
-- [ ] `.gitignore` 里有 `manuals/`、`renders/`、`refs/`、`exports/`。
+- [ ] `.gitignore` 里有 `inputs/`、`renders/`、`exports/`。
 - [ ] 截图类文件（分享图、示例截图）里看不到说明书页面：截图前隐藏说明书面板，或确认本机没有页面图。
 
 ## 校验

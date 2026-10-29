@@ -2,7 +2,7 @@
 
 这是 FlatPack3D 用本技能做出来的第一套 3D 说明书，产品 id 是 `kallax`，数据都在仓库的 `data/kallax/`。这里按 SKILL.md 的 8 个阶段，指出每个阶段在 KALLAX 里对应哪些文件、做到了什么程度，新产品照着做。
 
-> 仓库里没有宜家的说明书 PDF、说明书页面图和商品图（版权归原厂）。要在本机对照页面图，把三份 PDF（下载地址在 `data/kallax/manifest.json`）放进 `manuals/kallax/`，运行 `node skills/manual-to-3d/scripts/flatpack.js render kallax`。
+> 仓库里没有宜家的说明书 PDF、说明书页面图和商品图（版权归原厂）。要在本机对照页面图，把三份 PDF（下载地址在 `data/kallax/manifest.json`）放进 `inputs/kallax/`，运行 `node scripts/flatpack.js render kallax`。
 
 ## 规模
 

@@ -43,9 +43,9 @@
       }
     ],
     "images": {
-      "dir": "refs/kallax",
+      "dir": "inputs/kallax/images",
       "from": "https://www.ikea.com/jp/en/p/kallax-shelving-unit-with-10-inserts-white-s89278339/",
-      "note": "商品图只在本机参考，不入库（.gitignore 里有 refs/）"
+      "note": "商品图只在本机参考，不入库（.gitignore 里有 inputs/）"
     }
   }
 }

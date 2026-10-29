@@ -134,7 +134,7 @@
   "zoomSource": "依据 {pages}",
   "pageFallbackTitle": "说明书第 {p} 页（本机没有渲染页面图）",
   "pageOpenPdf": "打开官方 PDF 第 {p} 页（{doc}）",
-  "pageRenderHint": "说明书页面图不入库。把 PDF 放进 manuals/{product}/ 后运行 python scripts/render-pages.py {product}，这里会自动显示页面图。",
+  "pageRenderHint": "说明书页面图不入库。把 PDF 放进 inputs/{product}/ 后运行 python scripts/render-pages.py {product}，这里会自动显示页面图。",
   "roomPagesHintNoSafety": "本方案的固定步骤页",
   "byline": "by 蒸汽",
   "bylineTitle": "蒸汽 ZHENGQI"

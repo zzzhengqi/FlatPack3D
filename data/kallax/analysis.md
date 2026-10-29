@@ -1,6 +1,6 @@
 # KALLAX 说明书分析
 
-> 依据：`manuals/kallax/` 下 3 份 PDF（下载地址见 `data/kallax/manifest.json`），按约 1000px 宽渲染到 `renders/kallax/{shelf,door,drawers}/pNN.png` 后逐页阅读。
+> 依据：`inputs/kallax/` 下 3 份 PDF（下载地址见 `data/kallax/manifest.json`），按约 1000px 宽渲染到 `renders/kallax/{shelf,door,drawers}/pNN.png` 后逐页阅读。
 > 规则：结论只来自 PDF 页面本身。看不清或需要推断的地方标 **不确定**，或写明"根据图示判断"。
 > PDF 的文字层只有页码、文档号和警告语，零件和步骤信息都来自图。
 > PDF 里没有给出任何尺寸数字（mm/cm），所以本文不写尺寸。

@@ -1888,7 +1888,7 @@ function renderSetUi(set) {
   $('hwCard').innerHTML = `<h3>${esc(t('setCompose'))}</h3>${rows.map(([n, c, d]) => `<div class="row"><span class="name">${esc(n)}</span><span class="num">×${c}</span><span class="id">${esc(d)}</span></div>`).join('')}
     <div class="tool"><span>${esc(t('setPartTotal'))}</span><span class="num">${esc(t('setPartTotalVal', { n: partTotal }))}</span></div>
     <div class="tool"><span>${esc(t('setInstanced'))}</span><span class="num">${esc(t('setInstancedVal', { n: view.instanced.length }))}</span></div>`;
-  // 左侧显示商品图（refs/ 不入库，可能不存在）
+  // 左侧显示商品图（用户资料在 inputs/，不入库，可能不存在）
   $('manualLabel').textContent = t('refsLabel');
   $('pageNav').style.display = 'none';
   $('pageHintText').textContent = t('setLayoutNote');

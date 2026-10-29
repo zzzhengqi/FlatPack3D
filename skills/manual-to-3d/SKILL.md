@@ -11,20 +11,41 @@ description: 把产品的装配说明书（PDF、商品页尺寸、产品图片�
 
 ### 前提
 
-1. **FlatPack3D 仓库**：引擎（`index.html`）、校验和截图脚本都在仓库里，本技能的命令都在仓库里运行。确认方法：仓库根目录有 `index.html`、`scripts/validate.js`、`vendor/three@0.160.0/`。没有就请用户提供仓库地址或位置，不要自己另写引擎。
-2. 运行环境检查，全部 ✔ 再开始：
+1. **FlatPack3D 仓库**：本技能只有说明文字，不带工具；引擎（`index.html`）、校验、截图检查和命令入口 `scripts/flatpack.js` 都在 FlatPack3D 仓库里。先判断当前文件夹是不是仓库：根目录同时有 `index.html`、`scripts/flatpack.js`、`vendor/three@0.160.0/`。
+   - **是**：直接在这里做。
+   - **当前文件夹下已经有 `FlatPack3D/`**（以前克隆过）：进入它，不要重复克隆。
+   - **都不是**：在当前文件夹里克隆 v0.1.0，然后进入 `FlatPack3D/`，后面所有命令都在那里运行：
+
+     ```bash
+     git clone --depth 1 --branch v0.1.0 https://github.com/zzzhengqi/FlatPack3D.git
+     cd FlatPack3D
+     ```
+
+   - **没装 git**（`git --version` 报错）：从 Release 下载 zip 解压，解压出的文件夹叫 `FlatPack3D-0.1.0/`，进入它：
+
+     ```bash
+     # Windows PowerShell
+     Invoke-WebRequest -Uri https://github.com/zzzhengqi/FlatPack3D/archive/refs/tags/v0.1.0.zip -OutFile FlatPack3D-0.1.0.zip
+     Expand-Archive FlatPack3D-0.1.0.zip -DestinationPath .
+     # macOS / Linux
+     curl -L -o FlatPack3D-0.1.0.zip https://github.com/zzzhengqi/FlatPack3D/archive/refs/tags/v0.1.0.zip && unzip FlatPack3D-0.1.0.zip
+     ```
+
+   不要自己另写引擎，也不要把仓库里的脚本复制到别处运行。
+2. **用户的资料放 `inputs/`**：说明书 PDF 放仓库里的 `inputs/<id>/`，商品图放 `inputs/<id>/images/`（`inputs/` 在 `.gitignore` 里，不会入库）。用户的资料原本在别处的（例如克隆前所在文件夹里的 `inputs/`），复制进来，不要移动或删除原件。用户自己的产品数据放 `data/<id>/`。
+3. 运行环境检查，全部 ✔ 再开始：
 
    ```bash
-   node skills/manual-to-3d/scripts/flatpack.js doctor
+   node scripts/flatpack.js doctor
    ```
 
    需要：Node.js ≥ 22；Python 3 和 `pip install pymupdf opencv-python pillow numpy`；本机 Chrome 或 Edge（截图检查用，可用环境变量 `CHROME_PATH` 指定）。
-3. 下文的命令都写成 `flatpack <命令>`，意思是 `node skills/manual-to-3d/scripts/flatpack.js <命令>`，在仓库根目录运行。
+4. 下文的命令都写成 `flatpack <命令>`，意思是在仓库根目录运行 `node scripts/flatpack.js <命令>`。
 
 ### 规矩（整个流程都要守）
 
 - **结论只来自资料**：说明书页面、商品页、用户给的图片。看不清的写"**不确定**"，按图推断的写"根据图示判断"，**不要凭经验补**（例如铰链装哪边、"2x"是什么意思，都要回到页面上找依据，见 `references/pitfalls.md`）。
-- **资料不入库**：说明书 PDF 放 `manuals/<产品>/`，页面图在 `renders/<产品>/`，商品图放 `refs/<产品>/`，对照图和视频在 `exports/`，这些目录都在 `.gitignore` 里。仓库里只放自己写的数据、构建脚本、文档和 3D 截图。
+- **资料不入库**：说明书 PDF 放 `inputs/<产品>/`，商品图放 `inputs/<产品>/images/`，页面图在 `renders/<产品>/`，对照图和视频在 `exports/`，这些目录都在 `.gitignore` 里。仓库里只放自己写的数据、构建脚本、文档和 3D 截图。
 - **文字不写进代码**：界面文字在 `data/ui.*.json`，产品文字在 `data/<产品>/product.*.json`、`site*.json`、`i18n/`。
 - **每个数字有来源**：尺寸写进 `dimensions.md` 并标明是资料原文、读图近似还是猜测。
 - **自己验证**：每改一次就跑校验和截图检查，看截图，不要让用户替你看。
@@ -44,7 +65,7 @@ description: 把产品的装配说明书（PDF、商品页尺寸、产品图片�
    打开页面看：`flatpack serve 8137 --open`，地址后加 `?product=<id>`（要让它成为默认产品：`node scripts/build-index.js --default=<id>`）。
 
    > 从这里开始到阶段 4 换掉示例件之前，校验会因为示例占位和真实资料对不上而报错，这是正常的。
-2. 把说明书 PDF 放到 `manuals/<id>/`，商品图放到 `refs/<id>/`。
+2. 把说明书 PDF 放到 `inputs/<id>/`，商品图放到 `inputs/<id>/images/`（`flatpack new` 已经建好这两个目录）。
 3. 在 `data/<id>/manifest.json` 的 `sources` 里登记每份资料（格式见 `references/spec.md`"产品目录"一节）：
    - `manuals[]`：`key`（短名，例如 `shelf`）、`file`（PDF 文件名）、`docId`（说明书上的文档号，没有就写版本或日期）、`url`（官方下载地址）、`pages`（总页数）。
    - `productPages[]`：商品页地址和 `used`（从这一页取了什么，例如"整体尺寸"）。
@@ -176,7 +197,7 @@ flatpack validate --product=<id>
 逐条过 `references/release-checklist.md`，重点：
 
 ```bash
-git status --short && git ls-files | grep -iE '\.(pdf|jpe?g|webp)$|^renders/|^manuals/|^refs/|^exports/'   # 后一条必须没有输出
+git status --short && git ls-files | grep -iE '\.(pdf|jpe?g|webp)$|^inputs/|^renders/|^manuals/|^refs/|^exports/'   # 后一条必须没有输出
 flatpack validate                     # 所有产品、技能两份一致、产品索引最新
 flatpack sync-skill --check           # 改过技能文件后先运行 flatpack sync-skill
 ```

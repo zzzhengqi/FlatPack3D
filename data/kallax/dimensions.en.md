@@ -92,7 +92,7 @@ Chain of reasoning: nominal insert size 33×33 (product page) → front face of 
 
 ### Full-set layout (this layout comes from the product images, not from the assembly instructions)
 
-Based on two "KALLAX shelving unit + 10 inserts" product images in `refs/` (black-brown pe748007, white stained oak effect pe618893), which have the same layout:
+Based on two "KALLAX shelving unit + 10 inserts" product images in `inputs/kallax/images/` (black-brown pe748007, white stained oak effect pe618893), which have the same layout:
 
 - Rows 1 and 2 from the top: empty;
 - Row 3: 5 door inserts, all with the knob on the right, so they have their **hinges on the left** (the door opens to the left);

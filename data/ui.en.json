@@ -134,7 +134,7 @@
   "zoomSource": "Per {pages}",
   "pageFallbackTitle": "Manual page {p} (page images are not rendered on this machine)",
   "pageOpenPdf": "Open page {p} of the official PDF ({doc})",
-  "pageRenderHint": "Manual page images are not committed. Put the PDF in manuals/{product}/ and run python scripts/render-pages.py {product}; the page images will then appear here automatically.",
+  "pageRenderHint": "Manual page images are not committed. Put the PDF in inputs/{product}/ and run python scripts/render-pages.py {product}; the page images will then appear here automatically.",
   "roomPagesHintNoSafety": "The fixing steps for this option",
   "byline": "by 蒸汽",
   "bylineTitle": "蒸汽 ZHENGQI"
