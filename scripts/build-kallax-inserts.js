@@ -245,7 +245,7 @@ function buildDrawer() {
     },
     parts,
     hardware: [
-      { id: '110519', name: '带倒刺圆头钉', quantity: 4, kind: 'screw', shape: { type: 'screw', diameter: 0.5, length: 3.0, headDiameter: 1.0 } },
+      { id: '110519', name: '带倒刺圆头钉', quantity: 4, kind: 'screw', drive: 'hammer', shape: { type: 'screw', diameter: 0.5, length: 3.0, headDiameter: 1.0 } },
       { id: '118331', name: '偏心件连接杆', quantity: 4, kind: 'screw', shape: { type: 'screw', diameter: 0.6, length: 3.5, headDiameter: 1.0 } },
       { id: '100412', name: '机制螺钉（拉手用）', quantity: 2, kind: 'screw', shape: { type: 'screw', diameter: 0.5, length: 2.5, headDiameter: 1.0 } },
       { id: '124386', name: '十字自攻螺钉', quantity: 4, kind: 'screw', shape: { type: 'screw', diameter: 0.4, length: SCREW_124386_LEN, headDiameter: 0.9 } },

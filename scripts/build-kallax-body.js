@@ -168,7 +168,8 @@ steps.push(
     // p29 的放大圆圈引线指向右上角那一格
     zoomFocus: { index: 1, page: 29 },
     motionNote: '动作依据：p29 放大圆圈里葫芦孔片上方的左右双向箭头、左侧的上下双向箭头，先左右、再上下调整；再按螺丝刀上的旋转箭头拧紧。' },
-  { n: 28, variant: 'a', pages: [30], title: '盖帽', parts: [], hint: '盖上 2 个转角盖帽。', hardware: [hw('115754/118673/118225/119509', caps)] },
+  { n: 28, variant: 'a', pages: [30], title: '盖帽', parts: [], hint: '盖上 2 个转角盖帽。', hardware: [hw('115754/118673/118225/119509', caps)],
+    motions: [{ type: 'push', id: '115754/118673/118225/119509', page: 30 }], motionNote: '动作依据：p30 放大圆圈里盖帽旁边的直箭头——把盖帽推到固定件上。' },
 
   { n: 25, variant: 'b', pages: [31], title: '放角码、划线', parts: [],
     hint: '把 2 个角码放在顶板左端，孔对准顶板上的螺钉孔，用铅笔在墙上划出角码的位置。',

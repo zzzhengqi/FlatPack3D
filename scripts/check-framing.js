@@ -23,6 +23,7 @@ async function run({ lang = '', only = null, sizes = Object.keys(SIZES), quiet =
   const server = await startStaticServer(root);
   const page = await launch({ width: 1280, height: 800 });
   const failures = [];
+  const narrow = []; // 放大圆圈视野不到焦点零件 3 倍的（收紧过的），记下来供复查
   let checked = 0;
   const log = (s) => { if (!quiet) console.log(s); };
   try {
@@ -49,11 +50,14 @@ async function run({ lang = '', only = null, sizes = Object.keys(SIZES), quiet =
             await page.screenshot(file);
             checked++;
             if (rep.problems.length) failures.push({ size: sizeName, name, problems: rep.problems, file });
+            for (const f of rep.fields || []) if (f < 3) narrow.push({ size: sizeName, name, field: f });
           }
           log(`  ${sizeName} ${piece.key}${v ? ` [${v}]` : ''}：${steps.length} 张`);
         }
       }
     }
+    fs.mkdirSync(outDir, { recursive: true });
+    fs.writeFileSync(path.join(outDir, 'narrow-fields.json'), JSON.stringify(narrow, null, 1));
     if (page.consoleErrors.length) failures.push({ size: '-', name: '页面脚本报错', problems: [...new Set(page.consoleErrors)].slice(0, 5) });
   } finally {
     await page.close();

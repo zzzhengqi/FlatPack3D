@@ -331,7 +331,7 @@ function validateAssembly(data, md, file) {
           check(list.some((h) => h.id === key), `${where} 的对象 ${key} 在本步`, `${where}：本步没有${m.type === 'unscrew' ? '拧出' : '装'} ${key}`);
           const def = m.id ? cat[normId(m.id)] : (data.extras || []).find((e) => e.id === m.extra);
           const kind = def && (def.kind || (def.shape && def.shape.type));
-          const want = m.type === 'turn' ? 'cam' : 'screw';
+          const want = m.type === 'turn' ? 'cam' : m.type === 'push' ? kind : 'screw';
           check(kind === want, `${where} 的对象是 ${want}`, `${where}：${key} 的种类是 ${kind}，应为 ${want}`);
           if (m.type === 'turn') check(m.angle > 0, `${where} 转 ${m.angle}°`, `${where}：没有转角 angle`);
         }
@@ -398,7 +398,7 @@ function validateAssembly(data, md, file) {
   return { errors, passes, summary };
 }
 
-const MOTION_TYPES = ['screw', 'unscrew', 'turn', 'slide', 'tighten'];
+const MOTION_TYPES = ['screw', 'unscrew', 'turn', 'slide', 'tighten', 'push'];
 
 // ---------------- 全套校验 ----------------
 function validateRoom(room, baseDir) {

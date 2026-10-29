@@ -63,7 +63,8 @@ async function launch({ width = 1280, height = 800, port = null } = {}) {
   const close = async () => {
     proc.kill();
     await sleep(300);
-    fs.rmSync(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    // 浏览器子进程偶尔还占着临时配置目录，删不掉就留给系统清理，不影响结果
+    try { fs.rmSync(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 }); } catch { /* 忽略 */ }
   };
   try {
     let target;
@@ -86,6 +87,7 @@ async function launch({ width = 1280, height = 800, port = null } = {}) {
     await send('Runtime.enable');
     const page = {
       consoleErrors,
+      send, // 直接发调试协议命令（复查视频用虚拟时钟时要用）
       async evaluate(expr) {
         const r = await send('Runtime.evaluate', { expression: expr, awaitPromise: true, returnByValue: true });
         if (r.result?.exceptionDetails) throw new Error(r.result.exceptionDetails.exception?.description || r.result.exceptionDetails.text);

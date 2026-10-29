@@ -131,5 +131,6 @@
     }
   ],
   "movingParts": "Panels in this step",
-  "zoomCount": "{n}×"
+  "zoomCount": "{n}×",
+  "zoomSource": "Per {pages}"
 }
