@@ -5,42 +5,62 @@ description: 把产品的装配说明书（PDF、商品页尺寸、产品图片�
 
 # manual-to-3d：把说明书做成 3D 说明书
 
-用户把说明书资料交给你，你按下面 8 个阶段做出一套与 KALLAX 示例同等质量的 3D 说明书。每个阶段都有**完成标准**，没达到就不进入下一阶段。有两个**确认点**，到了必须停下来等用户回复。
+用户把说明书资料交给你（常见情况：当前文件夹里只有一个 `inputs/`，放着说明书 PDF，可能还有商品图和 `links.txt`），你先按"前提"准备好工具，再按下面 8 个阶段做出一套与 KALLAX 示例同等质量的 3D 说明书。每个阶段都有**完成标准**，没达到就不进入下一阶段。有两个**确认点**，到了必须停下来等用户回复。
 
 ## 开始之前
 
-### 前提
+### 前提：准备工具
 
-1. **FlatPack3D 仓库**：本技能只有说明文字，不带工具；引擎（`index.html`）、校验、截图检查和命令入口 `scripts/flatpack.js` 都在 FlatPack3D 仓库里。先判断当前文件夹是不是仓库：根目录同时有 `index.html`、`scripts/flatpack.js`、`vendor/three@0.160.0/`。
-   - **是**：直接在这里做。
-   - **当前文件夹下已经有 `FlatPack3D/`**（以前克隆过）：进入它，不要重复克隆。
-   - **都不是**：在当前文件夹里克隆 v0.1.0，然后进入 `FlatPack3D/`，后面所有命令都在那里运行：
+本技能只有说明文字，不带工具。引擎（`index.html`）、校验、截图检查和命令入口 `scripts/flatpack.js` 都在 FlatPack3D 仓库的 **v0.1.1** 版本里。按顺序做：
+
+1. **找到工具目录**。工具目录的根上同时有 `index.html`、`scripts/flatpack.js`、`vendor/three@0.160.0/`。
+   - 当前文件夹本身就是：工具目录就是当前文件夹，用户资料在它的 `inputs/` 里。
+   - 当前文件夹下有 `FlatPack3D/` 且符合上面的条件（以前下载过）：工具目录是 `FlatPack3D/`，不要重复下载。
+   - 都不是（例如当前文件夹只有用户的 `inputs/`）：把 v0.1.1 下载到**当前文件夹的子目录 `FlatPack3D/`**。不要下载到别处，也不要把文件散放在当前文件夹里。
 
      ```bash
-     git clone --depth 1 --branch v0.1.0 https://github.com/zzzhengqi/FlatPack3D.git
-     cd FlatPack3D
+     git clone --depth 1 --branch v0.1.1 https://github.com/zzzhengqi/FlatPack3D.git FlatPack3D
      ```
 
-   - **没装 git**（`git --version` 报错）：从 Release 下载 zip 解压，解压出的文件夹叫 `FlatPack3D-0.1.0/`，进入它：
+     没装 git（`git --version` 报错）时不用装 git，改下载 zip：
 
-     ```bash
+     ```powershell
      # Windows PowerShell
-     Invoke-WebRequest -Uri https://github.com/zzzhengqi/FlatPack3D/archive/refs/tags/v0.1.0.zip -OutFile FlatPack3D-0.1.0.zip
-     Expand-Archive FlatPack3D-0.1.0.zip -DestinationPath .
-     # macOS / Linux
-     curl -L -o FlatPack3D-0.1.0.zip https://github.com/zzzhengqi/FlatPack3D/archive/refs/tags/v0.1.0.zip && unzip FlatPack3D-0.1.0.zip
+     Invoke-WebRequest -Uri https://github.com/zzzhengqi/FlatPack3D/archive/refs/tags/v0.1.1.zip -OutFile FlatPack3D-0.1.1.zip
+     Expand-Archive FlatPack3D-0.1.1.zip -DestinationPath .
+     Rename-Item FlatPack3D-0.1.1 FlatPack3D
+     Remove-Item FlatPack3D-0.1.1.zip
      ```
 
-   不要自己另写引擎，也不要把仓库里的脚本复制到别处运行。
-2. **用户的资料放 `inputs/`**：说明书 PDF 放仓库里的 `inputs/<id>/`，商品图放 `inputs/<id>/images/`（`inputs/` 在 `.gitignore` 里，不会入库）。用户的资料原本在别处的（例如克隆前所在文件夹里的 `inputs/`），复制进来，不要移动或删除原件。用户自己的产品数据放 `data/<id>/`。
-3. 运行环境检查，全部 ✔ 再开始：
+     ```bash
+     # macOS / Linux
+     curl -L -o FlatPack3D-0.1.1.zip https://github.com/zzzhengqi/FlatPack3D/archive/refs/tags/v0.1.1.zip && unzip -q FlatPack3D-0.1.1.zip && mv FlatPack3D-0.1.1 FlatPack3D && rm FlatPack3D-0.1.1.zip
+     ```
 
-   ```bash
-   node scripts/flatpack.js doctor
-   ```
+     两种方法都下载不了（没有网络、被拦截），停下来告诉用户，请用户手动下载上面的 zip，解压到当前文件夹并改名为 `FlatPack3D`。
+   - 之后所有命令都在**工具目录**里运行（先 `cd FlatPack3D`）。不要自己另写引擎，也不要把工具里的脚本复制到别处运行。
 
-   需要：Node.js ≥ 22；Python 3 和 `pip install pymupdf opencv-python pillow numpy`；本机 Chrome 或 Edge（截图检查用，可用环境变量 `CHROME_PATH` 指定）。
-4. 下文的命令都写成 `flatpack <命令>`，意思是在仓库根目录运行 `node scripts/flatpack.js <命令>`。
+2. **检查环境，缺什么先问用户再装**。
+   - 先运行 `node --version`。没有 Node.js 或版本低于 22 时，环境检查脚本跑不了：停下来问用户能不能安装 Node.js 22 或以上（Windows：`winget install OpenJS.NodeJS.LTS`；macOS：`brew install node`；也可以从 https://nodejs.org 下载安装包）。用户同意并装好后再继续；新装的 Node 可能要重开终端才找得到。
+   - 再运行环境检查：
+
+     ```bash
+     node scripts/flatpack.js doctor
+     ```
+
+   - 有 ✘ 时，把缺的东西、用途和安装命令一次列给用户，**用户同意后再装**，装完重跑 doctor，直到全部 ✔：
+
+     | 缺什么 | 用来做什么 | 安装方法 |
+     |---|---|---|
+     | Python 3 | 渲染说明书页面、对照图 | Windows：`winget install Python.Python.3.12`；macOS：`brew install python` |
+     | Python 包 pymupdf、opencv-python、pillow、numpy | 同上 | `python -m pip install pymupdf opencv-python pillow numpy` |
+     | Chrome 或 Edge | 取景截图检查、对照图 | 安装其中一个；装在非默认位置时设环境变量 `CHROME_PATH` 指向它 |
+
+   - 不要跳过 ✘ 往下做。用户不同意安装时，告诉用户哪些阶段因此做不了，然后停下。
+
+3. **用户的资料**：在阶段 1 建好产品骨架后，**复制**进工具目录（见阶段 1 第 2 步），不要移动或删除原件。用户自己的产品数据放 `data/<id>/`。
+
+4. 下文的命令都写成 `flatpack <命令>`，意思是在工具目录运行 `node scripts/flatpack.js <命令>`。
 
 ### 规矩（整个流程都要守）
 
@@ -65,7 +85,11 @@ description: 把产品的装配说明书（PDF、商品页尺寸、产品图片�
    打开页面看：`flatpack serve 8137 --open`，地址后加 `?product=<id>`（要让它成为默认产品：`node scripts/build-index.js --default=<id>`）。
 
    > 从这里开始到阶段 4 换掉示例件之前，校验会因为示例占位和真实资料对不上而报错，这是正常的。
-2. 把说明书 PDF 放到 `inputs/<id>/`，商品图放到 `inputs/<id>/images/`（`flatpack new` 已经建好这两个目录）。
+2. 把用户的资料复制到工具目录（`flatpack new` 已经建好这两个目录）。工具目录是子目录 `FlatPack3D/` 时，用户的资料在上一级的 `inputs/`（`../inputs/`）；工具目录就是当前文件夹时，资料可能直接放在 `inputs/` 下：
+   - 说明书 PDF → `inputs/<id>/`
+   - 商品图（png、jpg、webp）→ `inputs/<id>/images/`
+   - `links.txt`（商品页、说明书下载地址等链接）→ `inputs/<id>/links.txt`，里面的链接在下一步登记进 `manifest.json`。
+   - 其他文件（例如用户的文字说明）也复制到 `inputs/<id>/`，逐个看过，用到的写进分析报告。
 3. 在 `data/<id>/manifest.json` 的 `sources` 里登记每份资料（格式见 `references/spec.md`"产品目录"一节）：
    - `manuals[]`：`key`（短名，例如 `shelf`）、`file`（PDF 文件名）、`docId`（说明书上的文档号，没有就写版本或日期）、`url`（官方下载地址）、`pages`（总页数）。
    - `productPages[]`：商品页地址和 `used`（从这一页取了什么，例如"整体尺寸"）。
@@ -77,7 +101,7 @@ description: 把产品的装配说明书（PDF、商品页尺寸、产品图片�
    ```
 
 完成标准：
-- [ ] 每份资料都有来源链接（用户只给了文件、没给链接的，问用户要；问不到就写"用户提供，来源未知"）。
+- [ ] 每份资料都有来源链接（先从 `links.txt` 找；用户只给了文件、没给链接的，问用户要；问不到就写"用户提供，来源未知"）。
 - [ ] `flatpack render <id>` 没有报"缺少 PDF"，打印的页数与 `pages` 一致。
 - [ ] 删掉 `manifest.json` 里的示例占位条目。
 
@@ -192,18 +216,35 @@ flatpack validate --product=<id>
 完成标准：
 - [ ] 校验全部 ✔（包括站点文案、中英文对齐、取景检查）。
 
-## 阶段 8：发布前检查
+## 阶段 8：检查和交付
 
-逐条过 `references/release-checklist.md`，重点：
+逐条过 `references/release-checklist.md`（"仓库"一节只在要把工具目录发布出去时才需要），重点：
 
 ```bash
-git status --short && git ls-files | grep -iE '\.(pdf|jpe?g|webp)$|^inputs/|^renders/|^manuals/|^refs/|^exports/'   # 后一条必须没有输出
+git status --short && git ls-files | grep -iE '\.(pdf|jpe?g|webp)$|^inputs/|^renders/|^manuals/|^refs/|^exports/'   # 后一条必须没有输出；工具是 zip 下载的（没有 .git）就跳过这一条
 flatpack validate                     # 所有产品、技能两份一致、产品索引最新
 flatpack sync-skill --check           # 改过技能文件后先运行 flatpack sync-skill
 ```
 
+交付给用户：
+
+1. 让新产品成为默认产品（打开页面时直接显示它），再校验一次：
+
+   ```bash
+   node scripts/build-index.js --default=<id>
+   node scripts/build-meta.js
+   flatpack validate
+   ```
+
+2. 告诉用户怎么打开查看（页面要用本地服务打开，双击 `index.html` 打不开）：
+   - Windows：双击工具目录里的 `start.bat`，会自动打开浏览器。
+   - 任何系统：在工具目录运行 `node scripts/flatpack.js serve 8137 --open`，浏览器打开 `http://localhost:8137/`；英文页 `http://localhost:8137/en/`；看某一件加 `?piece=<件>`。
+   - 说明书 PDF、页面图、商品图都在本机的 `inputs/`、`renders/`，在 `.gitignore` 里，不会提交到仓库；要分享给别人时只能分享 `data/<id>/` 里的数据。
+3. 汇报：做了哪些件和路线、还有哪些"不确定"（指向 `dimensions.md` 的猜测清单和分析报告的不确定点）。
+
 完成标准：
 - [ ] 清单每一条都打勾；没有说明书 PDF、说明书页面图、商品图进仓库。
+- [ ] 默认产品是新产品，`flatpack validate` 全部 ✔，用户知道怎么打开。
 
 ## 参考
 

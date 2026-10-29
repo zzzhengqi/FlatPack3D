@@ -4,14 +4,35 @@
 
 中文 | [English](README.en.md)
 
-> **v0.1.0 预览版，欢迎反馈问题**：[提 Issue](https://github.com/zzzhengqi/FlatPack3D/issues)。
+> **v0.1.1 预览版，欢迎反馈问题**：[提 Issue](https://github.com/zzzhengqi/FlatPack3D/issues)。
+
+## 三步开始
+
+1. **新建一个空文件夹**，在里面建 `inputs/`，放入说明书 PDF（可选：商品图；商品页链接写进 `inputs/links.txt`）。
+2. **复制下面这段话发给你的 Agent**（Claude Code、Codex 等），在这个文件夹里打开它：
+
+   ```text
+   请帮我把这个文件夹里的产品说明书做成可交互的 3D 说明书。
+   - 资料在 inputs/ 文件夹里（说明书 PDF，可能还有商品图片和商品页链接）。
+   - 工具和流程在这里：https://github.com/zzzhengqi/FlatPack3D/blob/v0.1.1/AGENTS.md
+     请先读它，严格按里面的流程做。
+     如果你打不开网页，就用 git 下载 https://github.com/zzzhengqi/FlatPack3D 的 v0.1.1 版本，再读里面的 AGENTS.md。
+   - 需要安装软件，或流程要求我确认的地方，先停下来问我。
+   - 做完告诉我怎么打开查看。
+   ```
+
+3. **Agent 会在两个确认点停下来问你**（零件和五金数量、说明书与 3D 的对照图），照实回答即可。
+
+Agent 会把工具下载到这个文件夹的 `FlatPack3D/` 子目录，缺软件（Node.js、Python、Chrome/Edge）时先问你再装。你的说明书和图片只留在这个文件夹里，不会提交到任何仓库。
+
+## 这是什么
 
 把家具的纸质 / PDF 装配说明书，做成可交互的 3D 分步装配演示：逐步动画、五金计数、说明书对照、放大圆圈（线稿风格，像说明书的放大图）、线稿视图、中英文界面。
 
 仓库里有两样东西：
 
 1. **引擎和工具**：单文件 Three.js 页面 `index.html`，以及构建、校验、截图检查、对照图脚本（`scripts/`，命令入口 `scripts/flatpack.js`）。引擎与具体家具无关。
-2. **技能 `manual-to-3d`**：把"说明书 → 3D 说明书"的完整流程写成 Agent 能照着做的说明（`skills/manual-to-3d/`）。技能只有说明文字，用的工具都在本仓库里；Agent 发现当前文件夹不是本仓库时，会先克隆 v0.1.0。
+2. **技能 `manual-to-3d`**：把"说明书 → 3D 说明书"的完整流程写成 Agent 能照着做的说明（`skills/manual-to-3d/`）。技能只有说明文字，用的工具都在本仓库里；Agent 发现当前文件夹不是本仓库时，会先把 v0.1.1 下载到子目录 `FlatPack3D/`。
 
 示例产品：宜家 KALLAX 置物架（5×5，两种上墙方案）+ 门嵌件（铰链在左 / 在右）+ 双抽屉嵌件 + 全套 + 靠墙摆放（Room 视图）。见 `skills/manual-to-3d/examples/kallax/`。
 
@@ -19,23 +40,9 @@
 
 > **安全提示（KALLAX）**：说明书的第一条警告（p2）是家具倾倒可能造成严重甚至致命的压伤，必须用附带的上墙固定配件把柜体固定在墙上；墙用螺钉和螺塞不随包装提供，要按墙体材质另购。本演示只是示意，实际安装请以官方说明书为准。
 
-## 安装
+## Claude Code 安装技能（可选）
 
-需要：[Node.js](https://nodejs.org/) 22 或以上；Python 3 和 `pip install pymupdf opencv-python pillow numpy`（渲染说明书页面、对照图）；本机 Chrome 或 Edge（截图检查）。
-
-### 1. 取得仓库
-
-```bash
-git clone --depth 1 --branch v0.1.0 https://github.com/zzzhengqi/FlatPack3D.git
-cd FlatPack3D
-node scripts/flatpack.js doctor
-```
-
-没装 git：下载 [v0.1.0 的 zip](https://github.com/zzzhengqi/FlatPack3D/archive/refs/tags/v0.1.0.zip)，解压后进入 `FlatPack3D-0.1.0/`。
-
-### 2. 安装技能
-
-**Claude Code**：把 `skills/manual-to-3d` 复制到用户主目录下的 `.claude/skills/`。在仓库目录里运行：
+"三步开始"不需要这一步。想在任何文件夹里直接说"用 manual-to-3d 把 inputs/ 里的说明书做成 3D 说明书"，就把技能复制到用户主目录下的 `.claude/skills/`。在克隆下来的仓库目录里运行：
 
 ```powershell
 # Windows PowerShell
@@ -48,17 +55,19 @@ Copy-Item -Recurse -Force skills\manual-to-3d "$HOME\.claude\skills\"
 mkdir -p ~/.claude/skills && cp -R skills/manual-to-3d ~/.claude/skills/
 ```
 
-在仓库目录里打开 Claude Code 时，不复制也能用（仓库自带 `.claude/skills/manual-to-3d/`）。
+在仓库目录里打开 Claude Code 时，不复制也能用（仓库自带 `.claude/skills/manual-to-3d/`）。其他 Agent（Codex、Cursor、Gemini CLI 等）不用安装，让它先读仓库根目录的 `AGENTS.md`。
 
-**其他 Agent**（Codex、Cursor、Gemini CLI 等）：让它先读仓库根目录的 `AGENTS.md`。
+## 开发者：克隆整个仓库
 
-### 3. 使用
+需要：[Node.js](https://nodejs.org/) 22 或以上；Python 3 和 `pip install pymupdf opencv-python pillow numpy`（渲染说明书页面、对照图）；本机 Chrome 或 Edge（截图检查）。
 
-把说明书 PDF 和商品图放进一个 `inputs/` 文件夹，在它所在的文件夹里对 Agent 说：
+```bash
+git clone --depth 1 --branch v0.1.1 https://github.com/zzzhengqi/FlatPack3D.git
+cd FlatPack3D
+node scripts/flatpack.js doctor
+```
 
-> 用 manual-to-3d 把 inputs/ 里的说明书做成 3D 说明书
-
-Agent 会在需要时克隆本仓库，把资料复制到仓库的 `inputs/<产品>/`，按 8 个阶段做，中间有两个确认点会停下来等你回复。
+没装 git：下载 [v0.1.1 的 zip](https://github.com/zzzhengqi/FlatPack3D/archive/refs/tags/v0.1.1.zip)，解压后进入 `FlatPack3D-0.1.1/`。要参与开发就克隆 `main` 分支（去掉 `--depth 1 --branch v0.1.1`）。
 
 ## 打开看看
 

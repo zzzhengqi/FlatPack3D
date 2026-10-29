@@ -4,14 +4,35 @@
 
 [中文](README.md) | English
 
-> **v0.1.0 preview. Feedback welcome:** [open an issue](https://github.com/zzzhengqi/FlatPack3D/issues).
+> **v0.1.1 preview. Feedback welcome:** [open an issue](https://github.com/zzzhengqi/FlatPack3D/issues).
+
+## Get started in three steps
+
+1. **Create an empty folder** with an `inputs/` folder inside, and put the manual PDFs in it (optional: product images; product page links in `inputs/links.txt`).
+2. **Copy the message below and send it to your agent** (Claude Code, Codex, …), opened in that folder:
+
+   ```text
+   Please turn the product assembly manual in this folder into an interactive 3D manual.
+   - The materials are in the inputs/ folder (manual PDFs, possibly product images and product page links).
+   - The tools and workflow are here: https://github.com/zzzhengqi/FlatPack3D/blob/v0.1.1/AGENTS.md
+     Read it first and follow its workflow strictly.
+     If you can't open web pages, use git to download version v0.1.1 of https://github.com/zzzhengqi/FlatPack3D, then read the AGENTS.md inside.
+   - Stop and ask me before installing any software, and wherever the workflow asks for my confirmation.
+   - When you're done, tell me how to open and view it.
+   ```
+
+3. **The agent stops at two checkpoints to ask you** (part and hardware counts; the manual-vs-3D comparison sheets). Just answer truthfully.
+
+The agent downloads the tools into a `FlatPack3D/` subfolder of that folder and asks you before installing anything that is missing (Node.js, Python, Chrome/Edge). Your manuals and images stay in that folder and are never committed to any repository.
+
+## What it is
 
 Turn paper / PDF furniture assembly instructions into an interactive 3D step-by-step assembly demo: step animations, hardware counts, side-by-side manual pages, zoom circles (line art, like the call-outs in a manual), line-art view, Chinese and English UI.
 
 The repository has two parts:
 
 1. **Engine and tools**: a single-file Three.js page `index.html`, plus build, validation, framing-check and comparison scripts (`scripts/`, entry point `scripts/flatpack.js`). The engine knows nothing about any specific piece of furniture.
-2. **The `manual-to-3d` skill**: the whole "manual → 3D manual" workflow written as instructions an agent can follow (`skills/manual-to-3d/`). The skill contains instructions only; every tool it uses lives in this repository. When the current folder is not this repository, the agent clones v0.1.0 first.
+2. **The `manual-to-3d` skill**: the whole "manual → 3D manual" workflow written as instructions an agent can follow (`skills/manual-to-3d/`). The skill contains instructions only; every tool it uses lives in this repository. When the current folder is not this repository, the agent first downloads v0.1.1 into a `FlatPack3D/` subfolder.
 
 Example product: IKEA KALLAX shelving unit (5×5, two wall-anchoring options) + insert with door (hinges left / right) + insert with 2 drawers + full set + against-the-wall Room view. See `skills/manual-to-3d/examples/kallax/`.
 
@@ -19,23 +40,9 @@ Example product: IKEA KALLAX shelving unit (5×5, two wall-anchoring options) + 
 
 > **Safety (KALLAX)**: the manual's first warning (p2) is that furniture can tip over and cause serious or fatal crush injuries, so the unit must be fixed to the wall with the included anchoring hardware. Wall screws and plugs are not included; choose them for your wall material. This demo is illustrative only; follow the official instructions when assembling.
 
-## Install
+## Install the skill for Claude Code (optional)
 
-Requirements: [Node.js](https://nodejs.org/) 22 or later; Python 3 with `pip install pymupdf opencv-python pillow numpy` (rendering manual pages, comparison sheets); Chrome or Edge installed locally (framing screenshots).
-
-### 1. Get the repository
-
-```bash
-git clone --depth 1 --branch v0.1.0 https://github.com/zzzhengqi/FlatPack3D.git
-cd FlatPack3D
-node scripts/flatpack.js doctor
-```
-
-Without git: download the [v0.1.0 zip](https://github.com/zzzhengqi/FlatPack3D/archive/refs/tags/v0.1.0.zip), extract it and enter `FlatPack3D-0.1.0/`.
-
-### 2. Install the skill
-
-**Claude Code**: copy `skills/manual-to-3d` into `.claude/skills/` in your home directory. From the repository folder:
+Not needed for the three steps above. To say "Use manual-to-3d to turn the manual in inputs/ into a 3D manual" in any folder, copy the skill into `.claude/skills/` in your home directory. From the cloned repository folder:
 
 ```powershell
 # Windows PowerShell
@@ -48,17 +55,19 @@ Copy-Item -Recurse -Force skills\manual-to-3d "$HOME\.claude\skills\"
 mkdir -p ~/.claude/skills && cp -R skills/manual-to-3d ~/.claude/skills/
 ```
 
-If you open Claude Code inside the repository folder, it works without copying (the repository ships `.claude/skills/manual-to-3d/`).
+If you open Claude Code inside the repository folder, it works without copying (the repository ships `.claude/skills/manual-to-3d/`). Other agents (Codex, Cursor, Gemini CLI, …) need no install: have them read `AGENTS.md` at the repository root.
 
-**Other agents** (Codex, Cursor, Gemini CLI, …): have them read `AGENTS.md` at the repository root first.
+## Developers: clone the whole repository
 
-### 3. Use it
+Requirements: [Node.js](https://nodejs.org/) 22 or later; Python 3 with `pip install pymupdf opencv-python pillow numpy` (rendering manual pages, comparison sheets); Chrome or Edge installed locally (framing screenshots).
 
-Put the manual PDFs and product images in an `inputs/` folder, then, in the folder that contains it, tell your agent:
+```bash
+git clone --depth 1 --branch v0.1.1 https://github.com/zzzhengqi/FlatPack3D.git
+cd FlatPack3D
+node scripts/flatpack.js doctor
+```
 
-> Use manual-to-3d to turn the manual in inputs/ into a 3D manual
-
-The agent clones this repository if needed, copies your files into the repository's `inputs/<product>/`, and works through 8 stages. It stops at two checkpoints and waits for your reply.
+Without git: download the [v0.1.1 zip](https://github.com/zzzhengqi/FlatPack3D/archive/refs/tags/v0.1.1.zip), extract it and enter `FlatPack3D-0.1.1/`. To contribute, clone the `main` branch (drop `--depth 1 --branch v0.1.1`).
 
 ## Try it
 

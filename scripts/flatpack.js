@@ -34,7 +34,7 @@ const run = (exe, args) => { const r = spawnSync(exe, args, { cwd: root, stdio: 
 const node = (script, args) => run(process.execPath, [path.join(root, script), ...args]);
 
 if (!root) {
-  console.error('找不到 FlatPack3D 仓库（要有 index.html、scripts/validate.js、vendor/）。先克隆：git clone --depth 1 --branch v0.1.0 https://github.com/zzzhengqi/FlatPack3D.git，再进入 FlatPack3D 目录运行。');
+  console.error('找不到 FlatPack3D 仓库（要有 index.html、scripts/validate.js、vendor/）。先克隆：git clone --depth 1 --branch v0.1.1 https://github.com/zzzhengqi/FlatPack3D.git FlatPack3D，再进入 FlatPack3D 目录运行。');
   process.exit(1);
 }
 
