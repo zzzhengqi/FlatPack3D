@@ -283,6 +283,8 @@ function getJson(url) {
 // 产品：data/products.json 列出所有产品（由 scripts/build-index.js 按 data/*/manifest.json 生成），?product= 选一个，缺省用 default。
 // 语言：?lang=en 或英文页的 <meta name="flatpack-lang">；读该产品这种语言的站点文件（?site= 可直接指定站点文件）
 const LANG = params.get('lang') || document.querySelector('meta[name="flatpack-lang"]')?.content || '';
+// 本机打开（开发者）时才显示"怎么渲染页面图"之类的提示；线上演示只给观众看得懂的话
+const LOCAL = location.protocol === 'file:' || /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
 let SITE, UI, PRODUCT, PRODUCT_ID;
 try {
   const index = await getJson('data/products.json');
@@ -302,7 +304,7 @@ const manualLink = (file) => ((PRODUCT.about && PRODUCT.about.links && PRODUCT.a
 function pageFallback(p, file, steps = []) {
   const link = manualLink(file);
   const btns = steps.map(({ i, label }) => `<button class="ghost" data-i="${i}">${esc(label)}</button>`).join(' ');
-  return `<div class="missing"><b>${esc(t('pageFallbackTitle', { p }))}</b><br>${link ? `<a href="${esc(link.url)}#page=${p}" target="_blank" rel="noopener">${esc(t('pageOpenPdf', { p, doc: link.docId || file }))}</a><br>` : ''}<span>${esc(t('pageRenderHint', { product: PRODUCT_ID }))}</span>${btns ? `<div class="jump">${btns}</div>` : ''}</div>`;
+  return `<div class="missing"><b>${esc(t(LOCAL ? 'pageFallbackTitle' : 'pageFallbackTitleOnline', { p }))}</b><br>${link ? `<a href="${esc(link.url)}#page=${p}" target="_blank" rel="noopener">${esc(t('pageOpenPdf', { p, doc: link.docId || file }))}</a><br>` : ''}${LOCAL ? `<span>${esc(t('pageRenderHint', { product: PRODUCT_ID }))}</span>` : ''}${btns ? `<div class="jump">${btns}</div>` : ''}</div>`;
 }
 const t = (key, vars = {}) => String(UI[key] ?? key).replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? '');
 document.documentElement.lang = SITE.lang || 'zh-CN';
@@ -1732,7 +1734,7 @@ function syncUrl() {
   q.set('piece', state.piece);
   if (state.variant) q.set('variant', state.variant); else q.delete('variant');
   if (view instanceof AssemblyView) q.set('step', view.stepsList[view.current].n); else q.delete('step');
-  history.replaceState(null, '', `?${q}`);
+  history.replaceState(null, '', `${location.pathname}?${q}`);
 }
 // 说明书步骤号 → 当前路线里的序号
 function indexOfStep(n) {
@@ -1900,7 +1902,7 @@ function renderSetUi(set) {
     img.alt = set.layoutSource;
     img.onerror = () => {
       const src = PRODUCT.about && PRODUCT.about.links && PRODUCT.about.links.source;
-      $('pageView').innerHTML = `<div class="missing">${esc(t('refsMissing', { url }))}${src ? `<br><a href="${esc(src.url)}" target="_blank" rel="noopener">${esc(src.label)}</a>` : ''}</div>`;
+      $('pageView').innerHTML = `<div class="missing">${esc(LOCAL ? t('refsMissing', { url }) : t('refsMissingOnline'))}${src ? `<br><a href="${esc(src.url)}" target="_blank" rel="noopener">${esc(src.label)}</a>` : ''}</div>`;
       if (src) $('pageOpen').href = src.url;
     };
     img.src = url;
