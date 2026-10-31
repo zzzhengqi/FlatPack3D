@@ -276,7 +276,8 @@ const params = new URLSearchParams(location.search);
 const jsonCache = {};
 function getJson(url) {
   if (!jsonCache[url]) {
-    jsonCache[url] = fetch(url).then((r) => { if (!r.ok) throw new Error(`${url}：${r.status} ${r.statusText}`); return r.json(); });
+    // no-cache：每次向服务器核对一下（没改就用缓存），线上更新后不会出现新页面配旧文案
+    jsonCache[url] = fetch(url, { cache: 'no-cache' }).then((r) => { if (!r.ok) throw new Error(`${url}：${r.status} ${r.statusText}`); return r.json(); });
   }
   return jsonCache[url];
 }
@@ -2238,7 +2239,7 @@ function parseGuesses(md, heading) {
 async function renderAbout() {
   const a = PRODUCT.about;
   let guesses = '';
-  try { guesses = parseGuesses(await (await fetch(a.approximate.source)).text(), a.approximate.heading); } catch { guesses = ''; }
+  try { guesses = parseGuesses(await (await fetch(a.approximate.source, { cache: 'no-cache' })).text(), a.approximate.heading); } catch { guesses = ''; }
   const ex = PRODUCT.explainers;
   $('about').innerHTML = `
     ${PRODUCT.safety ? `<p class="safety"><strong>${esc(PRODUCT.safety.title)}</strong> ${esc(PRODUCT.safety.text)}</p>` : ''}
