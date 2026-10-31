@@ -82,6 +82,8 @@
   #manual .sheet { position: relative; max-width: 100%; }
   #manual img { display: block; max-width: 100%; height: auto; background: #fff; border: 1px solid var(--line); border-radius: 4px; cursor: pointer; }
   #manual .fig { position: absolute; left: 0; right: 0; border: 2px solid var(--accent); border-radius: 4px; pointer-events: none; }
+  #manual .credit { font-size: 11px; line-height: 1.5; color: var(--muted); padding: 6px 12px 8px; border-top: 1px solid var(--line); }
+  #manual .credit a { color: inherit; }
   #manual .missing, #manual .note { color: var(--muted); font-size: 13px; line-height: 1.6; padding: 8px; }
   #manual .missing { padding: 24px 8px; }
   code { background: var(--bg); padding: 1px 5px; border-radius: 4px; }
@@ -228,6 +230,7 @@
       </div>
       <div class="hint" id="pageHint"><span id="pageHintText"></span><a id="pageOpen" target="_blank" rel="noopener" data-t="pageOpen"></a></div>
       <div class="page" id="pageView"></div>
+      <div class="credit" id="pageCredit" hidden></div>
     </aside>
     <section id="stage">
       <div id="labels"></div>
@@ -303,6 +306,13 @@ try {
   throw err;
 }
 // 说明书 PDF 的官方链接：按文件名在产品文案的 about.links 里找（没有页面图时说明书面板用它）
+// 说明书页面图的版权说明：只在页面图真的显示出来时出现
+function showCredit(on) {
+  const c = PRODUCT.manualCredit, el = $('pageCredit');
+  el.hidden = !(on && c);
+  if (el.hidden) return;
+  el.innerHTML = `${esc(c.text)}${c.contact ? ` <a href="${esc(c.contact.url)}" target="_blank" rel="noopener">${esc(c.contact.label)}</a>` : ''}`;
+}
 const manualLink = (file) => ((PRODUCT.about && PRODUCT.about.links && PRODUCT.about.links.items) || []).find((l) => file && l.url.split('/').pop().split('?')[0] === file) || null;
 // 没有渲染页面图时说明书面板显示的内容：第几页、打开官方 PDF 的这一页、这一页上的步骤（点了跳过去）
 function pageFallback(p, file, steps = []) {
@@ -1863,6 +1873,8 @@ function renderRoomUi(room) {
     $('pageView').innerHTML = '';
     const img = new Image();
     img.alt = t('pageAlt', { p: pg });
+    showCredit(false);
+    img.onload = () => showCredit(true);
     img.onerror = () => { $('pageView').innerHTML = pageFallback(pg, body.source.manual); const l = manualLink(body.source.manual); if (l) $('pageOpen').href = `${l.url}#page=${pg}`; };
     img.src = url;
     $('pageView').append(img);
@@ -1893,6 +1905,7 @@ function renderSetUi(set) {
     <div class="tool"><span>${esc(t('setInstanced'))}</span><span class="num">${esc(t('setInstancedVal', { n: view.instanced.length }))}</span></div>`;
   // 左侧显示商品图（用户资料在 inputs/，不入库，可能不存在）
   $('manualLabel').textContent = t('refsLabel');
+  showCredit(false);
   $('pageNav').style.display = 'none';
   $('pageHintText').textContent = t('setLayoutNote');
   const tabs = $('pageTabs');
@@ -1988,6 +2001,8 @@ function showPage(p) {
   sheet.className = 'sheet';
   const img = new Image();
   img.alt = t('pageAlt', { p: manualPage });
+  showCredit(false);
+  img.onload = () => showCredit(true);
   img.onerror = () => {
     const steps = here.map((h) => ({ i: h.i, label: h.i === 0 ? t('stepOverview') : t('stepTitle', { n: view.stepsList[h.i].n, title: view.stepsList[h.i].title }) }));
     pv.innerHTML = pageFallback(manualPage, view.data.source && view.data.source.manual, steps);

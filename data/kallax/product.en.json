@@ -84,5 +84,12 @@
     "page": 2,
     "text": "The first warning in the instructions (p2): furniture that tips over can cause serious or fatal crushing injuries, so the unit must be fixed to the wall with the wall-attachment devices supplied. Screws and plugs for the wall are not included and have to be bought to suit your wall material; if you are not sure which to use, ask a professional.",
     "short": "The instructions require fixing the unit to the wall to prevent tip-over. Wall screws and plugs are not included; buy them to suit your wall material."
+  },
+  "manualCredit": {
+    "text": "Manual page images are taken from IKEA's official assembly instructions, © Inter IKEA Systems B.V., and shown for side-by-side reference only. This demo is not affiliated with IKEA. If you object, we will remove them right away:",
+    "contact": {
+      "label": "contact us",
+      "url": "https://github.com/zzzhengqi/FlatPack3D/issues"
+    }
   }
 }
